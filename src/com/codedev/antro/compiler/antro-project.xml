@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes"?>
-<antro>
-   <directory name="">:
-   
-   </directory>
+<antro parsertype="LL" lookahead="1" parsingmethod="recursive descent">
+   <language name="Java" codepackage="com.codedev.antro.compiler">:
+   		
+   </language>
 </antro>

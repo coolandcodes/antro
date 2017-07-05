@@ -3,19 +3,15 @@ package com.codedev.antro.compiler;
 
 
 import java.io.File;
-
 import java.io.IOException;
-
 import java.io.FileNotFoundException;
 
 
 
  /**
- 
   *
-
-  * @author SCOFIELD
- 
+  * @author Ifeora Okechukwu
+  * @version 0.0.1
   */
 
  
@@ -26,12 +22,12 @@ public class TokenizerDemo {
       
                         try{
              
-                         Tokenizer tok = new Tokenizer(new File("antro-lang.txt"));
+                         Tokenizer tokenizer = new Tokenizer(new File("program.antro"));
              
-                         System.out.println("Number of Tokens found: "+tok.getTokenCount());
+                         System.out.println("Number of Tokens found: "+tokenizer.getTokenCount());
            
              
-                          while(tok.hasMoreTokens()){
+                          while(tokenizer.hasMoreTokens()){
                   
                                System.out.println(tok.nextToken());
              

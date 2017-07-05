@@ -1,0 +1,25 @@
+require: "file.cd ";
+require: " regex.cd ";
+
+def: MAX 200; 
+
+begin:
+   main(void)
+     var ty = call: factorUpBy2(MAX);
+     print ty;
+end;
+
+method: convertToFactor(c, d){
+              retn c * d;
+}
+
+method: factorUpBy2(x){
+          var y, g = true;
+          if(x > 0){
+              y = (x / 2) * 4;
+          }else{
+              g = false;
+          }
+          y = call: convertToFactor(g, x); 
+        retn y;
+}

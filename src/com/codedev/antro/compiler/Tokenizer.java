@@ -31,7 +31,7 @@ public class Tokenizer{
      
      private boolean checkForKeyWord = false;
      
-     private static final String[] KEYWORDS_LIST = {"main", "new", "break", "var", "require", "def", "if", "for", "while", "else", "else if", "switch", "begin", "end", "retn", "true", "false", "method", "call", "void", "case"}; // {Tokenizer.KEYWORDS_LIST}
+     private static final String[] KEYWORDS_LIST = {"main", "new", "break", "var", "require", "def", "if", "for", "while", "else", "elseif", "switch", "begin", "end", "retn", "true", "false", "method", "call", "void", "case", "print"}; // {Tokenizer.KEYWORDS_LIST}
 
      private static final short MAX_TOKEN_SIZE = 30; // {Tokenizer.MAX_TOKEN_SIZE} defines the maximum length for any given token!
 
@@ -117,10 +117,12 @@ public class Tokenizer{
      
      public Tokenizer(File input) throws IOException, FileNotFoundException, InvalidTokenCharException, IllegalArgumentException{
 
-           if(input == null || !Files.getFileExtension(input).equals("txt")){
-              throw new IllegalArgumentException("incorrect file type passed to Tokenizer...");
+           if(input == null || !Files.getFileExtension(input).equals("antro")){
+              throw new IllegalArgumentException("Error: Incorrect file type passed to ANTRO Tokenizer...");
            }
             // read out the file to tokenize...           
+
+           /* @TODO: may need to rewrite the below to accomodate low memory or lack of it */
 
            FileInputStream fs = new FileInputStream(input.getName());
            // DataInputStream in = new DataInputStream(new BufferedInputStream(fs));
@@ -548,7 +550,7 @@ public class Tokenizer{
             }
             LEXEM_BUFFER.add(currentChar);
             readChar();
-            if(Character.isLetterOrDigit(currentChar)){
+            if(currentChar == '_' || Character.isLetterOrDigit(currentChar)){
               do{
                result = true;
                if(x == 12 || x == 11){
@@ -617,17 +619,19 @@ public class Tokenizer{
         boolean result = false;
         int x = currentState.getIdentity();
         boolean accept = (x == 0);
+        char startQuote = NULL;
         if(accept){
-           if(currentChar == '"'){
+            startQuote = currentChar;
+           if(startQuote == '"' || startQuote == '\''){
                  currentState = mStates[14];
                  LEXEM_BUFFER.add(currentChar);
                  readChar();
-                    while(currentChar != '"'){
+                    while(!currentChar.equals(startQuote)){
                         currentState = mStates[16];
                         LEXEM_BUFFER.add(currentChar);
                         readChar();
                     }
-                    if(currentChar == '"'){
+                    if(startQuote == '"' || startQuote == '\''){
                            result = true;
                            currentState = mStates[17];
                            LEXEM_BUFFER.add(currentChar);
