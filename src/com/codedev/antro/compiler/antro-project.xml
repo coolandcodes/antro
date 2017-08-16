@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes"?>
-<antro parsertype="LL" lookahead="1" parsingmethod="recursive descent">
-   <language name="Java" codepackage="com.codedev.antro.compiler">:
+<antro parsertype="LL" lookahead="1" parsingmethod="recursive descent" handwritten="true">
+   <language name="Java" package="com.codedev.antro.compiler">:
    		
    </language>
 </antro>

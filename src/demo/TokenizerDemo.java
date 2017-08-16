@@ -1,11 +1,10 @@
-package com.codedev.antro.compiler;
+package demo;
 
-
+import com.codedev.antro.compiler.tokenizer.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.FileNotFoundException;
-
 
 
  /**
@@ -18,11 +17,11 @@ import java.io.FileNotFoundException;
 public class TokenizerDemo {
     
        
-         public static void main(String[] args) throws IOException, IllegalArgumentException, FileNotFoundException{
+         public static void main(String[] args) throws IOException, IllegalArgumentException, FileNotFoundException {
       
                         try{
              
-                         Tokenizer tokenizer = new Tokenizer(new File("program.antro"));
+                         Tokenizer tokenizer = new Tokenizer(new File("../../basic_program.antro"));
              
                          System.out.println("Number of Tokens found: "+tokenizer.getTokenCount());
            

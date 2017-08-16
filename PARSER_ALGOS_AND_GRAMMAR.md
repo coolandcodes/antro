@@ -1,17 +1,21 @@
 # TOKENIZER DEVELOPMENT STANDARD
 
-- Token families available (identifier, keyword, symbol)
+- Token families available (identifier, keyword)
+
+- All tokens that have type as "keyword" will always have the name of the token equal to its' image.
 
 - All tokens must be resolve to either exactly one terminal or sequence of terminals (on the right hand side) and never sequence of non-terminals or terminals and non-terminals
 
-- (variable) tokens will belong to identifier family, (if), (while), (for), (switch), (void), (case), (ret) tokens will belong to keyword family and other tokens will belong to symbol family
+- (variable) tokens will belong to "identifier" family, (if), (while), (for), (switch), (void), (case), (ret) tokens will belong to "keyword" family.
 
 
 # PARSER DEVELOPMENT STANDARD
 
->This parser is an LL parser (top-down) with a lookahead of 1 (even though the tokenizer supports backtracking). The CFG tries as much as possible to avoid direct left-recursion and an ambiguous leftmost-derivation/parse-tree for the production of any given non-terminal.
+>This parser is an LL parser (top-down) with a lookahead of 1 (even though the tokenizer supports backtracking). The CFG tries as much as possible to avoid direct left-recursion and an ambiguous leftmost derivation / parse-tree for the production of any given non-terminal.
 
-- All choice points in any CFG non-terminal production will have conditional expectation for failure (i.e. throwing a Parse Exception)
+- All choice points in any CFG non-terminal production will have conditional expectation for failure (i.e. throwing a Parse Error / Exception)
+
+- All CFG non-terminal productions with no choice points in their definition will fail unconditionally when they are in conflict with the order of token streams.
 
 - Tokenizer will have a "lookAheadToken" method - (this will return the yet to be consumed token which is the exact next token in line to be retrieved by the parser)
 
@@ -55,29 +59,33 @@
 
       // procedure:
      
-     boolean expect(String type, boolean canFail) throws ParseException, UnexpectedEndOfInputException {
+     boolean expect(String type, boolean canFail) throws ParseException {
+            
             String actualType = tokenizer.lookAheadToken().getType();
             String actualImage = tokenizer.lookAheadToken().getImage();
             int lineNumber = 0; 
+
             boolean isKeyword = actualType.equals("keyword");
             boolean result = false;
             
             if(actualType.equals(type)){
-                 result = true;   
+
+                result = true; 
+
             }else{
               
-              if(isKeyword && actualImage.equals(type)){
-                  result = true;
-              }
-                  
-              if(!result && canFail){
-                  lineNumber = tokenizer.lookAheadToken().getLineNumber();
-                  if(isKeyword){
-                     throw new ParseException("Invalid token <"+actualImage+"> encountered on line "+lineNumber+".");
-                  }else{
-                     throw new ParseException("Unexpected token <"+type+">, found <"+actualType+"> on line "+lineNumber+".");
-                  }   
-              }
+                if(isKeyword && actualImage.equals(type)){
+                    result = true;
+                }
+                    
+                if(!result && canFail){
+                    lineNumber = tokenizer.lookAheadToken().getLineNumber();
+                    if(isKeyword){
+                       throw new ParseException("Context Error: Invalid keyword token \"<"+actualImage+">\", found on line "+lineNumber+".");
+                    }else{
+                       throw new ParseException("Syntax Error: Unexpected token \"<"+actualImage+">\" of type <"+actualType+">, found on line "+lineNumber+"  \r\n\r\n compiler expected <"+type+">");
+                    }   
+                }
             }  
             
            return result;
@@ -96,7 +104,7 @@
      
      // procedure:
 
-     boolean consumeToken() throws UnexpectedEndOfInputException{
+     boolean consumeToken(String productionRule) throws UnexpectedEndOfInputException{
         boolean result = false;  
         if(currentToken.equals(null)){
             if(allTokensCount === 0){
@@ -104,9 +112,15 @@
             }
         }else{
            if(!currentToken.getType().equals("")){
-                result = true;              
-                tokensGroup.add(currentToken);
-                //more tree building code for AST depending on "currentToken" and "currentNode"
+                result = true;           
+                
+                if(!parsed.getCurrentProduction().equals(productionRule)){
+                    // any time the below is called create new AST Node
+                    parsed.setCurrentProduction(productionRule); 
+                }   
+
+                parsed.appendTokenToTree(currentToken);
+                
            }else{
                 // handle as error compiler error itself (not complacent of source file)
            }
@@ -115,7 +129,7 @@
         return result;
      }
  
-     // usage: consumeToken();
+     // usage: consumeToken("composition");
 ```
 
 4. At the begining of each production call (except start symbol production), the "expects" method will be called
@@ -143,22 +157,30 @@
 ```java
 
     boolean literal(boolean fail){
+
        boolean res = false;
-       res = expect("void", res) || expect("string", res) || expect("int", res) || expect("float", res) || expect("boolean", res);
+       res = (expect("void", res) 
+                  || expect("string", res) 
+                      || expect("int", res) 
+                          || expect("float", res) 
+                              || expect("boolean", fail));
+
        if(res){
           getToken(); /* retrieve the immediate next token from the tokenizer */
-          consumeToken();
+          consumeToken("literal");
        }
+
        return res;
     }
 
     boolean factor (boolean fail){
+
       boolean res = false;
       res = expect("variable", res);
 
       if(res){
          getToken(); /* retrieve the immediate next token from the tokenizer */
-         consumeToken();
+         consumeToken("factor");
       }else{
           res = literal( fail );
       }
@@ -168,89 +190,291 @@
 
     boolean arithmeticexpression (boolean fail){
 
+        boolean res = false;
+
+         if(expects("arithmeticunaryoperator", res)){
+
+              getToken();
+              consumeToken("arithmeticexpression");
+
+              res = expects("variable", fail);
+
+              if(res){
+                  getToken(); /* retrieve the immediate next token from the tokenizer */
+                  consumeToken("arithmeticexpression");
+              }
+         }else{ 
+            res = factor( fail );
+            while(res && (expect("bitwise", false) || expect("arithmeticbinaryoperator-add", false))){
+                    getToken();  /* retrieve the immediate next token from the tokenizer */
+                    consumeToken("arithmeticexpression");
+                    res = factor( fail ); 
+            }
+        }
+
+        return res;
     }
 
     boolean term (boolean fail){
+
          boolean res = false;
+
          if(expects("openbracket", res)){
               getToken();
-              consumeToken();
+              consumeToken("term");
+
               res = arithmeticexpression( fail ) && expects("closebracket", res);
+
               if(res){
                   getToken(); /* retrieve the immediate next token from the tokenizer */
-                  consumeToken();
+                  consumeToken("term");
               }
          }else{ 
+
             res = arithmeticexpression( fail );
-            while(res && (expect("arithmethicbinaryoperator-mul", res) || expect("relationaloperator", res))){
+
+            while(res && (expect("arithmethicbinaryoperator-mul", false) || expect("relationaloperator", false))){
                     getToken();  /* retrieve the immediate next token from the tokenizer */
-                    consumeToken();
-                    res = arithmeticexpression( res ); 
+                    consumeToken("term");
+                    res = arithmeticexpression( fail ); 
             }
         }
+
         return res; 
+    }
+
+    boolean array(boolean fail){ 
+          
+          boolean res = false;
+
+          if(expect("ace", fail)){
+              getToken();
+              consumeToken("array");
+
+              if(expect("openbrace", fail)){
+                 do{
+
+                    getToken();
+                    consumeToken("array");
+
+                    res = term( res ) || array( fail );
+
+                 }while(res && expects("comma", false));
+
+                 res = expect("closebrace", fail);
+
+                 if(res){
+                    getToken();
+                    consumeToken("array");
+                 }
+                  
+              }
+          }
+
+          return res;
     }
 
     boolean condition(boolean fail){
          boolean res = false;
+         
          if(expect("logicalunaryoperator", res)){
-           getToken();  /* retrieve the immediate next token from the tokenizer */
-           consumeToken();
-         }
+             do{
+                
+                getToken();  /* retrieve the immediate next token from the tokenizer */
+                consumeToken("condition");
+                res = term( fail );
 
-         res = term( res );
-      
-         while(res && expect("logicalbinaryoperator")){
-            getToken();  /* retrieve the immediate next token from the tokenizer */
-            consumeToken("logicalbinaryoperator");
-            res = term( fail );
+             }while(res && expect("logicalbinaryoperator", false));
          }
 
          return res;
     }
 
     boolean evaluation(boolean fail){
+        
         boolean res = false;
+        
         if(expect("openbracket", fail)){
-            getToken(); /* re */
-            consumeToken();
-            res = term ( fail );
-            while(res && expect("comma", res)){
-                getToken();
-                consumeToken();
-                res = term ( fail ); 
-            }
+
+            do{
+
+              getToken(); /* re */
+              consumeToken("evaluation");
+              res = term ( fail );
+
+            }while(res && expect("comma", false));
+
             res = expect("closebracket", fail);
+
             if(res){
                 getToken();
-                consumeToken();
+                consumeToken("evaluation");
             }
         }
+
         return res;
     }
 
-    boolean composition(boolean fail){
+    boolean callexpression(boolean fail){ 
+          
+          boolean res = false;
 
+          if(expect("call", fail)){
+                getToken();
+                consumeToken("callexpression");
+
+                if(expect("cursor", fail)){
+                    getToken();
+                    consumeToken("callexpression");
+
+                    if(expect("variable", fail)){
+                        getToken();
+                        consumeToken("callexpression");
+
+                        res = evaluation( fail );
+
+                    }
+                }
+          }
+
+          return res;
+    }
+
+    boolean composition(boolean fail){ 
+
+          boolean res = false;
+
+          if(expect("variable", fail)){
+
+              getToken();
+              consumeToken("composition");
+
+              res = true;
+
+              if(expect("assignmentoperator", res)){
+                  getToken();
+                  consumeToken("composition");
+
+                  res = callexpression( res ) || term( fail );
+
+              }
+          }
+
+          return res;
     }
 
     boolean declstatement (boolean fail){
+          
           boolean res = false;
+          
           if(expect("var", res)){
-              getToken();
-              consumeToken();
-              res = composition( fail );
+              do{
+
+                  getToken();
+                  consumeToken("declstatement");
+                  res = composition( fail );
+
+              }while(res && expect("comma", false));
           }
 
-          while(res && expect("comma", res)){
-                getToken();
-                consumeToken();
-                res = composition( fail ); 
-          }
-
-          res = expect("terminator", res);
+          res = expect("terminator", fail);
+          
           if(res){  
               getToken();
-              consumeToken();
+              consumeToken("declstatement");
+          }
+
+          return res;
+    }
+
+    boolean reqrstatement(boolean fail){ 
+          
+          boolean res = false;
+
+          if(expect("require", fail)){
+
+                getToken();
+                consumeToken("reqrstatement");
+
+                if(expect("cursor", fail)){
+
+                    getToken();
+                    consumeToken("reqrstatement");
+
+                    if(expect("string", fail)){
+
+                          getToken();
+                          consumeToken("reqrstatement");
+
+                          if(expect("terminator", fail)){
+
+                              getToken();
+                              consumeToken("reqrstatement");
+                          }
+                    }
+                }
+          }
+
+          return res;
+    }
+
+    boolean retnstatement(boolean fail){ 
+
+          boolean res = false;
+
+          if(expect("retn", fail)){
+              
+              getToken();
+              consumeToken("retnstatement");
+
+              res = callexpression( res ) || term ( fail );
+
+
+          }
+
+          res = expect("termnator", fail);
+
+          if(res){
+              getToken();
+              consumeToken("retnstatement");
+          }
+
+          return res;
+    }
+
+    boolean breakstatement(boolean fail){
+          
+          boolean res = false;
+
+          if(expect("break", fail)){
+              getToken();
+              consumeToken("breakstatement");
+
+              if(expect("terminator", fail)){
+                  getToken();
+                  consumeToken("breakstatement");
+
+                  res = true;
+              }
+          }
+
+          return res;
+    }
+
+    boolean continuestatement(boolean fail){
+
+          boolean res = false;
+
+          if(expect("continue", fail)){
+              getToken();
+              consumeToken("continuestatement");
+
+              if(expect("terminator", fail)){
+                  getToken();
+                  consumeToken("continuestatement");
+
+                  res = true;
+              }
           }
 
           return res;
@@ -260,7 +484,7 @@
 
 
 getToken(); /* retrieve the immediate next token from the tokenizer */   
-consumeToken("closebracket"); // ")"
+consumeToken("forstatement"); /* */
 
 
 ### ANTRO LANGUAGE GRAMMAR DETAILS
@@ -344,7 +568,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - else := "else" ;
 
-- elseif := "elseif" ;
+- elif := "elif" ;
 
 - for := "for" ;
 
@@ -366,7 +590,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - print := "print" ;
 
-- ret := "retn" ;
+- retn := "retn" ;
 
 - var := "var" ;
 
@@ -411,7 +635,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - arithmeticexpression := factor, { bitwise | arithmeticbinaryoperator-add, factor } | arithmeticunaryoperator, variable ;
 
-- term := arithmeticexpression, { arithmeticbinaryoperator-mul | relationaloperator ) arithmeticexpression } | openbracket, arithmeticexpression, closebracket ; 
+- term := arithmeticexpression, { arithmeticbinaryoperator-mul | relationaloperator , arithmeticexpression } | openbracket, arithmeticexpression, closebracket ; 
 
 - array := ace, openbrace, [ term | array ], { comma, term | array }, closebrace ;
                     
@@ -421,35 +645,37 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - callexpression := call, cursor, variable, evaluation ;
 
-- composition := variable, [ assignmentoperator,  callexpression | term ];
+- composition := variable, [ assignmentoperator,  callexpression | term ] ;
 
 - declstatement := [ var, composition ],  { comma, composition }, terminator ;
 
 - reqrstatement := require, cursor, string, terminator ;
 
-- retnstatement := ret, [ callexpression | term ], terminator ;
+- retnstatement := retn, [ callexpression | term ], terminator ;
 
 - breakstatement := break, terminator ;
 
 - continuestatement := continue, terminator ;
 
-- defnstatement :=  def, variable, literal, terminator ;
+- defnstatement :=  def, cursor, variable, literal, terminator ;
 
-- printstatement := print, ( callexpression | term ), terminator ;
+- printstatement := print, callexpression | term , terminator ;
 
-- forstatement := for, openbracket, declstatement, [ condition ], terminator, arithmeticexpression, closebracket, openbrace, { scopedstatement }, closebrace ;
+- forstatement := for, openbracket, declstatement, [ condition ], terminator, composition, closebracket, openbrace, { controlstatement | flowstatement }, closebrace ;
 
-- whilestatement := while, openbracket, condition, closebracket openbrace [ scopedstatement ] closebrace ;
+- whilestatement := while, openbracket, condition, closebracket openbrace [ controlstatement | flowstatement ] closebrace ;
 
-- ifstatement := if, openbrackect, condition, closebracket, openbrace [ scopedstatement ], closebrace, { elseif, openbrackect, condition, closebracket | else , openbrace, { scopedstatement }, closebrace } ;
+- ifstatement := if, openbrackect, condition, closebracket, openbrace { controlstatement | flowstatement }, closebrace, { elif, openbrackect, condition, closebracket, openbrace, { controlstatement | flowstatement }, closebrace }, [ else , openbrace, { controlstatement | flowstatement }, closebrace ] ;
 
-- switchstatement := switch openbrackect, term, closebracket openbrace { case, literal, cursor, { scopedstatement - breakstatement },  breakstatement }, [ default, cursor, { scopedstatement - breakstatement },  breakstatement ], closebrace ;
+- switchstatement := switch openbrackect, term, closebracket openbrace { case, literal, cursor, { controlstatement },  breakstatement }, [ default, cursor, { controlstatement },  breakstatement ], closebrace ;
 
-- scopedstatement := ifstatement | printstatement | forstatement | whilestatement | declstatement | retnstatement | switchstatement | breakstatement | continuestatement ;
+- controlstatement := ifstatement | printstatement | forstatement | whilestatement | declstatement | retnstatement | switchstatement ;
 
-- routineexpression := method, cursor, variable, evaluation, openbrace, { scopedstatement }, closebrace ;
+- flowstatement :=  breakstatement | continuestatement ;
 
-- programblock := { reqrstatement }, { defnstatement }, [ begin, cursor, main, evaluation  [ scopedstatement ], end, terminator ], { routineexpression }
+- routineexpression := method, cursor, variable, evaluation, openbrace, { controlstatement | flowstatement }, closebrace ;
+
+- programblock := { reqrstatement }, { defnstatement }, [ begin, cursor, main, evaluation  [ controlstatement ], end, terminator ], { routineexpression }
 
 
 

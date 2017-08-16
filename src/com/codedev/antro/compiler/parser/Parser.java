@@ -1,36 +1,45 @@
-package com.codedev.antro.compiler;
+/*
+ * Antro Compiler
+ * https://www.coolcode.io/antro
+ * Copyright (c) 2014-2018 Ifeora Okechukwu
+ * Licensed under the MIT license. See 'LICENSE' for details.
+ */
+
+package com.codedev.antro.compiler.parser;
+
+import com.codedev.antro.compiler.tokenizer.*;
 
 import java.util.Stack;
 import java.util.LinkedList;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.io.File;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
-public class Parser{
+public class Parser {
 
-     private static String INPUT_FILE_NAME; 
+     private static final String INPUT_FILE_NAME; 
      private Tokenizer tokenizer;
      private long  tokensLeftCount;
      private long allTokensCount;
      private Token currentToken;
      private Token lookAheadToken;
-     private ArrayList<Token> tokensGroup;
-     private HashMap<String, ArrayList<Token>> parseTreeBlocks;  
+     private ParseOutput parsed; 
 
      private enum StackSymbols {
         START, FOLLOW, END
      } 
 
      public Parser(String fileName) throws IOException, IllegalArgumentException{  
+        
          File f = new File(fileName);
          Parser.INPUT_FILE_NAME = f.getName();
-         this.parseTreeBlocks = new HashMap<String, ArrayList<Token>>();
-         this.tokensGroup = new ArrayList<Token>();
+         parsed = new ParseOutput(Parser.INPUT_FILE_NAME);
+
          try{
+            
             this.tokenizer = new Tokenizer(f);
             this.tokensLeftCount = this.allTokensCount = this.tokenizer.getTokenCount(); // save the initial total number of token found from input!
+         
          }catch(Tokenizer.InvalidTokenCharException e){
             System.err.println(e.getMessage()); // just development error handling... will change at distribution time
             System.exit(0);
@@ -92,8 +101,7 @@ public class Parser{
         }else{
            if(currentToken.getType().equals(type)){
                 result = true;              
-                tokensGroup.add(currentToken);
-                //more tree building code for AST depending on "currentToken" and "currentNode"
+                parsed.appendTokenToTree(currentToken);
            }else{
                 result = false;
            }
@@ -317,8 +325,11 @@ public class Parser{
          }
      }
 
-     public void parse() throws ParseException, UnexpectedEndOfInputException {
-           programblock();
+     public ParseTree parse() throws ParseException, UnexpectedEndOfInputException {
+           
+          programblock();
+          
+          return parsed.getAST();
      }
      
      public static class UnexpectedEndOfInputException extends Exception{

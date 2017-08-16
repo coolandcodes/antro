@@ -10,16 +10,27 @@ begin:
 end;
 
 method: convertToFactor(c, d){
-              retn c * d;
+    var gb = 23, kl = 0;
+
+    for(var i = 0; i < gb; i = i + 1){
+    
+        kl = (kl + i * c * d) + gb;
+    }
+
+    retn kl;
 }
 
 method: factorUpBy2(x){
+          
           var y, g = true;
+          
           if(x > 0){
               y = (x / 2) * 4;
           }else{
               g = false;
           }
+
           y = call: convertToFactor(g, x); 
-        retn y;
+
+          retn y;
 }

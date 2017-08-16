@@ -1,6 +1,12 @@
-package com.codedev.antro.compiler;
+/*
+ * Antro Compiler
+ * https://www.coolcode.io/antro
+ * Copyright (c) 2014-2018 Ifeora Okechukwu
+ * Licensed under the MIT license. See 'LICENSE' for details.
+ */
 
-/*import java.util.Queue;*/
+package com.codedev.antro.compiler.tokenizer;
+
 import java.util.Deque;
 import java.util.ArrayDeque;
 import java.util.List;
@@ -17,7 +23,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
-public class Tokenizer{
+public class Tokenizer {
 
      private int lineNumber = 1;
 

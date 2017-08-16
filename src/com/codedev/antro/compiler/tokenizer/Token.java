@@ -1,7 +1,7 @@
-package com.codedev.antro.compiler;
+package com.codedev.antro.compiler.tokenizer;
 
 
-public class Token implements Cloneable{
+public class Token implements Cloneable {
     
          private String kind;
         
@@ -17,12 +17,14 @@ public class Token implements Cloneable{
          }
 
          @Override 
-         protected Object clone() throws CloneNotSupportedException{
+         protected Object clone() throws CloneNotSupportedException {
+
             return super.clone();
          }
 
          @Override
          public String toString(){
+
             String string = "Token type: "+this.kind+", Token image: '"+this.image+"' at line: "+this.line_num;
             return string;
          }
