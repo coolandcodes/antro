@@ -327,6 +327,8 @@ public class Parser {
 
      public ParseTree parse() throws ParseException, UnexpectedEndOfInputException {
            
+          /* parse method will always call the start symbol production as entry point */
+           
           programblock();
           
           return parsed.getAST();

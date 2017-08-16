@@ -144,10 +144,13 @@
 
 ```java
 
-    Node parse(void) throws ParseException, UnexpectedEndOfInputException{
+    ParseTree parse(void) throws ParseException, UnexpectedEndOfInputException{
+
         /* parse method will always call the start symbol production as entry point */
-        ASTNode ast = programblock();
-        return ast;
+        
+        programblock();
+          
+        return parsed.getAST();
     }
 ```
 
@@ -192,12 +195,12 @@
 
         boolean res = false;
 
-         if(expects("arithmeticunaryoperator", res)){
+         if(expect("arithmeticunaryoperator", res)){
 
               getToken();
               consumeToken("arithmeticexpression");
 
-              res = expects("variable", fail);
+              res = expect("variable", fail);
 
               if(res){
                   getToken(); /* retrieve the immediate next token from the tokenizer */
@@ -219,11 +222,11 @@
 
          boolean res = false;
 
-         if(expects("openbracket", res)){
+         if(expect("openbracket", res)){
               getToken();
               consumeToken("term");
 
-              res = arithmeticexpression( fail ) && expects("closebracket", res);
+              res = arithmeticexpression( fail ) && expect("closebracket", res);
 
               if(res){
                   getToken(); /* retrieve the immediate next token from the tokenizer */
@@ -259,7 +262,7 @@
 
                     res = term( res ) || array( fail );
 
-                 }while(res && expects("comma", false));
+                 }while(res && expect("comma", false));
 
                  res = expect("closebrace", fail);
 
@@ -478,6 +481,10 @@
           }
 
           return res;
+    }
+
+    boolean defnstatement(boolean fail){
+
     }
 
 ```
