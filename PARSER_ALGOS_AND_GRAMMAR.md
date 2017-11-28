@@ -41,7 +41,7 @@
 
       // procedure:
 
-      void getToken"(void){
+      void getToken(void){
          if(tokenizer.hasMoreTokens()){
             currentToken = tokenizer.nextToken();
             --allTokensCount;
