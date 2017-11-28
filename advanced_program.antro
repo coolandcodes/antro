@@ -37,12 +37,12 @@ method: factorUpBy2(x){
 
 method: getString(num){
 
-   var array = @("zero", "one", "two", "three");
+   var array = @{"zero", "one", "two", "three};
    var str = "";
    
    for(var j = 0; j <= num; ++j){
          if(j === num){
-               str = array<j>;
+               str = array[j];
                break;
          }
    }
