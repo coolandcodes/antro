@@ -191,26 +191,26 @@
       return res;
     }
 
-    boolean arithmeticexpression (boolean fail){
+    boolean term (boolean fail){
 
         boolean res = false;
 
          if(expect("arithmeticunaryoperator", res)){
 
               getToken();
-              consumeToken("arithmeticexpression");
+              consumeToken("term");
 
               res = expect("variable", fail);
 
               if(res){
                   getToken(); /* retrieve the immediate next token from the tokenizer */
-                  consumeToken("arithmeticexpression");
+                  consumeToken("term");
               }
          }else{ 
             res = factor( fail );
             while(res && (expect("bitwise", false) || expect("arithmeticbinaryoperator-add", false))){
                     getToken();  /* retrieve the immediate next token from the tokenizer */
-                    consumeToken("arithmeticexpression");
+                    consumeToken("term");
                     res = factor( fail ); 
             }
         }
@@ -218,28 +218,28 @@
         return res;
     }
 
-    boolean term (boolean fail){
+    boolean expression (boolean fail){
 
          boolean res = false;
 
          if(expect("openbracket", res)){
               getToken();
-              consumeToken("term");
+              consumeToken("expression");
 
-              res = arithmeticexpression( fail ) && expect("closebracket", res);
+              res = term( fail ) && expect("closebracket", res);
 
               if(res){
                   getToken(); /* retrieve the immediate next token from the tokenizer */
-                  consumeToken("term");
+                  consumeToken("expression");
               }
          }else{ 
 
-            res = arithmeticexpression( fail );
+            res = term( fail );
 
             while(res && (expect("arithmethicbinaryoperator-mul", false) || expect("relationaloperator", false))){
                     getToken();  /* retrieve the immediate next token from the tokenizer */
-                    consumeToken("term");
-                    res = arithmeticexpression( fail ); 
+                    consumeToken("expression");
+                    res = term( fail ); 
             }
         }
 
@@ -260,7 +260,7 @@
                     getToken();
                     consumeToken("array");
 
-                    res = term( res ) || array( fail );
+                    res = expression( res ) || array( fail );
 
                  }while(res && expect("comma", false));
 
@@ -285,7 +285,7 @@
                 
                 getToken();  /* retrieve the immediate next token from the tokenizer */
                 consumeToken("condition");
-                res = term( fail );
+                res = expression( fail );
 
              }while(res && expect("logicalbinaryoperator", false));
          }
@@ -301,9 +301,9 @@
 
             do{
 
-              getToken(); /* re */
-              consumeToken("evaluation");
-              res = term ( fail );
+                  getToken(); /* retrieve the immediate next token from the tokenizer */
+                  consumeToken("evaluation");
+                  res = expression ( fail );
 
             }while(res && expect("comma", false));
 
@@ -358,7 +358,7 @@
                   getToken();
                   consumeToken("composition");
 
-                  res = callexpression( res ) || term( fail );
+                  res = callexpression ( res ) || expression ( fail );
 
               }
           }
@@ -430,7 +430,7 @@
               getToken();
               consumeToken("retnstatement");
 
-              res = callexpression( res ) || term ( fail );
+              res = callexpression( res ) || expression ( fail );
 
 
           }
@@ -499,6 +499,8 @@ consumeToken("forstatement"); /* */
 Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EBNF
 ==================================================================================
 
+The list of all valid tokens for Antro Language
+
 - pound := "$" ; (* used in variable token definition *)
 
 - hash := "#" ;
@@ -514,8 +516,6 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 - dquote := "\""; 
 
 - squote := "'";
-
-- exponentchar := "E" | "e"
 
 - cursor := ":"
 
@@ -549,7 +549,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - int := digit, { digit } ;
 
-- float := int, dot, int [  exponentchars, int ] ;
+- float := int, dot, int [ "E" | "e", int ] ;
 
 - pipe := "|" ;
 
@@ -635,20 +635,21 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) -- EBNF
 =====================================================================================
+This is the list of all production rules
 
-- literal := void | string | int | float | boolean ;
+- literal :=  string | int | float | boolean ;
 
 - factor :=  variable | literal ;
 
-- arithmeticexpression := factor, { bitwise | arithmeticbinaryoperator-add, factor } | arithmeticunaryoperator, variable ;
+- term := factor, { bitwise | arithmeticbinaryoperator-add, factor } | arithmeticunaryoperator, variable ;
 
-- term := arithmeticexpression, { arithmeticbinaryoperator-mul | relationaloperator , arithmeticexpression } | openbracket, arithmeticexpression, closebracket ; 
+- expression := term, { arithmeticbinaryoperator-mul | relationaloperator , term } | openbracket, term, closebracket ; 
 
-- array := ace, openbrace, [ term | array ], { comma, term | array }, closebrace ;
+- array := ace, openbrace, [ expression | array ], { comma, expression | array }, closebrace ;
                     
-- condition := [ logicalunaryoperator ] term,  { logicalbinaryoperator, term } ;
+- condition := [ logicalunaryoperator ] expression,  { logicalbinaryoperator, expression } ;
 
-- evaluation := openbracket, [ term ], { comma, term }, closebracket  ;
+- evaluation := openbracket, [ expression ], { comma, expression }, closebracket  ;
 
 - callexpression := call, cursor, variable, evaluation ;
 
@@ -658,7 +659,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - reqrstatement := require, cursor, string, terminator ;
 
-- retnstatement := retn, [ callexpression | term ], terminator ;
+- retnstatement := retn, [ callexpression | expression ], terminator ;
 
 - breakstatement := break, terminator ;
 
