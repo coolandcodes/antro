@@ -104,22 +104,29 @@
      
      // procedure:
 
-     boolean consumeToken(String productionRule) throws UnexpectedEndOfInputException{
+     boolean consumeToken(String currentProductionRule) throws UnexpectedEndOfInputException{
         boolean result = false;  
+        boolean non_terminal_switch = false;
         if(currentToken.equals(null)){
             if(allTokensCount === 0){
                throw UnexpectedEndOfInputException("unexpected end of input from source file "+Parser.INPUT_FILE_NAME);
             }
         }else{
            if(!currentToken.getType().equals("")){
-                result = true;           
+                result = true;
                 
-                if(!parsed.getCurrentProduction().equals(productionRule)){
+                if(parsed.getCurrentProduction() === null){
+                    // if we are at the start symbol, then set to create the root node of the AST
+                    parsed.setCurrentProduction(this.rootProductionRule); 
+                }
+                
+                if(!parsed.getCurrentProduction().equals(currentProductionRule)){
                     // any time the below is called create new AST Node
-                    parsed.setCurrentProduction(productionRule); 
+                    parsed.setCurrentProduction(currentProductionRule); 
+                    non_terminal_switch = true;
                 }   
 
-                parsed.appendTokenToTree(currentToken);
+                parsed.appendTokenToTree(currentToken, non_terminal_switch);
                 
            }else{
                 // handle as error compiler error itself (not complacent of source file)
@@ -148,9 +155,10 @@
 
         /* parse method will always call the start symbol production as entry point */
         
-        programblock();
+        if(programblock() === true){
           
-        return parsed.getAST();
+            return parsed.getAST();
+        }
     }
 ```
 
@@ -162,8 +170,7 @@
     boolean literal(boolean fail){
 
        boolean res = false;
-       res = (expect("void", res) 
-                  || expect("string", res) 
+       res =  (expect("string", res) 
                       || expect("int", res) 
                           || expect("float", res) 
                               || expect("boolean", fail));
@@ -208,6 +215,7 @@
               }
          }else{ 
             res = factor( fail );
+            
             while(res && (expect("bitwise", false) || expect("arithmeticbinaryoperator-add", false))){
                     getToken();  /* retrieve the immediate next token from the tokenizer */
                     consumeToken("term");
