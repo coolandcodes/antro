@@ -234,7 +234,7 @@
               getToken();
               consumeToken("expression");
 
-              res = term( fail ) && expect("closebracket", res);
+              res = expression( fail ) && expect("closebracket", res);
 
               if(res){
                   getToken(); /* retrieve the immediate next token from the tokenizer */
@@ -655,7 +655,7 @@ This is the list of all production rules
 
 - term := factor, { bitwise | arithmeticbinaryoperator-add, factor } | arithmeticunaryoperator, variable ;
 
-- expression := term, { arithmeticbinaryoperator-mul | relationaloperator , term } | openbracket, term, closebracket ; 
+- expression := term, { arithmeticbinaryoperator-mul | relationaloperator , term } | openbracket, expression, closebracket ; 
 
 - array := ace, openbrace, [ expression | array ], { comma, expression | array }, closebrace ;
                     
