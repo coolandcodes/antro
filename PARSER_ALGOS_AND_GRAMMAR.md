@@ -513,6 +513,10 @@ The list of all valid tokens for Antro Language
 
 - hash := "#" ;
 
+- opencue := '[';
+
+- closecue := ']';
+
 - assignmentoperator := "=" ;
 
 - uscore := "_" ;
