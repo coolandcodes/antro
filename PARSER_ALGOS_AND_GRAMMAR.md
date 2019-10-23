@@ -657,19 +657,21 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - factor :=  variable | literal ;
 
-- term := factor, { bitwise | arithmeticbinaryoperator-add, factor } | arithmeticunaryoperator, variable | variable arithmeticunaryoperator ;
+- term := factor, { ( bitwise | arithmeticbinaryoperator-add ), factor } | arithmeticunaryoperator, variable | variable arithmeticunaryoperator ;
 
-- airthmeticexpression := term, { arithmeticbinaryoperator-mul | relationaloperator, term } | openbracket, airthmeticexpression, closebracket ; 
+- airthmeticexpression := term, { ( arithmeticbinaryoperator-mul | relationaloperator ), term } | openbracket, airthmeticexpression, closebracket ; 
 
 - array := ace, openbrace, [ airthmeticexpression | array ], { comma, airthmeticexpression | array }, closebrace ;
 
 - arithmeticoperationexpression := airthmeticexpression, { logicalbinaryoperator, airthmeticexpression } ;
+
+- callexpression := call, cursor, variable, openbracket, logicexpressionlist, closebracket ;
                     
-- logicexpression := [ logicalunaryoperator ], arithmeticoperationexpression ;
+- logicexpression := [ logicalunaryoperator ], ( callexpression | arithmeticoperationexpression ) ;
 
 - logicexpressionlist := logicexpression, { comma, logicexpression } ;
 
-- declexpression :=  type, variable, [ assignmentoperator,  logicexpression ] ;
+- declexpression :=  [ type ], variable, [ assignmentoperator,  logicexpression ] ;
 
 - declexpressionlist := declexpression, { comma, declexpression }
 
@@ -679,7 +681,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - retnstatement := retn, [ logicexpression ], terminator ;
 
-- callstatement := call, cursor, variable, openbracket, logicexpressionlist, closebracket, terminator ;
+- callstatement := callexpression, terminator ;
 
 - breakstatement := break, terminator ;
 
@@ -699,7 +701,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - elsestatement := else, scopeblock ;
 
-- switchstatement := switch openbrackect, term, closebracket openbrace [ { case, literal, cursor, blocstatement }, breakstatement, default, cursor, { blockstatement }, breakstatement ], closebrace ;
+- switchstatement := switch openbrackect, term, closebracket openbrace [ { case, literal, cursor, blockstatement }, breakstatement, default, cursor, { blockstatement }, breakstatement ], closebrace ;
 
 - branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement
 
