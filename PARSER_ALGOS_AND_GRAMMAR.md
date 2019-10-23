@@ -109,7 +109,7 @@
         boolean non_terminal_switch = false;
         if(currentToken.equals(null)){
             if(allTokensCount === 0){
-               throw UnexpectedEndOfInputException("unexpected end of input from source file "+Parser.INPUT_FILE_NAME);
+               throw new UnexpectedEndOfInputException("unexpected end of input from source file "+Parser.INPUT_FILE_NAME);
             }
         }else{
            if(!currentToken.getType().equals("")){
@@ -129,7 +129,7 @@
                 parsed.appendTokenToTree(currentToken, non_terminal_switch);
                 
            }else{
-                // handle as error compiler error itself (not complacent of source file)
+                // handle as error compiler error itself (not complicit of source file)
            }
         }
         
@@ -157,7 +157,7 @@
         
         if(programblock() === true){
           
-            return parsed.getAST();
+            return parsed.getIntermediateRepresentation("AST");
         }
     }
 ```
@@ -507,7 +507,7 @@ consumeToken("forstatement"); /* */
 Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EBNF
 ==================================================================================
 
-The list of all valid tokens for Antro Language
+(* The list of all valid tokens for Antro Language - A purely functional language without much OOP *)
 
 - pound := "$" ; (* used in variable token definition *)
 
@@ -579,6 +579,8 @@ The list of all valid tokens for Antro Language
 
 - void := "void" ;
 
+- type := "int" | "float" | "string" | "array" | "boolean" ;
+
 - require := "require" ;
 
 - def := "def" ;
@@ -592,6 +594,8 @@ The list of all valid tokens for Antro Language
 - for := "for" ;
 
 - begin := "begin" ;
+
+- do := "do" ;
 
 - while := "while" ;
 
@@ -659,15 +663,15 @@ This is the list of all production rules
 
 - array := ace, openbrace, [ expression | array ], { comma, expression | array }, closebrace ;
                     
-- condition := [ logicalunaryoperator ] expression,  { logicalbinaryoperator, expression } ;
+- condition := [ logicalunaryoperator ], expression,  { logicalbinaryoperator, expression } ;
 
 - evaluation := openbracket, [ expression ], { comma, expression }, closebracket  ;
 
 - callexpression := call, cursor, variable, evaluation ;
 
-- composition := variable, [ assignmentoperator,  callexpression | term ] ;
+- composition := [ type ], variable, [ assignmentoperator,  callexpression | term ] ;
 
-- declstatement := [ var, composition ],  { comma, composition }, terminator ;
+- declstatement := [ var ], [ composition ],  { comma, composition }, terminator ;
 
 - reqrstatement := require, cursor, string, terminator ;
 
@@ -683,19 +687,29 @@ This is the list of all production rules
 
 - forstatement := for, openbracket, declstatement, [ condition ], terminator, composition, closebracket, openbrace, { controlstatement | flowstatement }, closebrace ;
 
-- whilestatement := while, openbracket, condition, closebracket openbrace [ controlstatement | flowstatement ] closebrace ;
+- dowhilestatement := do, openbrace, { controlstatement | flowstatement }, closebrace ;
 
-- ifstatement := if, openbrackect, condition, closebracket, openbrace { controlstatement | flowstatement }, closebrace, { elif, openbrackect, condition, closebracket, openbrace, { controlstatement | flowstatement }, closebrace }, [ else , openbrace, { controlstatement | flowstatement }, closebrace ] ;
+- whilestatement := while, openbracket, condition, closebracket openbrace, { controlstatement | flowstatement }, closebrace ;
+
+- ifstatement := if, openbrackect, condition, closebracket, openbrace, { controlstatement | flowstatement }, closebrace ;
+
+- elseifstatement := elif, openbrackect, condition, closebracket, openbrace, { controlstatement | flowstatement }, closebrace ;
+
+- elsestatement := else , openbrace, { controlstatement | flowstatement }, closebrace ;
 
 - switchstatement := switch openbrackect, term, closebracket openbrace { case, literal, cursor, { controlstatement },  breakstatement }, [ default, cursor, { controlstatement },  breakstatement ], closebrace ;
 
-- controlstatement := ifstatement | printstatement | forstatement | whilestatement | declstatement | retnstatement | switchstatement ;
+- branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement
+
+- controlstatement := declstatement | branchstatement | printstatement | forstatement | whilestatement | dowhilestatement | retnstatement ;
 
 - flowstatement :=  breakstatement | continuestatement ;
 
-- routineexpression := method, cursor, variable, evaluation, openbrace, { controlstatement | flowstatement }, closebrace ;
+- routinestatement := method, cursor, variable, evaluation, openbrace, { controlstatement | flowstatement }, closebrace ;
 
-- programblock := { reqrstatement }, { defnstatement }, [ begin, cursor, main, evaluation  [ controlstatement ], end, terminator ], { routineexpression }
+- subblock := begin, cursor, main, evaluation, { controlstatement }, end, terminator ;
+
+- programblock := { reqrstatement }, { defnstatement }, [ subblock ], { routinestatement } EOF ;
 
 
 
