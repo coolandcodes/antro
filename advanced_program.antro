@@ -12,11 +12,12 @@ begin:
 end;
 
 method: convertToFactor(c, d){
-    var gb = 23, kl = 0;
+    var int gb = 23, int kl = 0;
 
     for(var i = 0; i < gb; i = i + 1){
-    
-        kl = (kl + i * c * d) + gb;
+      if(c == true){
+        kl = (i * d) + gb;
+      }
     }
 
     retn kl;
@@ -24,7 +25,7 @@ method: convertToFactor(c, d){
 
 method: factorUpBy2(x){
           
-    var y, g = true;
+    var y, boolean g = true;
           
     if(x > 0){
         y = (x / 2) * 4;
