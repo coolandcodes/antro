@@ -619,15 +619,15 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - whitespace := "\f" | "\t" | "\r" | "\n" | "\b" | " " | ?? ;
 
-- arithmeticunaryoperators := plus, [ plus ] | minus, [ minus ] ;
+- arithmeticunaryoperators := plus,  plus | minus,  minus ;
 
-- arithmeticbinaryoperators := multiply | divide | modulo ;
+- arithmeticbinaryoperators := multiply | divide | modulo | plus | minus ;
 
 - bitwise := pipe | and ;
 
 - logicalunaryoperator := "!" ;
 
-- logicalbinaryoperators := pipe, [ pipe ] | and, [ and ] ;
+- logicalbinaryoperators := pipe,  pipe | and, and ;
 
 - comparisonoperator :=  gt, [ assignmentoperator ] | lt, [ assignmentoperator ] ;
 
@@ -651,31 +651,35 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) -- EBNF
 =====================================================================================
-This is the list of all production rules
+(* This is the list of all production rules *)
 
 - literal :=  string | int | float | boolean ;
 
 - factor :=  variable | literal ;
 
-- term := factor, { bitwise | arithmeticbinaryoperator-add, factor } | arithmeticunaryoperator, variable ;
+- term := factor, { bitwise | arithmeticbinaryoperator-add, factor } | arithmeticunaryoperator, variable | variable arithmeticunaryoperator ;
 
-- expression := term, { arithmeticbinaryoperator-mul | relationaloperator , term } | openbracket, expression, closebracket ; 
+- airthmeticexpression := term, { arithmeticbinaryoperator-mul | relationaloperator, term } | openbracket, airthmeticexpression, closebracket ; 
 
-- array := ace, openbrace, [ expression | array ], { comma, expression | array }, closebrace ;
+- array := ace, openbrace, [ airthmeticexpression | array ], { comma, airthmeticexpression | array }, closebrace ;
+
+- arithmeticoperationexpression := airthmeticexpression, { logicalbinaryoperator, airthmeticexpression } ;
                     
-- condition := [ logicalunaryoperator ], expression,  { logicalbinaryoperator, expression } ;
+- logicexpression := [ logicalunaryoperator ], arithmeticoperationexpression ;
 
-- evaluation := openbracket, [ expression ], { comma, expression }, closebracket  ;
+- logicexpressionlist := logicexpression, { comma, logicexpression } ;
 
-- callexpression := call, cursor, variable, evaluation ;
+- declexpression :=  type, variable, [ assignmentoperator,  logicexpression ] ;
 
-- composition := [ type ], variable, [ assignmentoperator,  callexpression | term ] ;
+- declexpressionlist := declexpression, { comma, declexpression }
 
-- declstatement := [ var ], [ composition ],  { comma, composition }, terminator ;
+- declstatement := { var, declexpressionlist }, terminator ;
 
 - reqrstatement := require, cursor, string, terminator ;
 
-- retnstatement := retn, [ callexpression | expression ], terminator ;
+- retnstatement := retn, [ logicexpression ], terminator ;
+
+- callstatement := call, cursor, variable, openbracket, logicexpressionlist, closebracket, terminator ;
 
 - breakstatement := break, terminator ;
 
@@ -683,33 +687,37 @@ This is the list of all production rules
 
 - defnstatement :=  def, cursor, variable, literal, terminator ;
 
-- printstatement := print, callexpression | term , terminator ;
+- forstatement := for, openbracket, { declstatement }, closebracket, scopeblock ;
 
-- forstatement := for, openbracket, declstatement, [ condition ], terminator, composition, closebracket, openbrace, { controlstatement | flowstatement }, closebrace ;
+- dowhilestatement := do, scopeblock, while, openbracket, logicexpression, closebracket ;
 
-- dowhilestatement := do, openbrace, { controlstatement | flowstatement }, closebrace ;
+- whilestatement := while, openbracket, logicexpression, closebracket, scopeblock ;
 
-- whilestatement := while, openbracket, condition, closebracket openbrace, { controlstatement | flowstatement }, closebrace ;
+- ifstatement := if, openbracket, logicexpression, closebracket, scopeblock ;
 
-- ifstatement := if, openbrackect, condition, closebracket, openbrace, { controlstatement | flowstatement }, closebrace ;
+- elseifstatement := elif, openbracket, logicexpression, closebracket, scopeblock ;
 
-- elseifstatement := elif, openbrackect, condition, closebracket, openbrace, { controlstatement | flowstatement }, closebrace ;
+- elsestatement := else, scopeblock ;
 
-- elsestatement := else , openbrace, { controlstatement | flowstatement }, closebrace ;
-
-- switchstatement := switch openbrackect, term, closebracket openbrace { case, literal, cursor, { controlstatement },  breakstatement }, [ default, cursor, { controlstatement },  breakstatement ], closebrace ;
+- switchstatement := switch openbrackect, term, closebracket openbrace [ { case, literal, cursor, blocstatement }, breakstatement, default, cursor, { blockstatement }, breakstatement ], closebrace ;
 
 - branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement
 
-- controlstatement := declstatement | branchstatement | printstatement | forstatement | whilestatement | dowhilestatement | retnstatement ;
+- controlstatement := branchstatement | printstatement | forstatement | whilestatement | dowhilestatement | retnstatement ;
 
 - flowstatement :=  breakstatement | continuestatement ;
 
-- routinestatement := method, cursor, variable, evaluation, openbrace, { controlstatement | flowstatement }, closebrace ;
+- routinestatement := method, cursor, variable, declexpressionlist, scopeblock ;
 
-- subblock := begin, cursor, main, evaluation, { controlstatement }, end, terminator ;
+- modulestatement := module, cursor, string, terminator ;
 
-- programblock := { reqrstatement }, { defnstatement }, [ subblock ], { routinestatement } EOF ;
+- blockstatment := declstatement | controlstatement ;
+
+- scopeblock := openbrace, { blockstatement | flowstatement }, closebrace ;
+
+- mainblock := begin, cursor, main, openbracket, declexpressionlist, closebracket, { blockstatement }, end, terminator ;
+
+- programblock := { modulestatement }, { reqrstatement }, { defnstatement }, [ mainblock ], { routinestatement }, EOF ;
 
 
 
