@@ -1,12 +1,14 @@
-require: "file.cd ";
-require: " regex.cd ";
+module: "#helpers";
 
-def: MAX 200; 
+require: "time.antro";
+require: " regex.antro";
+
+def: MAX 500; 
 
 begin:
    main(void)
      var ty = call: factorUpBy2(MAX);
-     print ty;
+     call: print(ty);
 end;
 
 method: convertToFactor(c, d){
@@ -22,22 +24,22 @@ method: convertToFactor(c, d){
 
 method: factorUpBy2(x){
           
-          var y, g = true;
+    var y, g = true;
           
-          if(x > 0){
-              y = (x / 2) * 4;
-          }else{
-              g = false;
-          }
+    if(x > 0){
+        y = (x / 2) * 4;
+    }else{
+        g = false;
+    }
 
-          y = call: convertToFactor(g, x); 
+    y = call: convertToFactor(g, x); 
 
-          retn y;
+    retn y;
 }
 
 method: getString(num){
 
-   var array = @{"zero", "one", "two", "three};
+   var array = @{"zero", "one", "two", "three"};
    var str = "";
    
    for(var j = 0; j <= num; ++j){
