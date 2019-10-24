@@ -6,18 +6,18 @@
 
 - All tokens must be resolve to either exactly one terminal or sequence of terminals (on the right hand side) and never sequence of non-terminals or terminals and non-terminals
 
-- (variable) tokens will belong to "identifier" family, (if), (while), (for), (switch), (void), (case), (ret) tokens will belong to "keyword" family.
+- (variable) tokens will belong to "identifier" family, (if), (while), (for), (switch), (do), (void), (null), (export), (module), (case), (retn) tokens will belong to "keyword" family.
 
 
 # PARSER DEVELOPMENT STANDARD
 
->This parser is an LL parser (top-down) with a lookahead of 1 (even though the tokenizer supports backtracking). The CFG tries as much as possible to avoid direct left-recursion and an ambiguous leftmost derivation / parse-tree for the production of any given non-terminal.
+>This parser is an LL parser (top-down) with a lookahead of 1 (even though the tokenizer supports backtracking). The CFG tries as much as possible to avoid direct left-recursion and an ambiguous leftmost derivation of the parse-tree for the production rule of any given LHS non-terminal.
 
-- All choice points in any CFG non-terminal production will have conditional expectation for failure (i.e. throwing a Parse Error / Exception)
+- All choice points in any CFG non-terminal production will have conditional expectation for failure (i.e. throwing a Parse Error / Exception when the token consumed doesn't match the production expansion from the grammar at that point)
 
-- All CFG non-terminal productions with no choice points in their definition will fail unconditionally when they are in conflict with the order of token streams.
+- All CFG non-terminal productions with no choice points in their definition will fail unconditionally when they are in conflict with the order of token from the tokenizer.
 
-- Tokenizer will have a "lookAheadToken" method - (this will return the yet to be consumed token which is the exact next token in line to be retrieved by the parser)
+- The tokenizer will have a "lookAheadToken" method - (this will return the next yet-to-be-consumed token which is the exact token in line to be retrieved by the parser)
 
 - "expect" Parser method should throw "ParseException" - (conditionally using "canFail" flag)
 
