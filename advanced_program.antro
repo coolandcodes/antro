@@ -1,7 +1,7 @@
-module: "#helpers";
+module: "advanced_program";
 
 require: "time.antro";
-require: " regex.antro";
+#require: "regex.antro";
 
 def: MAX 500; 
 
@@ -12,7 +12,7 @@ begin:
      var ty = call: factorUpBy2(MAX);
      call: print(ty);
      
-     export: factorUpBy2;
+     export: factorUpBy2, getString ;
 end;
 
 # composite[class]: Account(){
@@ -24,12 +24,12 @@ end;
 #   }
 # }
 
-method: convertToFactor(c, d){
+method: convertToFactor(boolean c, int d){
     var int gb = 23, int kl = 0;
 
     for(var i = 0; i < gb; i = i + 1){
       if(c == true){
-        kl = (i * d) + gb;
+        kl += (i * d) + gb;
       }
     }
 
@@ -51,7 +51,7 @@ method: factorUpBy2(x){
     retn y;
 }
 
-method: getString(num){
+method: getString(int num){
 
    var array = @{"zero", "one", "two", "three"};
    var str = "";
@@ -64,4 +64,4 @@ method: getString(num){
    }
    
    retn str;
-}
+};
