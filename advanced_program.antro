@@ -7,9 +7,22 @@ def: MAX 500;
 
 begin:
    main(void)
+     # testing this program
+     
      var ty = call: factorUpBy2(MAX);
      call: print(ty);
+     
+     export: factorUpBy2;
 end;
+
+# composite[class]: Account(){
+#    data: int amount ;
+#   _ data: string acctName ;
+#   
+#   _ method: setAmount(c){
+#     .amount = c
+#   }
+# }
 
 method: convertToFactor(c, d){
     var int gb = 23, int kl = 0;
