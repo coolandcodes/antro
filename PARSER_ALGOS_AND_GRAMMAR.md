@@ -226,13 +226,13 @@
         return res;
     }
 
-    boolean expression (boolean fail){
+    boolean arithmeticexpression (boolean fail){
 
          boolean res = false;
 
          if(expect("openbracket", res)){
               getToken();
-              consumeToken("expression");
+              consumeToken("airthmeticexpression");
 
               res = expression( fail ) && expect("closebracket", res);
 
@@ -507,43 +507,45 @@ consumeToken("forstatement"); /* */
 Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EBNF
 ==================================================================================
 
+#### Use [this EBNF metasyntax defintion](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) to read the productions below
+
 (* The list of all valid tokens for Antro Language - A purely functional language without much OOP *)
 
 - pound := "$" ; (* used in variable token definition *)
 
 - hash := "#" ;
 
-- opencue := '[';
+- opencue := "[" ;
 
-- closecue := ']';
-
-- assignmentoperator := "=" ;
+- closecue := "]" ;
 
 - uscore := "_" ;
 
-- lt := "<";
+- lt := "<" ;
 
-- gt := ">";
+- gt := ">" ;
 
-- dquote := "\""; 
+- dquote := "\"" ; 
 
-- squote := "'";
+- squote := "'" ;
 
-- cursor := ":"
+- cursor := ":" ;
 
-- terminator := ";"
+- terminator := ";" ;
 
-- openbracket := "("
+- openbracket := "(" ;
 
-- closebracket := ")"
+- closebracket := ")" ;
 
-- openbrace := "{"
+- openbrace := "{" ;
 
-- closebrace := "}"
+- closebrace := "}" ;
 
-- dot := "."
+- dot := "." ;
 
-- digit := "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" 
+- digit := "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+- number := digit, { "0" | digit } ;
 
 - letter := "a" | "b" | "c" | "d" | "e"  | "f" | "g"  | "h" | "i"  | "j" | "k"  | "l" | "m"  | "n" | "o"  | "p" | "q"  | "r" | "s"  | "t" | "u"  | "v" | "w"  | "x" | "y"  | "z" | "A"  | "B" | "C"  | "D" | "E"  | "F" | "G"  | "H" | "I"  | "J" | "K"  | "L" | "M"  | "N" | "O"  | "P" | "Q"  | "R" | "S"  | "T" | "U"  | "V" | "W"  | "X" | "Y"  | "Z" ;
 
@@ -559,9 +561,11 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - modulo := "%"
 
-- int := digit, { digit } ;
+- assignmentoperator := [ minus | plus | multiply | divide | modulo ], "=" ;
 
-- float := int, dot, int [ "E" | "e", int ] ;
+- int := "0" | [ minus ], number ;
+
+- float := int, dot, int, [ ( "E" | "e" ), int ] ;
 
 - pipe := "|" ;
 
@@ -578,6 +582,8 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 - main := "main" ;
 
 - void := "void" ;
+
+- null := "null" ;
 
 - type := "int" | "float" | "string" | "array" | "boolean" ;
 
@@ -611,7 +617,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - continue := "continue" ;
 
-- print := "print" ;
+- export := "export" ;
 
 - retn := "retn" ;
 
@@ -619,7 +625,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - whitespace := "\f" | "\t" | "\r" | "\n" | "\b" | " " | ?? ;
 
-- arithmeticunaryoperators := plus,  plus | minus,  minus ;
+- arithmeticunaryoperators := plus, plus | minus, minus ;
 
 - arithmeticbinaryoperators := multiply | divide | modulo | plus | minus ;
 
@@ -639,11 +645,11 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - comma := "," ;
 
-- allchars := [ whitespace | letterordigit | pipe | and | cursor | terminator | hash | pound | dquote | squote | logicalunaryoperator | ace | multiply | divide | modulo | comma | uscore | plus | minus | assignmentoperator | openbracket | openbrace | closebracket | closebrace | dot ]
+- allchars := [ whitespace | letterordigit | pipe | and | cursor | terminator | hash | pound | dquote | squote | logicalunaryoperator | relationaloperator | retn | ace | multiply | divide | modulo | comma | uscore | plus | minus | assignmentoperator | openbracket | openbrace | closebracket | closebrace | dot ]
 
 - string := dquote, { allchars - dquote },  dquote | squote, { allchars - squote }, squote
 
-- variable := pound | letter, {  letterordigit | uscore  } ;
+- identifier := pound | letter, {  letterordigit | uscore  } ;
 
 - comment := hash, { allchars - hash } ;
 
@@ -655,23 +661,23 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - literal :=  string | int | float | boolean ;
 
-- factor :=  variable | literal ;
+- factor :=  identifier | literal ;
 
-- term := factor, { ( bitwise | arithmeticbinaryoperator-add ), factor } | arithmeticunaryoperator, variable | variable arithmeticunaryoperator ;
+- term := factor, { ( bitwise | arithmeticbinaryoperator-add ), factor } | arithmeticunaryoperator, identifier | identifier, arithmeticunaryoperator ;
 
 - airthmeticexpression := term, { ( arithmeticbinaryoperator-mul | relationaloperator ), term } | openbracket, airthmeticexpression, closebracket ; 
 
 - array := ace, openbrace, [ airthmeticexpression | array ], { comma, airthmeticexpression | array }, closebrace ;
 
-- arithmeticoperationexpression := airthmeticexpression, { logicalbinaryoperator, airthmeticexpression } ;
+- logicoperationexpression := airthmeticexpression, { logicalbinaryoperator, airthmeticexpression } ;
 
-- callexpression := call, cursor, variable, openbracket, logicexpressionlist, closebracket ;
+- callexpression := call, cursor, identifier, openbracket, logicexpressionlist, closebracket ;
                     
-- logicexpression := [ logicalunaryoperator ], ( callexpression | arithmeticoperationexpression ) ;
+- logicexpression := void | null | [ logicalunaryoperator ], ( callexpression | logicoperationexpression ) ;
 
 - logicexpressionlist := logicexpression, { comma, logicexpression } ;
 
-- declexpression :=  [ type ], variable, [ assignmentoperator,  logicexpression ] ;
+- declexpression :=  [ type ], identifier, [ assignmentoperator,  logicexpression ] ;
 
 - declexpressionlist := declexpression, { comma, declexpression }
 
@@ -683,11 +689,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - callstatement := callexpression, terminator ;
 
-- breakstatement := break, terminator ;
-
-- continuestatement := continue, terminator ;
-
-- defnstatement :=  def, cursor, variable, literal, terminator ;
+- defnstatement :=  def, cursor, identifier, literal, terminator ;
 
 - forstatement := for, openbracket, { declstatement }, closebracket, scopeblock ;
 
@@ -701,25 +703,27 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - elsestatement := else, scopeblock ;
 
-- switchstatement := switch openbrackect, term, closebracket openbrace [ { case, literal, cursor, blockstatement }, breakstatement, default, cursor, { blockstatement }, breakstatement ], closebrace ;
+- switchstatement := switch openbrackect, term, closebracket openbrace [ { case, literal, cursor }, { blockstatement }, breakstatement, default, cursor, { blockstatement }, breakstatement ], closebrace ;
 
 - branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement
 
-- controlstatement := branchstatement | printstatement | forstatement | whilestatement | dowhilestatement | retnstatement ;
+- controlstatement := branchstatement | forstatement | whilestatement | dowhilestatement | retnstatement ;
 
-- flowstatement :=  breakstatement | continuestatement ;
-
-- routinestatement := method, cursor, variable, declexpressionlist, scopeblock ;
+- flowstatement :=  ( break | continue ), terminator ;
 
 - modulestatement := module, cursor, string, terminator ;
+
+- exportstatement := export, cursor, identifier, { identifier }, terminator ;
 
 - blockstatment := declstatement | controlstatement ;
 
 - scopeblock := openbrace, { blockstatement | flowstatement }, closebrace ;
 
-- mainblock := begin, cursor, main, openbracket, declexpressionlist, closebracket, { blockstatement }, end, terminator ;
+- routineblock := method, cursor, identifier, openbracket, declexpressionlist, closebracket, scopeblock, [ terminator ] ;
 
-- programblock := { modulestatement }, { reqrstatement }, { defnstatement }, [ mainblock ], { routinestatement }, EOF ;
+- mainblock := begin, cursor, main, openbracket, declexpressionlist, closebracket, { blockstatement }, { exportstatement }, end, [ terminator ] ;
+
+- programblock := { modulestatement }, { reqrstatement }, { defnstatement }, [ mainblock ], { routineblock }, EOF ;
 
 
 
