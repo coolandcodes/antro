@@ -713,7 +713,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - modulestatement := module, cursor, string, terminator ;
 
-- exportstatement := export, cursor, identifier, { identifier }, terminator ;
+- exportstatement := export, cursor, identifier, { comma, identifier }, terminator ;
 
 - blockstatment := declstatement | controlstatement ;
 
