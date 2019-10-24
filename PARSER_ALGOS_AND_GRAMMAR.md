@@ -677,7 +677,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - logicexpressionlist := logicexpression, { comma, logicexpression } ;
 
-- declexpression :=  [ type ], identifier, [ assignmentoperator,  logicexpression ] ;
+- declexpression :=  [ type | dot ], identifier, [ assignmentoperator,  logicexpression ] ;
 
 - declexpressionlist := declexpression, { comma, declexpression }
 
@@ -703,7 +703,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - elsestatement := else, scopeblock ;
 
-- switchstatement := switch openbrackect, term, closebracket openbrace [ { case, literal, cursor }, { blockstatement }, breakstatement, default, cursor, { blockstatement }, breakstatement ], closebrace ;
+- switchstatement := switch openbrackect, term, closebracket openbrace { { case, literal, cursor }, { blockstatement }, flowstatement }, [ default, cursor, { blockstatement }, flowstatement ], closebrace ;
 
 - branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement
 
