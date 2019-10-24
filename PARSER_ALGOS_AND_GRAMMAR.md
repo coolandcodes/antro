@@ -563,6 +563,8 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - assignmentoperator := [ minus | plus | multiply | divide | modulo ], "=" ;
 
+- naturalnumber 
+
 - int := "0" | [ minus ], number ;
 
 - float := int, dot, int, [ ( "E" | "e" ), int ] ;
@@ -590,6 +592,10 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 - require := "require" ;
 
 - def := "def" ;
+
+- try := "try" ;
+
+- catch := "catch" ;
 
 - switch := "switch" ;
 
@@ -704,6 +710,8 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 - elsestatement := else, scopeblock ;
 
 - switchstatement := switch openbrackect, term, closebracket openbrace { { case, literal, cursor }, { blockstatement }, flowstatement }, [ default, cursor, { blockstatement }, flowstatement ], closebrace ;
+
+- trycatchstatement := try, scopeblock, catch, cursor, identifier, scopeblock ; 
 
 - branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement
 
