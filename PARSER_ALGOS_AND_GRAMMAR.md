@@ -499,7 +499,7 @@
 
 
 getToken(); /* retrieve the immediate next token from the tokenizer */   
-consumeToken("forstatement"); /* */
+consumeToken("identifier"); /* consume the next token retrieved and ensure it is a {identifier} token else raise a syntax error */
 
 
 ### ANTRO LANGUAGE GRAMMAR DETAILS
@@ -655,7 +655,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - string := dquote, { allchars - dquote },  dquote | squote, { allchars - squote }, squote
 
-- identifier := pound | letter, {  letterordigit | uscore  } ;
+- identifier := ( pound | letter ), {  letterordigit | uscore  } ;
 
 - comment := hash, { allchars - hash } ;
 
@@ -669,9 +669,9 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - factor :=  identifier | literal ;
 
-- term := factor, { ( bitwise | arithmeticbinaryoperator-add ), factor } | arithmeticunaryoperator, identifier | identifier, arithmeticunaryoperator ;
+- term := factor, { ( bitwise | arithmeticbinaryoperator ), factor } | arithmeticunaryoperator, identifier | identifier, arithmeticunaryoperator ;
 
-- airthmeticexpression := term, { ( arithmeticbinaryoperator-mul | relationaloperator ), term } | openbracket, airthmeticexpression, closebracket ; 
+- airthmeticexpression := term, { ( arithmeticbinaryoperator | relationaloperator ), term } | openbracket, airthmeticexpression, closebracket ; 
 
 - array := ace, openbrace, [ airthmeticexpression | array ], { comma, airthmeticexpression | array }, closebrace ;
 
@@ -715,7 +715,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement
 
-- controlstatement := branchstatement | forstatement | whilestatement | dowhilestatement | retnstatement ;
+- controlstatement := branchstatement | trycatchstatement | forstatement | whilestatement | dowhilestatement | retnstatement ;
 
 - flowstatement :=  ( break | continue ), terminator ;
 
@@ -729,7 +729,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - routineblock := method, cursor, identifier, openbracket, declexpressionlist, closebracket, scopeblock, [ terminator ] ;
 
-- mainblock := begin, cursor, main, openbracket, declexpressionlist, closebracket, { blockstatement }, { exportstatement }, end, [ terminator ] ;
+- mainblock := begin, cursor, main, openbracket, declexpressionlist, closebracket, { blockstatement }, [ exportstatement ], end, [ terminator ] ;
 
 - programblock := { modulestatement }, { reqrstatement }, { defnstatement }, [ mainblock ], { routineblock }, EOF ;
 
