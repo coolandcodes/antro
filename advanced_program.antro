@@ -17,14 +17,14 @@ end;
 
 # composite[class]: Account(){
 #    data: int amount ;
-#   _ data: string acctName ;
+#   _data: string acctName ;
 #   
-#   _ method: setAmount(c){
+#   _method: setAmount(c){
 #     .amount = c
 #   }
 # }
 
-method: convertToFactor(boolean c, int d){
+method: convertToFactor (boolean c, int d) {
     var int gb = 23, int kl = 0;
 
     for(var i = 0; i < gb; i = i + 1){
@@ -36,7 +36,7 @@ method: convertToFactor(boolean c, int d){
     retn kl;
 }
 
-method: factorUpBy2(x){
+method: factorUpBy2 (int x) {
           
     var y, boolean g = true;
           
@@ -51,7 +51,7 @@ method: factorUpBy2(x){
     retn y;
 }
 
-method: getString(int num){
+method: getString (int num) {
 
    var array = @{"zero", "one", "two", "three"};
    var str = "";
