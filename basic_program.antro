@@ -7,7 +7,6 @@ begin:
 end;
 
 method: multiplyByTwo(c, d){
-
     retn c * d;
 }
 
