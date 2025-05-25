@@ -33,7 +33,7 @@ What is a Context-Free Grammar ?
 	def: convertToFactor(c, d){
 		var error_message_prefix = "Argument type error: ";
 
-		# before the return statement below is executed...
+		# before the `retn` statement below is executed...
 		# ... we call the invariants below 👇🏾👇🏾
 		defer |: invariants {
 			error_message_prefix + "calling `convertToFactor(..)`",
