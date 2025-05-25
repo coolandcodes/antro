@@ -1,8 +1,8 @@
 # antro
 
-This is a toy parser for a toy programming language called _antor scripting language_ which is still in development.This project is purely educational as the language cannot be used for any industry work in its current form. Therefore, the sole aim of this project is to show and teach the skills required of designing computer languages and implementing them.
+This is a toy parser for an experimental programming language called _antor scripting language_ which is still in development. This project is purely educational (for now) as the language cannot be used for any industry work in its current form. Therefore, the sole aim of this project is to show and teach the skills required of designing computer languages and implementing them.
 
-> The **Regular Grammar** and **Context-Free Grammar** (written in EBNF format) can be found in the *PARSER_ALGOS_AND_GRAMMAR.md* (markdown) file as well as the details of the algorithm used to implement the recursive descent strategy of the parser.
+> The [**Regular Grammar** and **Context-Free Grammar**](https://github.com/coolandcodes/antro/blob/master/PARSER_ALGOS_AND_GRAMMAR.md) (written in EBNF format) as well as other details of the algorithm used to implement the recursive descent strategy of the parser.
 
 What is a Regular Grammar ?
 
@@ -14,42 +14,79 @@ What is a Context-Free Grammar ?
 
 ## Sample program written in antro
 
-```antro
+```ada
 
-	require: "file.module";
-	require: "regex.module";
+	require: "sys.module";
+	require: "errors.module";
+	require: "types.module";
 
-	def: MAX 200; 
+	def: MAX 200;
 
-	begin:
-	   main(void)
-	     var ty = call: factorUpBy2(MAX);
+	begin: (void)
+             var error = call: error("Program crashed");
+	     var ty = call: factorUpBy2(MAX) |: or_throw error |: hook {
+		print "An error occurred";
+	     };
 	     print ty;
 	end;
 
-	method: convertToFactor(c, d){
-	              retn c * d;
-	}
+	def: convertToFactor(c, d){
+		var error_message_prefix = "Argument type error: ";
 
-	method: factorUpBy2(x){
-	          var y, g = true;
-	          if(x > 0){
-	              y = (x / 2) * 4;
-	          }else{
-	              g = false;
-	          }
-	          y = call: convertToFactor(g, x); 
-	        retn y;
-	}
+		# before the return statement below is executed...
+		# ... we call the invariants below 👇🏾👇🏾
+		defer |: invariants {
+			error_message_prefix + "calling `convertToFactor(..)`",
+			call: type(c, "number") |: or_throw $;
+
+			error_message_prefix + "calling `convertToFactor(..)`",
+			call: type(d, "number") |: or_throw $;
+		}
+
+	      	retn c * d;
+	};
+
+	def: factorUpBy2(x){
+	  	var y, g = true;
+
+		if (x > 0) {
+		  y = (x / 2) * 4;
+		} else {
+		  g = false;
+		}
+
+		y = call: convertToFactor(g, x); 
+		retn y;
+	};
 
 ```
 
-Though the above program doesn't do anything for now (i.e. the parser as currently written does not produce an Absract Syntax Tree - AST nor does it provide an Immediate Representation - IR), one can still get to understand the basics of what's going on. 
+Though the above program doesn't do anything useful for now (i.e. the parser as currently written does not yet produce an Absract Syntax Tree - AST nor does it provide an Immediate Representation - IR), one can still get to understand the basics of what's going on.
+
+## About
+
+The `require` keyword is used  to  require a module (folder of source files) or a single source file as an implicit dependency.
+
+The  `def`  keyword is used to define variables in the **global scope** (i.e. outside functions) that cannot be changed. When using `def`, it doesn't matter if the variable is defined in a **global scope** or **local scope**, it will always  be a **globally-scoped** variable. Also, variables created with the `def` keyword cannot have their values changed/mutated but only copied into a variable whose value can be changed/mutated.
+
+The `begin` keyword is used to defined the entry point of the _antro_ program. It is truncated by the `end` keyword.
+
+The `var` keyword is used to define variables in a **local scope** (i.e. within functions) only. When using the `var` keyword, it matters that it isn't used in a **global scope** (i.e. outside functions) else it the runtime will throw an error. Also, variables created with the `var` keyword can have their value changed/mutated.
+
+The `or_throw` keyword is the _antro_ equivalent of a [catch block](https://www.geeksforgeeks.org/try-catch-block-in-programming/#what-is-a-catchexcept-block) in other scripting languages like JavaScript. _Antro_ does not use the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) model for error handling. It uses an error to catch other errors that occur higher up on the call stack.
+
+The  `or_panic` keyword is the _antro_ equivalent of [panic](https://gobyexample.com/panic) keyword in [Golang](https://go.dev/).
+
+The `invariants` keyword is used to setup [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) within a **local scope** (i.e. within functions).
+
+The `defer` keyword is the _antro_ equivalent of the [defer](https://gobyexample.com/defer) keyword in [Golang](https://go.dev/).
+
+The `retn` keyword is used to  return a value from a function definition or `begin` block.
 
 ## License 
 
-This is released under the MIT license
+This is released under the MIT license.
 
 ## Design Inspiration
 
-Antro language design was inspired by Objective-C, Python and JavaScript combined
+Antro language design was inspired by Go, Python and JavaScript combined.
