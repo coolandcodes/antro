@@ -567,7 +567,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - int := "0" | [ minus ], number ;
 
-- float := int, dot, int, [ ( "E" | "e" ), int ] ;
+- float := int, dot, number, [ ( "E" | "e" ), int ] ;
 
 - pipe := "|" ;
 
@@ -587,15 +587,15 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - null := "null" ;
 
-- type := "int" | "float" | "string" | "array" | "boolean" ;
+- type := ".int" | ".float" | ".string" | ".array" | ".boolean" | ".nil" ;
+
+- defer := "defer" ;
 
 - require := "require" ;
 
 - def := "def" ;
 
-- try := "try" ;
-
-- catch := "catch" ;
+- invariants := "invariants" ;
 
 - switch := "switch" ;
 
@@ -617,7 +617,13 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - default := "default" ;
 
-- method := "method" ;
+- throw := "throw" ;
+
+- othrow := "or_throw" ;
+
+- opanic := "or_panic" ;
+
+- hook := "hook" ;
 
 - call := "call" ;
 
@@ -649,6 +655,8 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - boolean := "true" | "false" ;
 
+- link := "|:" ;
+
 - comma := "," ;
 
 - allchars := [ whitespace | letterordigit | pipe | and | cursor | terminator | hash | pound | dquote | squote | logicalunaryoperator | relationaloperator | retn | ace | multiply | divide | modulo | comma | uscore | plus | minus | assignmentoperator | openbracket | openbrace | closebracket | closebrace | dot ]
@@ -665,25 +673,29 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 =====================================================================================
 (* This is the list of all production rules *)
 
-- literal :=  string | int | float | boolean ;
+- literal :=  string | int | float | boolean | void | null;
 
 - factor :=  identifier | literal ;
 
 - term := factor, { ( bitwise | arithmeticbinaryoperator ), factor } | arithmeticunaryoperator, identifier | identifier, arithmeticunaryoperator ;
 
-- airthmeticexpression := term, { ( arithmeticbinaryoperator | relationaloperator ), term } | openbracket, airthmeticexpression, closebracket ; 
+- airthmeticexpression := term, { ( arithmeticbinaryoperator | relationaloperator ), term } | openbracket, airthmeticexpression, closebracket ;
 
 - array := ace, openbrace, [ airthmeticexpression | array ], { comma, airthmeticexpression | array }, closebrace ;
 
 - logicoperationexpression := airthmeticexpression, { logicalbinaryoperator, airthmeticexpression } ;
 
+- trialexpression := [ string ], callexpression, ( { link, (othrow | opanic), (identifier | "$") }, { link, hook, scopeblock } ) ;
+
 - callexpression := call, cursor, identifier, openbracket, logicexpressionlist, closebracket ;
                     
-- logicexpression := void | null | [ logicalunaryoperator ], ( callexpression | logicoperationexpression ) ;
+- logicexpression :=  term | [ logicalunaryoperator ], ( callexpression | trialexpression | logicoperationexpression ) ;
 
 - logicexpressionlist := logicexpression, { comma, logicexpression } ;
 
-- declexpression :=  [ type | dot ], identifier, [ assignmentoperator,  logicexpression ] ;
+- declsolution := [ type ], identifier ;
+
+- declexpression :=  declsolution, { assignmentoperator, logicexpression } ;
 
 - declexpressionlist := declexpression, { comma, declexpression }
 
@@ -695,9 +707,13 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - callstatement := callexpression, terminator ;
 
-- defnstatement :=  def, cursor, identifier, literal, terminator ;
+- parameterlist := declsolution, { comma, declsolution } ;
 
-- forstatement := for, openbracket, { declstatement }, closebracket, scopeblock ;
+- functiondefstatement := openbracket, parameterlist, closebracket, scopeblock;
+
+- defnstatement :=  def, cursor, identifier, ( term | functiondefstatement ), terminator ;
+
+- forstatement := for, openbracket, declstatement, [ airthmeticexpression ], terminator, [ airthmeticexpression ], closebracket, scopeblock ;
 
 - dowhilestatement := do, scopeblock, while, openbracket, logicexpression, closebracket ;
 
@@ -711,11 +727,15 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - switchstatement := switch openbrackect, term, closebracket openbrace { { case, literal, cursor }, { blockstatement }, flowstatement }, [ default, cursor, { blockstatement }, flowstatement ], closebrace ;
 
-- trycatchstatement := try, scopeblock, catch, cursor, identifier, scopeblock ; 
+- breakstatement := break, terminator ;
 
-- branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement
+- continuestatement := continue, terminator ;
 
-- controlstatement := branchstatement | trycatchstatement | forstatement | whilestatement | dowhilestatement | retnstatement ;
+- deferstatement := @TODO... later using the defer keyword;
+
+- branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement ;
+
+- controlstatement := branchstatement | forstatement | whilestatement | dowhilestatement | retnstatement | breakstatement | continuestatement;
 
 - flowstatement :=  ( break | continue ), terminator ;
 
