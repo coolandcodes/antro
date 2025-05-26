@@ -673,7 +673,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 =====================================================================================
 (* This is the list of all production rules *)
 
-- literal :=  string | int | float | boolean | void | null;
+- literal :=  string | int | float | boolean | null;
 
 - factor :=  identifier | literal ;
 
@@ -685,11 +685,11 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - logicoperationexpression := airthmeticexpression, { logicalbinaryoperator, airthmeticexpression } ;
 
-- trialexpression := [ string ], callexpression, ( { link, (othrow | opanic), (identifier | "$") }, { link, hook, scopeblock } ) ;
-
 - callexpression := call, cursor, identifier, openbracket, logicexpressionlist, closebracket ;
+
+- trialexpression := [ string ], callexpression, ( { link, (othrow | opanic), (identifier | "$") }, { link, hook, scopeblock } ) ;
                     
-- logicexpression :=  term | [ logicalunaryoperator ], ( callexpression | trialexpression | logicoperationexpression ) ;
+- logicexpression :=  term | [ logicalunaryoperator ], ( callexpression | logicoperationexpression ) | trialexpression ;
 
 - logicexpressionlist := logicexpression, { comma, logicexpression } ;
 
@@ -707,11 +707,15 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - callstatement := callexpression, terminator ;
 
-- parameterlist := declsolution, { comma, declsolution } ;
+- fdefnbody := openbracket, (void | declexpressionlist), closebracket, scopeblock;
 
-- functiondefstatement := openbracket, parameterlist, closebracket, scopeblock;
+- globalliteraldefnstatement := def, cursor, identifier, literal, terminator ;
 
-- defnstatement :=  def, cursor, identifier, ( term | functiondefstatement ), terminator ;
+- globalfunctiondefnstatement := def, cursor, identifier, fdefnbody, terminator ;
+
+- localfunctiondefnstatement := var, identifier, fdefnbody, [ terminator ];
+
+- defnstatement := globalliteraldefnstatement | globalfunctiondefnstatement ;
 
 - forstatement := for, openbracket, declstatement, [ airthmeticexpression ], terminator, [ airthmeticexpression ], closebracket, scopeblock ;
 
@@ -731,27 +735,27 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - continuestatement := continue, terminator ;
 
-- deferstatement := @TODO... later using the defer keyword;
+- invariantsblock := link, invariants, openbrace, { trialexpression }, closebrace, [ terminator ] ;
+
+- deferstatement := defer, declexpressionlist | invariantsblock;
 
 - branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement ;
 
-- controlstatement := branchstatement | forstatement | whilestatement | dowhilestatement | retnstatement | breakstatement | continuestatement;
+- controlstatement := branchstatement | forstatement | whilestatement | dowhilestatement | retnstatement ;
 
-- flowstatement :=  ( break | continue ), terminator ;
+- flowstatement :=  breakstatement | continuestatement ;
 
 - modulestatement := module, cursor, string, terminator ;
 
 - exportstatement := export, cursor, identifier, { comma, identifier }, terminator ;
 
-- blockstatment := declstatement | controlstatement ;
+- blockstatment := declstatement | localfunctiondefnstatement | controlstatement ;
 
 - scopeblock := openbrace, { blockstatement | flowstatement }, closebrace ;
 
-- routineblock := method, cursor, identifier, openbracket, declexpressionlist, closebracket, scopeblock, [ terminator ] ;
+- mainblock := begin, cursor, openbracket, (void | declexpressionlist), closebracket, { blockstatement }, end, [ terminator ] ;
 
-- mainblock := begin, cursor, main, openbracket, declexpressionlist, closebracket, { blockstatement }, [ exportstatement ], end, [ terminator ] ;
-
-- programblock := { modulestatement }, { reqrstatement }, { defnstatement }, [ mainblock ], { routineblock }, EOF ;
+- programblock := { modulestatement }, { reqrstatement }, { defnstatement }, [ mainblock ], { defnstatement }, [ exportstatement ], EOF ;
 
 
 
