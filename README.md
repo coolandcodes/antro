@@ -65,22 +65,31 @@ Though the above program doesn't do anything useful for now (i.e. the parser as 
 
 ## About
 
+#### Module/File Imports
 The `require` keyword is used to require/import a module (folder of source files) or a single source file as an implicit dependency.
 
-The  `def`  keyword is used to define variables in the **global scope** (i.e. outside functions) that cannot be changed. When using `def`, it doesn't matter if the variable is defined in a **global scope** or **local scope**, it will always  be a **globally-scoped** variable. Also, variables created with the `def` keyword cannot have their values changed/mutated but only copied into a variable whose value can be changed/mutated.
-
+#### Entry Point Definition
 The `begin` keyword is used to defined the entry point of the _antro_ program. It is truncated by the `end` keyword.
 
-The `var` keyword is used to define variables or functions within a **local scope** (i.e. within functions) only. When using the `var` keyword, it matters that it isn't used in a **global scope** (i.e. outside functions) else it the runtime will throw a parse error. Also, variables created with the `var` keyword can have their value changed/mutated.
+#### Other Definitions
+The  `def`  keyword is used to define variables in the **global scope** (i.e. outside functions) that cannot be changed. When using `def`, it doesn't matter if the variable is defined in a **global scope** or **local scope**, it will always  be a **globally-scoped** variable. Also, variables created with the `def` keyword cannot have their values changed/mutated but only copied into a variable whose value can be changed/mutated.
 
+#### Variable Creation
+The `var` keyword is used to define variables or functions within a **local scope** (i.e. within functions) only. When using the `var` keyword, it matters that it isn't used in a **global scope** (i.e. outside functions) else the _antro_ parser will throw a parse error. Also, variables created with the `var` keyword can have their value changed/mutated.
+
+#### Exception Handling - Part 1
 The `or_throw` keyword is the _antro_ equivalent of a [catch block](https://www.geeksforgeeks.org/try-catch-block-in-programming/#what-is-a-catchexcept-block) in other scripting languages like JavaScript. _Antro_ does not use the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) model for error handling. It uses an error to catch other errors that occur higher up on the call stack.
 
+#### Exception Handling - Part 2
 The  `or_panic` keyword is the _antro_ equivalent of [panic](https://gobyexample.com/panic) keyword in [Golang](https://go.dev/).
 
-The `invariants` keyword is used to setup [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) within a **local scope** (i.e. within functions).
+#### Invaraints
+The `invariants` keyword is used to setup [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) within a **local scope** (i.e. within functions). For the design of _antro_, i believe that [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) ought to be baked into the programming model (i.e. the programming language). In the future, i plan to setup [macros](https://doc.rust-lang.org/book/ch20-05-macros.html) just like they are used in [Rust](https://www.rust-lang.org/) to make the `invariants` block shorter and more compact. All function definitions MUST contain an `invariants` block else the _antro_ runtime will throw an error.
 
+#### Defering Action
 The `defer` keyword is the _antro_ equivalent of the [defer](https://gobyexample.com/defer) keyword in [Golang](https://go.dev/).
 
+#### Outputs
 The `retn` keyword is used to return a value from a function definition or `begin` block.
 
 ## License 
@@ -89,4 +98,4 @@ This is released under the MIT license.
 
 ## Design Inspiration
 
-Antro language design was inspired by Go, Python and JavaScript combined.
+Antro language design was inspired by Go, Rust, Python and JavaScript all combined.
