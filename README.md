@@ -78,7 +78,7 @@ The  `def`  keyword is used to define variables in the **global scope** (i.e. ou
 The `var` keyword is used to define variables or functions within a **local scope** (i.e. within functions) only. When using the `var` keyword, it matters that it isn't used in a **global scope** (i.e. outside functions) else the _antro_ parser will throw a parse error. Also, variables created with the `var` keyword can have their value changed/mutated.
 
 #### Exception Handling - Part 1
-The `or_throw` keyword is the _antro_ equivalent of a [catch block](https://www.geeksforgeeks.org/try-catch-block-in-programming/#what-is-a-catchexcept-block) in other scripting languages like JavaScript. _Antro_ does not use the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) model for error handling. It uses an error to catch other errors that occur higher up on the call stack.
+The `or_throw` keyword is the _antro_ equivalent of a [catch block](https://www.geeksforgeeks.org/try-catch-block-in-programming/#what-is-a-catchexcept-block) in other scripting languages like JavaScript. _Antro_ does not directly use the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) model for error handling. It uses an error to catch other errors that occur higher up on the call stack. In this way, the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) block [is abstracted away](https://github.com/isocroft/runn) from the programmer and handled by the _antro_ compiler and runtime.
 
 #### Exception Handling - Part 2
 The  `or_panic` keyword is the _antro_ equivalent of [panic](https://gobyexample.com/panic) keyword in [Golang](https://go.dev/).
