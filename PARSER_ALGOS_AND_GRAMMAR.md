@@ -705,7 +705,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - retnstatement := retn, [ logicexpression ], terminator ;
 
-- callstatement := callexpression, terminator ;
+- callstatement := trialexpression, terminator ;
 
 - fdefnbody := openbracket, (void | declexpressionlist), closebracket, scopeblock;
 
