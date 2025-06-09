@@ -8,7 +8,7 @@ This is a toy parser for an experimental programming language called _antro scri
 
 -  **Tokenizer** (lexical analysis)
 -  **Parser**  (semantic analysis)
--  **Joiner** (an atomic message queue for passing tokens from the **Tokenizer** to the **Parser** with a lookahead of 1)
+-  **Joiner** (an atomic message queue for passing tokens from the **Tokenizer** to the **Parser** with a [lookahead of 1](https://www.quora.com/What-is-a-%E2%80%9Clookahead-operator%E2%80%9D-in-compiler-designs))
 
 ## Backend Design
 
@@ -28,45 +28,50 @@ No yet determined.
 
 	require: "sys.module";
 	require: "errors.module";
+	require: "logging.module";
 	require: "types.module";
 
 	def: MAX 200;
 
 	begin: (void)
-             var error = call: error("Program crashed");
-	     var ty = call: factorUpBy2(MAX) |: or_throw error |: hook {
-		print "An error occurred";
-	     };
-	     print ty;
+	  # A novel programming language design for error handling (antro)
+	  # This uses chain exceptions behind the scenes (within the runtime).
+	  var error = call: error("Program crashed");
+	  var ty = call: factorUpBy2(MAX) |: or_throw error |: hook {
+ 	    if (error.isThrown) {
+	      logput(error.message + error.unrolledCauses)	
+	    }
+  	    print "An error occurred";
+	  };
+	  print ty;
 	end;
 
-	def: convertToFactor(c, d){
-		var error_message_prefix = "Argument type error: ";
+	def: factorUpBy2(x){
+	  var y, g = true;
 
-		# before the `retn` statement below executes...
-		# ... we call the invariants below 👇🏾👇🏾
-		defer |: invariants {
-			error_message_prefix + "calling `convertToFactor(..)`",
-			call: type(c, "number") |: or_throw $;
+	   if (x > 0) {
+	     y = (x / 2) * 4;
+	   } else {
+	     g = false;
+	   }
 
-			error_message_prefix + "calling `convertToFactor(..)`",
-			call: type(d, "number") |: or_throw $;
-		}
-
-	      	retn c * d;
+	    y = call: convertToFactor(g, x);
+	    retn y;
 	};
 
-	def: factorUpBy2(x){
-	  	var y, g = true;
+	def: convertToFactor(c, d){
+	  var error_message_prefix = "Argument type error: ";
 
-		if (x > 0) {
-		  y = (x / 2) * 4;
-		} else {
-		  g = false;
-		}
+	  # before the `retn` statement below executes...
+	  # ... we call the invariants below 👇🏾👇🏾
+	  defer |: invariants {
+	    error_message_prefix + "calling `convertToFactor(..)`",
+		call: type(c, "number") |: or_throw $;
+ 	    error_message_prefix + "calling `convertToFactor(..)`",
+		call: type(d, "number") |: or_throw $;
+	  }
 
-		y = call: convertToFactor(g, x); 
-		retn y;
+	  retn c * d;
 	};
 
 ```
