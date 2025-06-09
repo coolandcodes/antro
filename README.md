@@ -34,8 +34,8 @@ No yet determined.
 	def: MAX 200;
 
 	begin: (void)
-	  # A novel programming language design for error handling (antro)
-	  # This uses chain exceptions behind the scenes (within the runtime).
+	  --# A novel programming language design for error handling (antro)
+	  --# This uses chain exceptions behind the scenes (within the runtime).
 	  var error = call: error("Program crashed");
 	  var ty = call: factorUpBy2(MAX) |: or_throw error |: hook {
  	    if (error.isThrown) {
@@ -62,8 +62,8 @@ No yet determined.
 	def: convertToFactor(c, d){
 	  var error_message_prefix = "Argument type error: ";
 
-	  # before the `retn` statement below executes...
-	  # ... we call the invariants below 👇🏾👇🏾
+	  --# before the `retn` statement below executes...
+	  --# ... we call the invariants below 👇🏾👇🏾
 	  defer |: invariants {
 	    error_message_prefix + "calling `convertToFactor(..)`",
 		call: type(c, "number") |: or_throw $;
