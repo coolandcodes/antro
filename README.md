@@ -35,7 +35,7 @@ No yet determined.
 
 	begin: (void)
 	  --# A novel programming language design for error handling (antro)
-	  --# This uses chain exceptions behind the scenes (within the runtime).
+	  --# This uses chained exceptions behind the scenes (within the runtime).
 	  var error = call: error("Program crashed");
 	  var ty = call: factorUpBy2(MAX) |: or_throw error |: hook {
  	    if (error.isThrown) {
