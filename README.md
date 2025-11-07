@@ -36,15 +36,15 @@ No yet determined.
 	begin: (void)
 	  --# A novel programming language design for error handling (antro)
 	  --# This uses chained exceptions behind the scenes (within the runtime).
-	  var error = call: error("Program crashed");
-	  var ty = call: factorUpBy2(MAX) -> eject_with error << ["ErrorType"] -> and_use {
+	  var error = call: error("Program crashed") as MyErrorType;
+	  var ty = call: factorUpBy2(MAX) -> eject_on error << ["OtherErrorType"] -> use {
  	    if (error.isEjected) {
-	      logput(error.message + error.context.cause)	
+	      call: output(f"{error.message} - {error.context.cause}")
 	    }
 		
   	    print "A fatal error occurred";
 
-		panic_with error;
+		panic_on error;
 	  };
 	  print ty;
 	end;
@@ -96,10 +96,13 @@ The  `def`  keyword is used to define variables in the **global scope** (i.e. ou
 The `var` keyword is used to define variables or functions within a **local scope** (i.e. within functions) only. When using the `var` keyword, it matters that it isn't used in a **global scope** (i.e. outside functions) else the _antro_ parser will throw a parse error. Also, variables created with the `var` keyword can have their value changed/mutated.
 
 #### Exception Handling - Part 1
-The `eject_with` keyword is the _antro_ equivalent of a [catch block](https://www.geeksforgeeks.org/try-catch-block-in-programming/#what-is-a-catchexcept-block) in other scripting languages like JavaScript. _Antro_ does not directly use the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) model for error handling. It uses an error to catch other errors that occur higher up on the call stack. In this way, the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) block [is abstracted away](https://github.com/isocroft/runn) from the source-level (hidden from the programmer) and handled by the _antro_ compiler and runtime.
+The `eject_on` keyword is the _antro_ equivalent of a [catch block](https://www.geeksforgeeks.org/try-catch-block-in-programming/#what-is-a-catchexcept-block) in other scripting languages like JavaScript. _Antro_ does not directly use the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) model for error handling. It uses an error to catch other errors that occur higher up on the call stack. In this way, the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) block [is abstracted away](https://github.com/isocroft/runn) from the source-level (hidden from the programmer) and handled by the _antro_ compiler and runtime.
 
 #### Exception Handling - Part 2
-The  `panic_with` keyword is the _antro_ equivalent of [panic](https://gobyexample.com/panic) keyword in [Golang](https://go.dev/) which triggers abandonment.
+The  `panic_on` keyword is the _antro_ equivalent of [panic](https://gobyexample.com/panic) keyword in [Golang](https://go.dev/) which triggers abandonment.
+
+#### Exception Handling - Part 3
+The `use` keyword is the _antro_ equivakent of [finally](https://www.w3schools.com/java/ref_keyword_finally.asp) keyword in most c-based programming languages like Java, C#, Python or PHP
 
 #### Invaraints
 The `invariants` keyword is used to setup [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) within a **local scope** (i.e. within functions). For the design of _antro_, i believe that [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) ought to be baked into the programming model (i.e. the programming language). In the future, i plan to setup [macros](https://doc.rust-lang.org/book/ch20-05-macros.html) just like they are used in [Rust](https://www.rust-lang.org/) to make the `invariants` block shorter and more compact. All function definitions MUST contain an `invariants` block else the _antro_ runtime will throw an error.
@@ -117,4 +120,5 @@ This is released under the MIT license.
 ## Design Inspiration
 
 Antro language design was inspired by Go, Rust, Python and JavaScript all combined.
+
 
