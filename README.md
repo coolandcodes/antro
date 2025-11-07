@@ -69,9 +69,9 @@ No yet determined.
 	  --# ... we call the invariants below 👇🏾👇🏾
 	  defer |: invariants {
 	    error_message_prefix + "calling `convertToFactor(..)`",
-		call: type(c, "number") |: or_throw $;
+		call: type(c, "number") -> eject_on $;
  	    error_message_prefix + "calling `convertToFactor(..)`",
-		call: type(d, "number") |: or_throw $;
+		call: type(d, "number") -> eject_on $;
 	  }
 
 	  retn c * d;
@@ -120,5 +120,6 @@ This is released under the MIT license.
 ## Design Inspiration
 
 Antro language design was inspired by Go, Rust, Python and JavaScript all combined.
+
 
 
