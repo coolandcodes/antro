@@ -36,10 +36,10 @@ No yet determined.
 	begin: (void)
 	  --# A novel programming language design for error handling (antro)
 	  --# This uses chained exceptions behind the scenes (within the runtime).
-	  var error = call: error("Program crashed") as MyErrorType;
-	  var ty = call: factorUpBy2(MAX) -> eject_on error << ["OtherErrorType"] -> use {
+	  var error = call: error("Program crashed");
+	  var ty = call: factorUpBy2(MAX) -> eject_on error -> use {
  	    if (error.isEjected) {
-	      call: output(f"{error.message} - {error.context.cause}")
+	      call: output(f"{error.message} - {error.context.cause}");
 	    }
 		
   	    print "A fatal error occurred";
@@ -67,7 +67,7 @@ No yet determined.
 
 	  --# before the `retn` statement below executes...
 	  --# ... we call the invariants below 👇🏾👇🏾
-	  defer |: invariants {
+	  defer -> invariants {
 	    error_message_prefix + "calling `convertToFactor(..)`",
 		call: type(c, "number") -> eject_on $;
  	    error_message_prefix + "calling `convertToFactor(..)`",
@@ -102,7 +102,7 @@ The `eject_on` keyword is the _antro_ equivalent of a [catch block](https://www.
 The  `panic_on` keyword is the _antro_ equivalent of [panic](https://gobyexample.com/panic) keyword in [Golang](https://go.dev/) which triggers abandonment.
 
 #### Exception Handling - Part 3
-The `use` keyword is the _antro_ equivakent of [finally](https://www.w3schools.com/java/ref_keyword_finally.asp) keyword in most c-based programming languages like Java, C#, Python or PHP
+The `use` keyword is the _antro_ equivalent of [finally](https://www.w3schools.com/java/ref_keyword_finally.asp) keyword in most c-based programming languages like Java, C#, Python or PHP
 
 #### Invaraints
 The `invariants` keyword is used to setup [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) within a **local scope** (i.e. within functions). For the design of _antro_, i believe that [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) ought to be baked into the programming model (i.e. the programming language). In the future, i plan to setup [macros](https://doc.rust-lang.org/book/ch20-05-macros.html) just like they are used in [Rust](https://www.rust-lang.org/) to make the `invariants` block shorter and more compact. All function definitions MUST contain an `invariants` block else the _antro_ runtime will throw an error.
@@ -120,6 +120,7 @@ This is released under the MIT license.
 ## Design Inspiration
 
 Antro language design was inspired by Go, Rust, Python and JavaScript all combined.
+
 
 
 
