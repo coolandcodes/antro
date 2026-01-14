@@ -38,15 +38,15 @@ No yet determined.
 	  --# This uses chained exceptions behind the scenes (within the runtime).
 	  var error = call: error("Program crashed");
 	  var ty = call: factorUpBy2(MAX) -> eject_on error -> use {
- 	    if (error.isEjected) {
+ 	    if (error) {
 	      call: output(f"{error.message} - {error.context.cause}");
 	    }
 		
-  	    print "A fatal error occurred";
+  	    call: print("A fatal error occurred");
 
 		panic_on error;
 	  };
-	  print ty;
+	  call: print(ty);
 	end;
 
 	def: factorUpBy2(x){
@@ -59,7 +59,7 @@ No yet determined.
 	   }
 
 	    y = call: convertToFactor(g, x);
-	    retn y;
+	    retn y
 	};
 
 	def: convertToFactor(c, d){
@@ -67,11 +67,13 @@ No yet determined.
 
 	  --# before the `retn` statement below executes...
 	  --# ... we call the invariants below 👇🏾👇🏾
+	  --# Antro builds invariants right into the...
+	  --# ... programming model of the language 💯
 	  defer -> invariants {
 	    error_message_prefix + "calling `convertToFactor(..)`",
-		call: type(c, "number") -> eject_on $;
+		call: type(c, "number") -> eject_on $$;
  	    error_message_prefix + "calling `convertToFactor(..)`",
-		call: type(d, "number") -> eject_on $;
+		call: type(d, "number") -> eject_on $$;
 	  }
 
 	  retn c * d;
@@ -84,13 +86,13 @@ Though the above program doesn't do anything useful for now (i.e. the parser as 
 ## About
 
 #### Module/File Imports
-The `require` keyword is used to require/import a module (folder of source files) or a single source file as an implicit dependency.
+The `require` keyword is used to require/import a module (i.e. a folder) or a single source (i.e. a file) as an implicit dependency. For example, `require: "sys.module";` is a statement that requires/imports a folder named **"sys.module"**. This folder must dircetly contain a **root.antro** file. The folder can also contain other files and folders. 
 
 #### Entry Point Definition
-The `begin` keyword is used to defined the entry point of the _antro_ program. It is truncated by the `end` keyword.
+The `begin` keyword is used to defined the [**entry point**](https://en.wikipedia.org/wiki/Entry_point) of the _antro_ program. It is truncated by the `end` keyword.
 
 #### Other Definitions
-The  `def`  keyword is used to define variables in the **global scope** (i.e. outside functions) that cannot be changed. When using `def`, it doesn't matter if the variable is defined in a **global scope** or **local scope**, it will always  be a **globally-scoped** variable. Also, variables created with the `def` keyword cannot have their values changed/mutated but only copied into a variable whose value can be changed/mutated.
+The  `def`  keyword is used to define variables in the **global scope** (i.e. outside functions) that cannot be changed. When using `def`, it doesn't matter if the variable is defined in a **global scope** or **local scope**, it will always be a **globally-scoped** variable. Also, variables created with the `def` keyword cannot have their values changed/mutated but only copied into a variable whose value can be changed/mutated. NOTE: Antro makes use of lexical scoping.
 
 #### Variable Creation
 The `var` keyword is used to define variables or functions within a **local scope** (i.e. within functions) only. When using the `var` keyword, it matters that it isn't used in a **global scope** (i.e. outside functions) else the _antro_ parser will throw a parse error. Also, variables created with the `var` keyword can have their value changed/mutated.
@@ -100,6 +102,11 @@ The `eject_on` keyword is the _antro_ equivalent of a [catch block](https://www.
 
 #### Exception Handling - Part 2
 The  `panic_on` keyword is the _antro_ equivalent of [panic](https://gobyexample.com/panic) keyword in [Golang](https://go.dev/) which triggers abandonment.
+
+NOTE: Antro only has 2 broad classifications for errors:
+
+- Recoverable Errors
+- Non-recoverable Errors
 
 #### Exception Handling - Part 3
 The `use` keyword is the _antro_ equivalent of [finally](https://www.w3schools.com/java/ref_keyword_finally.asp) keyword in most c-based programming languages like Java, C#, Python or PHP
@@ -120,6 +127,7 @@ This is released under the MIT license.
 ## Design Inspiration
 
 Antro language design was inspired by Go, Rust, Python and JavaScript all combined.
+
 
 
 
