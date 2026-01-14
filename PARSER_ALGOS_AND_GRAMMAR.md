@@ -507,7 +507,7 @@ consumeToken("identifier"); /* consume the next token retrieved and ensure it is
 Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EBNF
 ==================================================================================
 
-#### Use [this EBNF metasyntax defintion](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) to read the productions below
+#### Use [this EBNF meta-syntax defintion](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) to read the productions below
 
 (* The list of all valid tokens for Antro Language - A purely functional language without much OOP *)
 
@@ -545,11 +545,11 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - digit := "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 
-- number := digit, { "0" | digit } ;
+- number := ("0x" | "0" | digit), { "0" | digit } ;
 
 - letter := "a" | "b" | "c" | "d" | "e"  | "f" | "g"  | "h" | "i"  | "j" | "k"  | "l" | "m"  | "n" | "o"  | "p" | "q"  | "r" | "s"  | "t" | "u"  | "v" | "w"  | "x" | "y"  | "z" | "A"  | "B" | "C"  | "D" | "E"  | "F" | "G"  | "H" | "I"  | "J" | "K"  | "L" | "M"  | "N" | "O"  | "P" | "Q"  | "R" | "S"  | "T" | "U"  | "V" | "W"  | "X" | "Y"  | "Z" ;
 
-- letterordigit := digit | letter ;
+- letterordigit := "0" | digit | letter ;
 
 - plus := "+" ;
 
@@ -557,13 +557,11 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - multiply := "*" ;
 
-- divide := "/"
+- divide := "/" ;
 
-- modulo := "%"
+- modulo := "%" ;
 
 - assignmentoperator := [ minus | plus | multiply | divide | modulo ], "=" ;
-
-- naturalnumber 
 
 - int := "0" | [ minus ], number ;
 
@@ -619,11 +617,11 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - throw := "throw" ;
 
-- othrow := "or_throw" ;
+- oeject := "eject_on" ;
 
-- opanic := "or_panic" ;
+- opanic := "panic_on" ;
 
-- hook := "hook" ;
+- hook := "use" ;
 
 - call := "call" ;
 
@@ -645,23 +643,27 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - logicalunaryoperator := "!" ;
 
+- stringformatprefix := "f" ;
+
 - logicalbinaryoperators := pipe,  pipe | and, and ;
 
 - comparisonoperator :=  gt, [ assignmentoperator ] | lt, [ assignmentoperator ] ;
 
-- relationaloperator := comparisonoperator | ( assignmentoperator | logicalunaryoperator ), assignmentoperator ;
+- relationaloperator := comparisonoperator | ( assignmentoperator | logicalunaryoperator ), assignmentoperator | assignmentoperator, assignmentoperator, assignmentoperator ;
 
 - ace := "@" ;
 
 - boolean := "true" | "false" ;
 
-- link := "|:" ;
+- link := "->" ;
 
 - comma := "," ;
 
-- allchars := [ whitespace | letterordigit | pipe | and | cursor | terminator | hash | pound | dquote | squote | logicalunaryoperator | relationaloperator | retn | ace | multiply | divide | modulo | comma | uscore | plus | minus | assignmentoperator | openbracket | openbrace | closebracket | closebrace | dot ]
+- allchars := whitespace | [ letterordigit | pipe | and | cursor | terminator | hash | pound | dquote | squote | logicalunaryoperator | relationaloperator | retn | ace | multiply | divide | modulo | comma | uscore | plus | minus | assignmentoperator | openbracket | openbrace | closebracket | closebrace | dot ]
 
-- string := dquote, { allchars - dquote },  dquote | squote, { allchars - squote }, squote
+- string := dquote, { allchars - dquote }, dquote | squote, { allchars - squote }, squote ;
+
+- formattedstring := stringformatprefix, string ;
 
 - identifier := ( pound | letter ), {  letterordigit | uscore  } ;
 
@@ -673,23 +675,43 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 =====================================================================================
 (* This is the list of all production rules *)
 
-- literal :=  string | int | float | boolean | null;
+- numericliteral := int | float ;
 
-- factor :=  identifier | literal ;
+- stringliteral := string | formattedstring ;
 
-- term := factor, { ( bitwise | arithmeticbinaryoperator ), factor } | arithmeticunaryoperator, identifier | identifier, arithmeticunaryoperator ;
+- flagliteral := boolean ;
 
-- airthmeticexpression := term, { ( arithmeticbinaryoperator | relationaloperator ), term } | openbracket, airthmeticexpression, closebracket ;
+- factor :=  identifier | numericliteral ;
 
-- array := ace, openbrace, [ airthmeticexpression | array ], { comma, airthmeticexpression | array }, closebrace ;
+- stringedterm := stringliteral, { plus, stringliteral } ;
 
-- logicoperationexpression := airthmeticexpression, { logicalbinaryoperator, airthmeticexpression } ;
+- flaggedterm := flagliteral, { bitwise, flagliteral } ;
+
+- factoredterm := factor, { ( bitwise | arithmeticbinaryoperator ), factor } ;
+
+- operandterm := flaggedterm | factoredterm | stringedterm | null ;
+
+- symbolterm := (operandterm - stringedterm) | arithmeticunaryoperator, identifier | identifier, arithmeticunaryoperator ;
+
+- arithmeticexpression := symbolterm, { arithmeticbinaryoperator, symbolterm } | identifier, assignmentoperator, arithmeticexpression ; (* This production rule is recursive *)
+
+- relationalexpression := operandterm, { relationaloperator, operandterm } | identifier, assignmentoperator, relationalexpression ; (* This production rule is recursive *)
+
+- airthmeticexpressionsgroup :=  openbracket, airthmeticexpression, arithmeticbinaryoperator, { airthmeticexpression | airthmeticexpressiongroup }, closebracket ; (* This production rule is recursive *)
+
+- relationalexpressiongroup := openbracket, relationalexpression, relationaloperator, { relationalexpression | relationalexpressiongroup }, closebracket ; (* This production rule is recursive *)
+
+- expressionsgroup := airthmeticexpressionsgroup | relationalexpressiongroup ;
+
+- array := ace, openbrace, [ expressionsgroup | array ], { comma, expressionsgroup | array }, closebrace ;
+
+- logicoperationexpression := expressionsgroup, { logicalbinaryoperator, expressionsgroup } ;
 
 - callexpression := call, cursor, identifier, openbracket, logicexpressionlist, closebracket ;
 
-- trialexpression := [ string ], callexpression, ( { link, (othrow | opanic), (identifier | "$") }, { link, hook, scopeblock } ) ;
+- trialexpression := [ stringedterm, comma ], callexpression, ( { link, (oeject | opanic), (identifier | pound, pound) }, { link, hook, scopeblock } ) ;
                     
-- logicexpression :=  term | [ logicalunaryoperator ], ( callexpression | logicoperationexpression ) | trialexpression ;
+- logicexpression :=  operandterm | [ logicalunaryoperator ], ( callexpression | logicoperationexpression ) | trialexpression ;
 
 - logicexpressionlist := logicexpression, { comma, logicexpression } ;
 
@@ -697,23 +719,23 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - declexpression :=  declsolution, { assignmentoperator, logicexpression } ;
 
-- declexpressionlist := declexpression, { comma, declexpression }
+- declexpressionlist := declexpression, { comma, declexpression } ;
 
 - declstatement := { var, declexpressionlist }, terminator ;
 
 - reqrstatement := require, cursor, string, terminator ;
 
-- retnstatement := retn, [ logicexpression ], terminator ;
+- retnstatement := retn, [ logicexpression ], [ terminator ] ; (* if we put `logicexpressionlist` instead of `logicexpresion`, we risk making antro an multi-value return language *)
 
 - callstatement := trialexpression, terminator ;
 
-- fdefnbody := openbracket, (void | declexpressionlist), closebracket, scopeblock;
+- fdefnbody := openbracket, (void | declexpressionlist), closebracket, scopeblock ;
 
 - globalliteraldefnstatement := def, cursor, identifier, literal, terminator ;
 
 - globalfunctiondefnstatement := def, cursor, identifier, fdefnbody, terminator ;
 
-- localfunctiondefnstatement := var, identifier, fdefnbody, [ terminator ];
+- localfunctiondefnstatement := var, identifier, fdefnbody, [ terminator ] ;
 
 - defnstatement := globalliteraldefnstatement | globalfunctiondefnstatement ;
 
@@ -737,7 +759,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - invariantsblock := link, invariants, openbrace, { trialexpression }, closebrace, [ terminator ] ;
 
-- deferstatement := defer, declexpressionlist | invariantsblock;
+- deferstatement := defer, declexpressionlist | invariantsblock ;
 
 - branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement ;
 
@@ -756,6 +778,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 - mainblock := begin, cursor, openbracket, (void | declexpressionlist), closebracket, { blockstatement }, end, [ terminator ] ;
 
 - programblock := { modulestatement }, { reqrstatement }, { defnstatement }, [ mainblock ], { defnstatement }, [ exportstatement ], EOF ;
+
 
 
 
