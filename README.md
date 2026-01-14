@@ -8,7 +8,7 @@ This is a toy parser for an experimental programming language called _antro scri
 
 -  **Tokenizer** (lexical analysis)
 -  **Parser**  (semantic analysis)
--  **Joiner** (an atomic message queue for passing tokens from the **Tokenizer** to the **Parser** with a [lookahead of 1](https://www.quora.com/What-is-a-%E2%80%9Clookahead-operator%E2%80%9D-in-compiler-designs))
+-  **Executor** (a concurrent thread-safe queue for passing tokens from the **Tokenizer** to the **Parser** with a [lookahead of 1](https://www.quora.com/What-is-a-%E2%80%9Clookahead-operator%E2%80%9D-in-compiler-designs))
 
 ## Backend Design
 
@@ -127,6 +127,7 @@ This is released under the MIT license.
 ## Design Inspiration
 
 Antro language design was inspired by Go, Rust, Python and JavaScript all combined.
+
 
 
 
