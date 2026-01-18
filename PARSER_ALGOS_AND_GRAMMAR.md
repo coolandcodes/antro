@@ -545,7 +545,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - digit := "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 
-- number := ("0x" | "0" | digit), { "0" | digit } ;
+- number := [ "0x" ], ("0" | digit), { "0" | digit } ;
 
 - letter := "a" | "b" | "c" | "d" | "e"  | "f" | "g"  | "h" | "i"  | "j" | "k"  | "l" | "m"  | "n" | "o"  | "p" | "q"  | "r" | "s"  | "t" | "u"  | "v" | "w"  | "x" | "y"  | "z" | "A"  | "B" | "C"  | "D" | "E"  | "F" | "G"  | "H" | "I"  | "J" | "K"  | "L" | "M"  | "N" | "O"  | "P" | "Q"  | "R" | "S"  | "T" | "U"  | "V" | "W"  | "X" | "Y"  | "Z" ;
 
@@ -563,9 +563,9 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - assignmentoperator := [ minus | plus | multiply | divide | modulo ], "=" ;
 
-- int := "0" | [ minus ], number ;
+- int := [ minus ], number ;
 
-- float := int, dot, number, [ ( "E" | "e" ), int ] ;
+- float := [ "0" ] | { digit }, dot, ("0" | digit), { "0" | digit }, [ ( "E" | "e" ), int ] ;
 
 - pipe := "|" ;
 
@@ -585,7 +585,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - null := "null" ;
 
-- type := ".int" | ".float" | ".string" | ".array" | ".boolean" | ".nil" ;
+- type := ".int" | ".flt" | ".str" | ".arr" | ".bool" | ".nil" ;
 
 - defer := "defer" ;
 
@@ -649,7 +649,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - comparisonoperator :=  gt, [ assignmentoperator ] | lt, [ assignmentoperator ] ;
 
-- relationaloperator := comparisonoperator | ( assignmentoperator | logicalunaryoperator ), assignmentoperator | assignmentoperator, assignmentoperator, assignmentoperator ;
+- relationaloperator := comparisonoperator | ( assignmentoperator | logicalunaryoperator ), assignmentoperator, [ assignmentoperator ] ;
 
 - ace := "@" ;
 
@@ -778,6 +778,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 - mainblock := begin, cursor, openbracket, (void | declexpressionlist), closebracket, { blockstatement }, end, [ terminator ] ;
 
 - programblock := { modulestatement }, { reqrstatement }, { defnstatement }, [ mainblock ], { defnstatement }, [ exportstatement ], EOF ;
+
 
 
 
