@@ -56,7 +56,7 @@ public enum TokenType {
     AT
 }
 
-public class Tokennizer {
+public class Tokenizer {
 
     /* ============================
        Input handling
@@ -64,6 +64,7 @@ public class Tokennizer {
 
     private final BufferedReader reader;
     private final boolean fromString;
+    private final boolean multiCharScanActive;
 
     private String buffer = "";
     private int bufferPos = 0;
@@ -130,11 +131,13 @@ public class Tokennizer {
     public Tokenizer(String source) {
         this.reader = new BufferedReader(new java.io.StringReader(source));
         this.fromString = true;
+        this.multiCharScanActive = false;
     }
 
     public Tokenizer(BufferedReader reader) {
         this.reader = reader;
         this.fromString = false;
+        this.multiCharScanActive = false;
     }
 
     /* ============================
@@ -145,14 +148,11 @@ public class Tokennizer {
         try {
             while (true) {
                 char c = advance();
-                if (!isAtEnd(c)) {
-                  if (reader.) {
-
-                  }
-                } else {
+                if (isAtEnd(c)) {
                   break;
+                } else {
+                  scanToken(c);
                 }
-                scanToken(c);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -181,6 +181,21 @@ public class Tokennizer {
         return tokens.get(tokenCursor++);
     }
 
+    private char readUnicodeEscape() throws IOException {
+        int value = 0;
+    
+        for (int charCount = 0; charCount < 4; charCount++) {
+            char c = advance();
+            if (!isHexDigit(c)) {
+                error("Invalid Unicode escape sequence");
+            }
+            value = (value << 4) + Character.digit(c, 16);
+        }
+    
+        return (char) value;
+    }
+
+
     /* ============================
        Core scanning
        ============================ */
@@ -194,32 +209,42 @@ public class Tokennizer {
 
         // Comment
         if (c == '#') {
+            multiCharScanActive = true;
             while (peek() != '\n' && peek() != '\0') advance();
+            multiCharScanActive = false;
             return;
         }
 
         // Strings
         if (c == '"' || c == '\'') {
+            multiCharScanActive = true;
             readString(c, false, startColumn);
+            multiCharScanActive = false;
             return;
         }
 
         // Formatted string
         if (c == 'f' && (peek() == '"' || peek() == '\'')) {
             char quote = advance();
+            multiCharScanActive = true;
             readString(quote, true, startColumn);
+            multiCharScanActive = false;
             return;
         }
 
         // Numbers
         if (isDigit(c) || (c == '-' && isDigit(peek()))) {
+            multiCharScanActive = true;
             readNumber(c, startColumn);
+            multiCharScanActive = false;
             return;
         }
 
         // Identifiers / keywords
         if (isIdentifierStart(c)) {
+            multiCharScanActive = true;
             readIdentifier(c, startColumn);
+            multiCharScanActive = false;
             return;
         }
 
@@ -315,26 +340,89 @@ public class Tokennizer {
         emit(new Token(formatted ? TokenType.FORMATTED_STRING : TokenType.STRING, sb.toString(), line, col));
     }
 
+    private void readString(char quote, boolean formatted, int col) throws IOException {
+        StringBuilder sb = new StringBuilder();
+    
+        sb.append(formatted ? "f" + quote : quote);
+    
+        while (peek() != quote) {
+            char c = advance();
+    
+            if (isAtEnd(c)) {
+              error("Unterminated string");
+            }
+    
+            if (c == '\\') {
+                char esc = advance();
+                switch (esc) {
+    
+                    case 'n'  -> sb.append('\n');
+                    case 't'  -> sb.append('\t');
+                    case 'r'  -> sb.append('\r');
+                    case 'b'  -> sb.append('\b');
+                    case 'f'  -> sb.append('\f');
+                    case '\\' -> sb.append('\\');
+                    case '\'' -> sb.append('\'');
+                    case '"'  -> sb.append('"');
+    
+                    case 'u' -> {
+                        sb.append(readUnicodeEscape());
+                    }
+    
+                    default -> error("Invalid escape sequence: \\" + esc);
+                }
+            } else {
+                sb.append(c);
+            }
+        }
+    
+        sb.append(advance()); // closing quote
+        emit(new Token(
+            formatted ? TokenType.FORMATTED_STRING : TokenType.STRING,
+            sb.toString(),
+            line,
+            col
+        ));
+    }
+
     /* ============================
        Helpers
        ============================ */
 
     private char advance() throws IOException {
+        boolean READER_EOF = false;
+        
         if (bufferPos >= buffer.length()) {
-            buffer = reader.readLine();
-            if (buffer == null) {
-              bufferPos = 0;
-              return '\0';
-            }
+          buffer = reader.readLine();
+            
+          if (buffer == null) {
+            READER_EOF = true;
+          } else {
             buffer += "\n";
-            bufferPos = 0;
+          }
+          bufferPos = 0;
         }
-        char c = buffer.charAt(bufferPos++);
-        column++;
-        if (c == '\n') {
+        
+        char c = " ";
+
+        if (READER_EOF) {
+          c = '\0';
+        } else {
+          c = buffer.charAt(bufferPos++);
+          column++;
+        }
+        
+        if (isNewLine(c)) {
             line++;
             column = 0;
         }
+
+        if (isAtEnd(c)) {
+          if (multiCharScanActive) {
+            error("Incomplete character stream");
+          }
+        }
+        
         return c;
     }
 
@@ -353,6 +441,10 @@ public class Tokennizer {
 
     private boolean isAtEnd(char nextOnAdvance) {
         return nextOnAdvance == '\0';
+    }
+
+    private boolean isNewLine(char nextOnAdvance) {
+        return nextOnAdvance == '\n';
     }
 
     private void emit(Token token) {
