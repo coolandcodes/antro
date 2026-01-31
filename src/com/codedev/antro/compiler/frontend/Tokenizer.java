@@ -327,22 +327,9 @@ public class Tokenizer {
         emit(new Token(isFloat ? TokenType.FLOAT_LITERAL : TokenType.INT_LITERAL, sb.toString(), line, col));
     }
 
-    private void readString(char quote, boolean formatted, int col) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        sb.append(formatted ? "f" + quote : quote);
-
-        while (peek() != quote) {
-            if (peek() == '\0') error("Unterminated string");
-            sb.append(advance());
-        }
-
-        sb.append(advance()); // closing quote
-        emit(new Token(formatted ? TokenType.FORMATTED_STRING : TokenType.STRING, sb.toString(), line, col));
-    }
 
     private void readString(char quote, boolean formatted, int col) throws IOException {
         StringBuilder sb = new StringBuilder();
-    
         sb.append(formatted ? "f" + quote : quote);
     
         while (peek() != quote) {
