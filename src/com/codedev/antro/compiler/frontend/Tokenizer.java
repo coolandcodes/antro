@@ -267,19 +267,19 @@ public class Tokenizer {
             case '!': emit(simple(c, match('=') ? TokenType.NOT_EQUAL : TokenType.LOGICAL_NOT)); break;
             case '=': emit(simple(c, TokenType.ASSIGN)); break;
 
-            case '(' -> emit(simple(c, TokenType.LPAREN));
-            case ')' -> emit(simple(c, TokenType.RPAREN));
-            case '{' -> emit(simple(c, TokenType.LBRACE));
-            case '}' -> emit(simple(c, TokenType.RBRACE));
-            case '[' -> emit(simple(c, TokenType.LBRACKET));
-            case ']' -> emit(simple(c, TokenType.RBRACKET));
-            case ',' -> emit(simple(c, TokenType.COMMA));
-            case '.' -> emit(simple(c, TokenType.DOT));
-            case ':' -> emit(simple(c, TokenType.COLON));
-            case ';' -> emit(simple(c, TokenType.SEMICOLON));
-            case '@' -> emit(simple(c, TokenType.AT));
+            case '(': emit(simple(c, TokenType.LPAREN)); break;
+            case ')': emit(simple(c, TokenType.RPAREN)); break;
+            case '{': emit(simple(c, TokenType.LBRACE)); break;
+            case '}': emit(simple(c, TokenType.RBRACE)); break;
+            case '[': emit(simple(c, TokenType.LBRACKET)); break;
+            case ']': emit(simple(c, TokenType.RBRACKET)); break;
+            case ',': emit(simple(c, TokenType.COMMA)); break;
+            case '.': emit(simple(c, TokenType.DOT)); break;
+            case ':': emit(simple(c, TokenType.COLON)); break;
+            case ';': emit(simple(c, TokenType.SEMICOLON)); break;
+            case '@': emit(simple(c, TokenType.AT)); break;
 
-            default -> error("Unexpected character: " + c);
+            default: error("Unexpected character: " + c); break;
         }
     }
 
