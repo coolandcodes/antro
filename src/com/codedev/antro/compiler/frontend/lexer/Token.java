@@ -1,4 +1,11 @@
-package com.codedev.antro.compiler.frontend;
+package com.codedev.antro.compiler.frontend.lexer;
+
+/*
+ * Antro Compiler Project
+ * https://www.coolcodes.io/antro
+ * Copyright (c) 2014-2026 Ifeora Okechukwu
+ * Licensed under the MIT license. See 'LICENSE' for details.
+ */
 
 public class Token implements Cloneable {
 
@@ -35,7 +42,8 @@ public class Token implements Cloneable {
         try {
             return (Token) super.clone();
         } catch (CloneNotSupportedException e) {
-            throw new AssertionError(e);
+            //throw new AssertionError(e);
+            return this;
         }
     }
 
@@ -43,7 +51,7 @@ public class Token implements Cloneable {
     public String toString() {
         return "Token kind: " + this.type +
                ", Token image: '" + this.lexeme +
-               "' at line: " + this.line +
-               ", column: " + this.column;
+               "'-> at line: " + this.line +
+               "-> on column: " + this.column;
     }
 }

@@ -11,4 +11,14 @@ public abstract class Expr {
     }
 
     public abstract <R> R accept(Visitor<R> visitor);
+
+    @Override
+    public Expr clone() {
+        try {
+            return (Expr) super.clone();
+        } catch (CloneNotSupportedException e) {
+            //throw new AssertionError(e);
+            return this;
+        }
+    }
 }

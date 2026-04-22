@@ -1,69 +1,35 @@
 package com.codedev.antro.compiler.frontend;
 
+import java.io.StringReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 
-import com.codedev.antro.compiler.frontend.Token;
+import com.codedev.antro.compiler.frontend.lexer.Token;
+import com.codedev.antro.compiler.frontend.lexer.TokenType;
+import com.codedev.antro.compiler.frontend.lexer.LexemeQueue;
 
-public enum TokenType {
+import com.codedev.antro.compiler.frontend.helpers.NoticeConsoleLogger;
+import com.codedev.antro.compiler.frontend.contracts.concerns.LexisException;
 
-    // Special
-    EOF,
+/*
+ * Antro Compiler Project
+ * https://www.coolcodes.io/antro
+ * Copyright (c) 2014-2026 Ifeora Okechukwu
+ * Licensed under the MIT license. See 'LICENSE' for details.
+ */
 
-    // Identifiers & literals
-    IDENTIFIER,
-    INT_LITERAL,
-    FLOAT_LITERAL,
-    STRING,
-    FORMATTED_STRING,
-    BOOLEAN,
-    NULL,
-
-    // Keywords
-    IF, ELSE, ELIF, FOR, WHILE, DO, BEGIN, END,
-    DEF, VAR, RETURN, MAIN, VOID,
-    SWITCH, CASE, DEFAULT,
-    BREAK, CONTINUE,
-    EXPORT, REQUIRE, DEFER,
-    THROW, PANIC_ON, EJECT_ON,
-    USE, CALL,
-    NEW, INVARIANTS,
-
-    // Types
-    TYPE_INT, TYPE_FLT, TYPE_STR, TYPE_ARR, TYPE_BOOL, TYPE_NIL,
-
-    // Operators
-    PLUS, MINUS, STAR, SLASH, MODULO,
-    INCREMENT, DECREMENT,
-    ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN, STAR_ASSIGN, SLASH_ASSIGN, MOD_ASSIGN,
-    EQUAL, NOT_EQUAL,
-    GREATER, GREATER_EQUAL,
-    LESS, LESS_EQUAL,
-    LOGICAL_AND, LOGICAL_OR, LOGICAL_NOT,
-    BIT_AND, BIT_OR, SHIFT_LEFT, SHIFT_RIGHT,
-    ARROW,
-
-    // Delimiters
-    LPAREN, RPAREN,
-    LBRACE, RBRACE,
-    LBRACKET, RBRACKET,
-    COMMA, DOT, COLON, SEMICOLON,
-    AT
-}
-
+/**
+ * The core logic for turning an file/string bytes stream or bufferred reader into a stream of tokens.
+ */
 public class Tokenizer {
 
     /* ============================
        Input handling
        ============================ */
 
-    private final BufferedReader reader;
-    private final boolean fromString;
+    private final BufferedReader reader; /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
     private final boolean multiCharScanActive;
 
     private String buffer = "";
@@ -76,14 +42,8 @@ public class Tokenizer {
        Output
        ============================ */
 
-    private final List<Token> tokens = new ArrayList<>();
-    private final LinkedBlockingQueue<Token> tokenQueue = new LinkedBlockingQueue<>();
+    private final LexemeQueue tokenQueue;
 
-    /* ============================
-       Lookahead support
-       ============================ */
-
-    private int tokenCursor = 0;
 
     /* ============================
        Keywords
@@ -128,15 +88,15 @@ public class Tokenizer {
        Constructors
        ============================ */
 
-    public Tokenizer(String source) {
-        this.reader = new BufferedReader(new java.io.StringReader(source));
-        this.fromString = true;
+    public Tokenizer(String source, LexemeQueue tokenQueue) {
+        this.reader = new BufferedReader(new StringReader(source)); /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
+        this.tokenQueue = tokenQueue;
         this.multiCharScanActive = false;
     }
 
-    public Tokenizer(BufferedReader reader) {
-        this.reader = reader;
-        this.fromString = false;
+    public Tokenizer(BufferedReader reader, LexemeQueue tokenQueue) {
+        this.reader = reader; /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
+        this.tokenQueue = tokenQueue;
         this.multiCharScanActive = false;
     }
 
@@ -144,41 +104,23 @@ public class Tokenizer {
        Public API
        ============================ */
 
-    public void tokenize() {
+    public void tokenize() throws LexisException {
         try {
             while (true) {
                 char c = advance();
                 if (isAtEnd(c)) {
                   break;
-                } else {
-                  scanToken(c);
                 }
+                scanToken(c);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            LexisException lexisEx = new LexisException("lexical scan of source failed");
+            // Wrap the original IOException
+            lexisEx.initCause(e); 
+            throw lexisEx;
         }
 
         emit(new Token(TokenType.EOF, "\0", line, column));
-    }
-
-    public List<Token> getTokens() {
-        return tokens;
-    }
-
-    public LinkedBlockingQueue<Token> getTokenQueue() {
-        return tokenQueue;
-    }
-
-    public Token peek() {
-        return tokenCursor < tokens.size() ? tokens.get(tokenCursor) : null;
-    }
-
-    public Token peekNext() {
-        return (tokenCursor + 1) < tokens.size() ? tokens.get(tokenCursor + 1) : null;
-    }
-
-    public Token consume() {
-        return tokens.get(tokenCursor++);
     }
 
     private char readUnicodeEscape() throws IOException {
@@ -200,17 +142,34 @@ public class Tokenizer {
        Core scanning
        ============================ */
 
-    private void scanToken(char c) throws IOException {
+    private void scanToken(char c) throws Exception {
 
         int startColumn = column;
 
         // Whitespace
-        if (isWhitespace(c)) return;
+        if (isWhitespace(c)) {
+            if (multiCharScanActive) {
+                multiCharScanActive = false;
+            }
+            return;
+        }
 
         // Comment
-        if (c == '#') {
+        if (isCommentStart(c)) {
             multiCharScanActive = true;
-            while (peek() != '\n' && peek() != '\0') advance();
+            while (!isAtEnd(peek())) {
+                if (isCommentEnd(c, peek())) {
+                    break;
+                }
+                advance();
+            }
+
+            if (c == '/' && isAtEnd(peek())) {
+                NoticeConsoleLogger.logMessage(
+                    "TOKENIZER",
+                    "unterminated comment found at the end of source on line: " + line
+                );
+            }
             multiCharScanActive = false;
             return;
         }
@@ -242,9 +201,7 @@ public class Tokenizer {
 
         // Identifiers / keywords
         if (isIdentifierStart(c)) {
-            multiCharScanActive = true;
             readIdentifier(c, startColumn);
-            multiCharScanActive = false;
             return;
         }
 
@@ -279,7 +236,7 @@ public class Tokenizer {
             case ';': emit(simple(c, TokenType.SEMICOLON)); break;
             case '@': emit(simple(c, TokenType.AT)); break;
 
-            default: error("Unexpected character: " + c); break;
+            default: error("Unexpected character found: '" + c + "'"); break;
         }
     }
 
@@ -287,16 +244,40 @@ public class Tokenizer {
        Readers
        ============================ */
 
-    private void readIdentifier(char first, int col) throws IOException {
-        StringBuilder sb = new StringBuilder().append(first);
+    private void readIdentifier(char first, int col) throws Exception {
+        multiCharScanActive = true;
+        StringBuilder sb = new StringBuilder();
+
+        if (first !== null) {
+            sb.append(first);
+        } else {
+            NullPointerException npEx = new NullPointerException(
+                "reading first character (as null) of <identifier> on line: " + line
+            );
+            error("invalid <identifier> found", npEx);
+        }
+
         while (isIdentifierPart(peek())) sb.append(advance());
 
         String text = sb.toString();
+
+        char currCharacter = peek();
+        if (isWhitespace(currCharacter) || isCommentStart(currCharacter)) {
+            multiCharScanActive = false;
+        } else {
+            NoticeConsoleLogger.logMessage(
+                "TOKENIZER",
+                "extra character: '"+currCharacter+"' found close to identifier=['"+text+"']"
+            );
+        }
+
+        
         TokenType type = KEYWORDS.getOrDefault(text, TokenType.IDENTIFIER);
         emit(new Token(type, text, line, col));
     }
 
     private void readNumber(char first, int col) throws IOException {
+        multiCharScanActive = true;
         StringBuilder sb = new StringBuilder().append(first);
 
         boolean isHex = false;
@@ -306,13 +287,24 @@ public class Tokenizer {
             sb.append(advance());
             isHex = true;
             while (isHexDigit(peek())) sb.append(advance());
+            
+            char currCharacter = peek();
+            if (isWhitespace(currCharacter) || isCommentStart(currCharacter)) {
+                multiCharScanActive = false;
+            }
+
             emit(new Token(TokenType.INT_LITERAL, sb.toString(), line, col));
             return;
         }
 
         while (isDigit(peek())) sb.append(advance());
 
-        if (peek() == '.') {
+        char currCharacter = peek();
+        if (isWhitespace(currCharacter) || isCommentStart(currCharacter)) {
+            multiCharScanActive = false;
+        }
+
+        if (currCharacter == '.') {
             isFloat = true;
             sb.append(advance());
             while (isDigit(peek())) sb.append(advance());
@@ -328,7 +320,7 @@ public class Tokenizer {
     }
 
 
-    private void readString(char quote, boolean formatted, int col) throws IOException {
+    private void readString(char quote, boolean formatted, int col) throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append(formatted ? "f" + quote : quote);
     
@@ -336,7 +328,7 @@ public class Tokenizer {
             char c = advance();
     
             if (isAtEnd(c)) {
-              error("Unterminated string");
+              error("Unterminated string literal found");
             }
     
             if (c == '\\') {
@@ -376,51 +368,62 @@ public class Tokenizer {
        Helpers
        ============================ */
 
-    private char advance() throws IOException {
+    private char advance() throws Exception {
         boolean READER_EOF = false;
-        
-        if (bufferPos >= buffer.length()) {
-          buffer = reader.readLine();
-            
-          if (buffer == null) {
-            READER_EOF = true;
-          } else {
-            buffer += "\n";
-          }
-          bufferPos = 0;
-        }
-        
         char c = " ";
+        
+        try {
+            if (bufferPos >= buffer.length()) {
+                buffer = reader.readLine();
+                
+                if (buffer == null) {
+                    READER_EOF = true;
+                } else {
+                    buffer += "\n";
+                }
+                bufferPos = 0;
+            }
 
-        if (READER_EOF) {
-          c = '\0';
-        } else {
-          c = buffer.charAt(bufferPos++);
-          column++;
+            if (READER_EOF) {
+                c = '\0';
+            } else {
+                c = buffer.charAt(bufferPos++);
+                column++;
+            }
+        } catch (IOException ex) {
+            Exception ex = new Exception("could not advance to next character in stream");
+            ex.initCause(ex);
+            throw ex;
         }
         
-        if (isNewLine(c)) {
+        if (isAtNewLine(c)) {
             line++;
             column = 0;
-        }
-
-        if (isAtEnd(c)) {
-          if (multiCharScanActive) {
-            error("Incomplete character stream");
-          }
         }
         
         return c;
     }
 
-    private char peek() throws IOException {
+    private char peek() throws Exception {
         char c = advance();
         bufferPos--;
         column--;
         return c;
     }
 
-    private boolean match(char expected) throws IOException {
+    private char peek(boolean setBufferPos_IncrByOne) throws Exception {
+        if (!setBufferPos_IncrByOne) {
+            return peek();
+        }
+
+        char c = advance();
+        c = advance();
+        bufferPos-=2;
+        column-=2;
+        return c;
+    }
+
+    private boolean match(char expected) throws Exception {
         if (peek() != expected) return false;
         advance();
         return true;
@@ -430,13 +433,20 @@ public class Tokenizer {
         return nextOnAdvance == '\0';
     }
 
-    private boolean isNewLine(char nextOnAdvance) {
+    private boolean isAtNewLine(char nextOnAdvance) {
         return nextOnAdvance == '\n';
     }
 
     private void emit(Token token) {
-        tokens.add(token);
-        tokenQueue.offer(token);
+        try {
+            tokenQueue.pushNextToken(token);
+        } catch (InterruptedException ex) {
+            NoticeConsoleLogger.logMessage(
+                "TOKENIZER",
+                "thread running interrupted with message: " + ex.getMessage()
+            );
+            Thread.currentThread().interrupt(); // Restore interrupted status
+        }
     }
 
     private Token simple(char c, TokenType type) {
@@ -455,6 +465,32 @@ public class Tokenizer {
         return isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     }
 
+    private boolean isCommentStart(char c) throws Exception {
+        if (c == "#") {
+            return true;
+        }
+
+        if (c == "/") {
+            characterAhead = peek(true);
+            return characterAhead == "*";
+        }
+    }
+
+    private boolean isCommentEnd(char start, char curr) throws IOException {
+        if (start == '#') {
+            return isAtNewLine(curr);
+        } else if (start == "/") {
+            characterAhead = peek(true);
+            return curr == "*" && characterAhead == "/";
+        }
+
+        NoticeConsoleLogger.logMessage(
+            "TOKENIZER",
+            "plausible unexpected character: '"+start+"' at the start of comment"
+        );
+        return false;
+    }
+
     private boolean isIdentifierStart(char c) {
         return Character.isLetter(c) || c == '$';
     }
@@ -464,6 +500,10 @@ public class Tokenizer {
     }
 
     private void error(String msg) {
-        throw new RuntimeException("[Line " + line + ", Col " + column + "] " + msg);
+        throw new Exception("[Line " + line + ", Col " + column + "]; " + msg);
+    }
+
+    private void error(String msg, RuntimeException ex) {
+        throw new Exception("[Line " + line + ", Col " + column + "]; " + msg, ex);
     }
 }

@@ -1,10 +1,9 @@
 package demo;
 
-import com.codedev.antro.compiler.tokenizer.*;
+import com.codedev.antro.compiler.frontend.*;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.FileNotFoundException;
+import java.io.BufferedReader;
 
 
  /**
@@ -15,30 +14,41 @@ import java.io.FileNotFoundException;
 
  
 public class TokenizerDemo {
-    
        
-         public static void main(String[] args) throws IOException, IllegalArgumentException, FileNotFoundException {
+     public static void main(String[] args) {
+
+          LexemeQueue sharedQueue = new LexemeQueue();
+
+          Thread spawn = new Thread(() -> {
+               try {
+                    while (sharedQueue.hasMoreTokens()) {
+                         Token t = sharedQueue.pullNextToken();
+                         System.out.println("Token image: " + t.getImage() + "; Token line number: " + t.getLineNumber());
+                    }
+               } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+               }
+          });
       
-                        try{
+          try {
+
+               BufferedReader reader = new BufferedReader(new File("../../basic_program.antro"));
              
-                         Tokenizer tokenizer = new Tokenizer(new File("../../basic_program.antro"));
+               Tokenizer tokenizer = new Tokenizer(reader, sharedQueue);
              
-                         System.out.println("Number of Tokens found: "+tokenizer.getTokenCount());
-           
-             
-                          while(tokenizer.hasMoreTokens()){
-                  
-                               System.out.println(tok.nextToken());
-             
-                          }
+               tokenizer.tokenize();
           
-                     }catch(Tokenizer.InvalidTokenCharException e){
+          } catch (LexisException e) {
              
-                               System.err.println(e.getMessage());
+               System.err.println(e.getMessage());
           
-                     }
+          }
+
+          spawn.start();
+
+          spawn.join();
           
      
-          }
+     }
   
 }
