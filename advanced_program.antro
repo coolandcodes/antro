@@ -24,7 +24,7 @@ end;
 #   }
 # }
 
-method: convertToFactor (boolean c, int d) {
+def: convertToFactor (boolean c, int d) {
     var int gb = 23, int kl = 0;
 
     for(var i = 0; i < gb; i = i + 1){
@@ -36,7 +36,7 @@ method: convertToFactor (boolean c, int d) {
     retn kl;
 }
 
-method: factorUpBy2 (int x) {
+def: factorUpBy2 (int x) {
           
     var y, boolean g = true;
           
@@ -51,16 +51,16 @@ method: factorUpBy2 (int x) {
     retn y;
 }
 
-method: getString (int num) {
+def: getString (int num) {
 
    var array = @{"zero", "one", "two", "three"};
    var str = "";
    
    for(var j = 0; j <= num; ++j){
-         if(j === num){
+        if(j === num){
                str = array[j];
                break;
-         }
+        }
    }
    
    retn str;

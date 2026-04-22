@@ -2,7 +2,7 @@ package demo;
 
 import com.codedev.antro.compiler.frontend.*;
 
-import java.io.File;
+import java.io.FileReader;
 import java.io.BufferedReader;
 
 
@@ -32,7 +32,7 @@ public class TokenizerDemo {
       
           try {
 
-               BufferedReader reader = new BufferedReader(new File("../../basic_program.antro"));
+               BufferedReader reader = new BufferedReader(new FileReader("../../basic_program.antro"), 1000);
              
                Tokenizer tokenizer = new Tokenizer(reader, sharedQueue);
              

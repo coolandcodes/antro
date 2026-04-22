@@ -17,7 +17,9 @@ import com.codedev.antro.compiler.frontend.helpers.NoticeConsoleLogger;
  */
 
 /**
- * ...
+ * A idle-wait blocking queue that coordinates the transfer of tokens
+ * from a producer (i.e. Tokenizer) to a consumer (i.e. Parser) in a 
+ * thread-safe way while dealing with back-pressure and synchronization.
  */
 public class LexemeQueue {
     private boolean ALL_TOKENS_QUEUED;
@@ -34,7 +36,7 @@ public class LexemeQueue {
 
     public LexemeQueue() {
         this.tokensHistoryList = new ArrayList<>();
-        this.tokenQueue = new LinkedBlockingQueue<>();
+        this.tokenQueue = new LinkedBlockingQueue<>(15);
         this.ALL_TOKENS_QUEUED = false;
     }
 
@@ -42,9 +44,9 @@ public class LexemeQueue {
      * Adds a token to the end of the queue. 
      * Called by the Tokenizer thread.
      */
-    public boolean pushNextToken(Token token) throws InterruptedException {
+    public final boolean pushNextToken(Token token) throws InterruptedException {
         if (token == null) return false;
-        if (token.getType() == TokenType.EOF) {
+        if (isEOFToken(token)) {
             ALL_TOKENS_QUEUED = true;
         }
         lastSeenLineNumber = token.getLineNumber();
@@ -55,14 +57,14 @@ public class LexemeQueue {
      * Checks if there are tokens available in either the 
      * push-back buffer or the main queue.
      */
-    public boolean hasMoreTokens() {
+    public final boolean hasMoreTokens() {
         return !lookaheadStack.isEmpty() || !tokenQueue.isEmpty() || !ALL_TOKENS_QUEUED;
     }
 
     /**
      * Retrieves the next token without removing it.
      */
-    public Token peekLookAheadToken() throws InterruptedException {
+    public final Token peekLookAheadToken() throws InterruptedException {
         if (!lookaheadStack.isEmpty()) {
             return lookaheadStack.peek();
         }
@@ -88,9 +90,10 @@ public class LexemeQueue {
 
     /**
      * Pulls the next token out entirely. 
-     * If the queue is empty, this will return null.
+     * If the queue is empty, this will return `null` after trigerring
+     * a scheduling point (i.e. calling `Thread.sleep(...)`).
      */
-    public Token pullNextToken(boolean canIdleWait) throws InterruptedException {
+    public final Token pullNextToken(boolean canIdleWait) throws InterruptedException {
         Token token;
         int MAX_IDLE_WAIT_CYCLE = 2;
         int CURR_IDLE_WAIT_CYCLE = 0;
@@ -127,29 +130,39 @@ public class LexemeQueue {
     /**
      * Overload version of `pullNextToken(boolean canIdleWait)`
      */
-    public Token pullNextToken() throws InterruptedException {
+    public final Token pullNextToken() throws InterruptedException {
         return pullNextToken(false);
     }
 
     /**
-     * 
+     * Check if the last token is aout to be consumed by the
+     * consumer (i.e. Parser)
      */
-    private boolean isAtEnd() throws InterruptedException {
+    public final boolean isAtEnd() throws InterruptedException {
         return peekLookAheadToken().getType() == TokenType.EOF;
     }
 
     /**
-     * 
+     * Check if the end of token transfer into the queue has 
+     * been reached.
      */
-    private boolean isEOFToken(Token token) {
+    public final boolean isEOFToken(Token token) {
         if (token == null) return true;
         return token.getType() == TokenType.EOF;
     }
 
     /**
-     * 
+     * Check if the token queue is full.
      */
-    public int getLastSeenLineNumber () {
+    public final boolean isAtCapacity () {
+        return tokenQueue.size() === 15;
+    }
+
+    /**
+     * Retrieve the last seen line number from the recently 
+     * queued token.
+     */
+    public final int getLastSeenLineNumber () {
         return lastSeenLineNumber;
     }
 
@@ -157,7 +170,7 @@ public class LexemeQueue {
      * Pushes a token back to the front of the queue.
      * Useful when `Parser` needs to "un-read" a token.
      */
-    public int pushBackToken(Token token) {
+    public final int pushBackToken(Token token) {
         if (token != null) {
             if (!lookaheadStack.isEmpty() && !lookaheadStack.peek().equals(token)) {
                 NoticeConsoleLogger.logMessage(

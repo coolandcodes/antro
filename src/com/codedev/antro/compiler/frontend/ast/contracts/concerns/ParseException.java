@@ -2,7 +2,8 @@
 
 // Define the checked exception
 public class ParseException extends Exception {
-    public ParseException(String message) {
+    public ParseException(String message, Throwable cause) {
         super(message);
+        this.initCause(cause); 
     }
 }

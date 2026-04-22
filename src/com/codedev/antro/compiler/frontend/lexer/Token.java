@@ -7,6 +7,9 @@ package com.codedev.antro.compiler.frontend.lexer;
  * Licensed under the MIT license. See 'LICENSE' for details.
  */
 
+/**
+ * A simple class to model regular grammar tokens
+ */
 public class Token implements Cloneable {
 
     private final TokenType type;
@@ -21,34 +24,46 @@ public class Token implements Cloneable {
         this.column = column;
     }
 
-    public TokenType getType() {
+    /**
+     * 
+     */
+    public final TokenType getType() {
         return this.type;
     }
 
-    public String getImage() {
+    /**
+     * 
+     */
+    public final String getImage() {
         return this.lexeme;
     }
 
-    public int getLineNumber() {
+    /**
+     * 
+     */
+    public final int getLineNumber() {
         return this.line;
     }
 
-    public int getColumnNumber() {
+    /**
+     * 
+     */
+    public final int getColumnNumber() {
         return this.column;
     }
 
     @Override
-    public Token clone() {
+    public final Token clone() {
         try {
             return (Token) super.clone();
         } catch (CloneNotSupportedException e) {
             //throw new AssertionError(e);
-            return this;
+            return new Token(this.type, this.lexeme, this.line, this.column);
         }
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
         return "Token kind: " + this.type +
                ", Token image: '" + this.lexeme +
                "'-> at line: " + this.line +

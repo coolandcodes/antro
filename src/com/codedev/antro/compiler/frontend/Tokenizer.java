@@ -21,7 +21,8 @@ import com.codedev.antro.compiler.frontend.contracts.concerns.LexisException;
  */
 
 /**
- * The core logic for turning an file/string bytes stream or bufferred reader into a stream of tokens.
+ * The core logic for turning file/string bytes or contents of buffered reader
+ * into a series of tokens.
  */
 public class Tokenizer {
 
@@ -89,7 +90,7 @@ public class Tokenizer {
        ============================ */
 
     public Tokenizer(String source, LexemeQueue tokenQueue) {
-        this.reader = new BufferedReader(new StringReader(source)); /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
+        this.reader = new BufferedReader(new StringReader(source), 2000); /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
         this.tokenQueue = tokenQueue;
         this.multiCharScanActive = false;
     }
@@ -104,7 +105,7 @@ public class Tokenizer {
        Public API
        ============================ */
 
-    public void tokenize() throws LexisException {
+    public final void tokenize() throws LexisException {
         try {
             while (true) {
                 char c = advance();
@@ -114,9 +115,7 @@ public class Tokenizer {
                 scanToken(c);
             }
         } catch (Exception e) {
-            LexisException lexisEx = new LexisException("lexical scan of source failed");
-            // Wrap the original IOException
-            lexisEx.initCause(e); 
+            LexisException lexisEx = new LexisException("lexical scan of source failed", e);
             throw lexisEx;
         }
 
@@ -368,6 +367,9 @@ public class Tokenizer {
        Helpers
        ============================ */
 
+    /**
+     * Consume the next character
+     */
     private char advance() throws Exception {
         boolean READER_EOF = false;
         char c = " ";
@@ -391,7 +393,9 @@ public class Tokenizer {
                 column++;
             }
         } catch (IOException ex) {
-            Exception ex = new Exception("could not advance to next character in stream");
+            Exception ex = new Exception(
+                "could not advance to next character in stream"
+            );
             ex.initCause(ex);
             throw ex;
         }
@@ -471,16 +475,20 @@ public class Tokenizer {
         }
 
         if (c == "/") {
-            characterAhead = peek(true);
+            char characterAhead = peek(true);
             return characterAhead == "*";
         }
+
+        return false;
     }
 
     private boolean isCommentEnd(char start, char curr) throws IOException {
         if (start == '#') {
             return isAtNewLine(curr);
-        } else if (start == "/") {
-            characterAhead = peek(true);
+        }
+        
+        if (start == "/") {
+            char characterAhead = peek(true);
             return curr == "*" && characterAhead == "/";
         }
 
@@ -499,11 +507,11 @@ public class Tokenizer {
         return isIdentifierStart(c) || isDigit(c) || c == '_';
     }
 
-    private void error(String msg) {
+    private void error(String msg) throws Exception {
         throw new Exception("[Line " + line + ", Col " + column + "]; " + msg);
     }
 
-    private void error(String msg, RuntimeException ex) {
+    private void error(String msg, RuntimeException ex) throws Exception {
         throw new Exception("[Line " + line + ", Col " + column + "]; " + msg, ex);
     }
 }

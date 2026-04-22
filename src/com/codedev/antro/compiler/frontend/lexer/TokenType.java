@@ -7,6 +7,9 @@ package com.codedev.antro.compiler.frontend.lexer;
  * Licensed under the MIT license. See 'LICENSE' for details.
  */
 
+/**
+ * All token types for the [Antro Programming Language]
+ */
 public enum TokenType {
 
     // Special

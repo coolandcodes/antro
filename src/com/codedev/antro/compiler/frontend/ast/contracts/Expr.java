@@ -1,6 +1,6 @@
 package com.codedev.antro.compiler.frontend.ast.contracts;
 
-public abstract class Expr {
+public abstract class Expr implements Cloneable {
     public interface Visitor<R> {
         R visitBinary(Binary e);
         R visitUnary(Unary e);

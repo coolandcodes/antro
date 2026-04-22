@@ -2,11 +2,11 @@
 def: MAX 200; 
 
 begin:
-   main(void)
-     var value = call: multiplyByTwo(MAX, 2);
+  main(void)
+    var value = call: multiplyByTwo(MAX, 2);
 end;
 
-method: multiplyByTwo(c, d){
+def: multiplyByTwo(c, d){
     retn c * d;
 }
 

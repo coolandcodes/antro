@@ -38,18 +38,17 @@
 
 ```java
 
-    public ParseTree parse () throws ParseException {
-       try {
-          Block block = parseProgramBlock();
+   public ParseTree parse () throws ParseException {
+      try {
+         Block block = parseProgramBlock();
 
-          return new ParseTree(block);
+         return new ParseTree(block);
           
-       } catch (UnexpectedEndOfInputException ex) {
-          ParseException prsEx = new ParseException("parser truncated");
-          prsEx.initCause(ex);
-          throw prsEx;  
-       }
-    }
+      } catch (Exception e) {
+         ParseException prsEx = new ParseException("parsing process issue", e);
+         throw prsEx;  
+      }
+   }
 ```
 
 
