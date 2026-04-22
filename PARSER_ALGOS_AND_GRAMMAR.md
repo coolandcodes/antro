@@ -46,7 +46,7 @@
           
        } catch (UnexpectedEndOfInputException ex) {
           ParseException prsEx = new ParseException("parser truncated");
-          prsEx.initCause(prsEx);
+          prsEx.initCause(ex);
           throw prsEx;  
        }
     }
