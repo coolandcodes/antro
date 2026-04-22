@@ -36,7 +36,7 @@ public class Assignment extends Expr {
      * Dispatches the call to the visitor's specific visitAssignment method.
      */
     @Override
-    public <R> R accept(Visitor<R> visitor) {
+    public <R> R accept(Expr.Visitor<R> visitor) {
         return visitor.visitAssignment(this);
     }
 
