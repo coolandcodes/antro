@@ -301,7 +301,7 @@ public class Parser {
             } while (matchAny(COMMA));
         }
 
-        setExpectationForTokenType(RPAREN, "Expected ')'");
+        setExpectationForTokenType(RPAREN, "Expected ')' or ','");
         advance(); // consume the `RPAREN` token and discard it
 
         Stmt body = parseBlock();
