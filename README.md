@@ -12,7 +12,7 @@ This is a toy parser for an experimental programming language called _antro scri
 
 ## Backend Design
 
-No yet determined.
+Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (intermediate representation) generation via a [Java library](https://github.com/pointhi/java-llvm-ir-builder) alongside the **LLVM Module** and **LLVM Context** and then convert the IR to machine code using an `LLVM Codegen` toolchain.
 
 ### What is a Regular Grammar ?
 
