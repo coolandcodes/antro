@@ -1,8 +1,7 @@
 
 def: MAX 200; 
 
-begin:
-  main(void)
+begin: (void)
     var value = call: multiplyByTwo(MAX, 2);
 end;
 
