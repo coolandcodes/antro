@@ -45,7 +45,7 @@
          return new ParseTree(block);
           
       } catch (Exception e) {
-         ParseException prsEx = new ParseException("parsing process issue", e);
+         ParseException prsEx = new ParseException("parse syntax issue", e);
          throw prsEx;  
       }
    }
