@@ -1,12 +1,11 @@
 module: "advanced_program";
 
-require: "time.antro";
-#require: "regex.antro";
+require: "time.module";
+#require: "regex.module";
 
 def: MAX 500; 
 
-begin:
-   main(void)
+begin: (void)
      # testing this program
      
      var ty = call: factorUpBy2(MAX);
@@ -34,7 +33,7 @@ def: convertToFactor (boolean c, int d) {
     }
 
     retn kl;
-}
+};
 
 def: factorUpBy2 (int x) {
           
@@ -49,7 +48,7 @@ def: factorUpBy2 (int x) {
     y = call: convertToFactor(g, x); 
 
     retn y;
-}
+};
 
 def: getString (int num) {
 
