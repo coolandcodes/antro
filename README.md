@@ -69,7 +69,10 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 	    error_message_prefix += "calling `convertToFactor(..)`; "
 		var error_message_suffix = "`c` is not a number"
 		var error_message = error_message_prefix + error_message_suffix
-		
+
+		--# `$$<...>` is a macro call into the runtime internal API
+		--# for auto error propagation and chaining used here as
+		--# `$$<error_message>`
 		call: type(c, "number") -> eject_on $$<error_message>;
 		error_message_suffix = "`d` is not a number"
 		error_message = error_message_prefix + error_message_suffix
@@ -78,7 +81,7 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 
 	  --# before the `retn` statement below executes...
 	  --# ... we call the invariants below 👇🏾👇🏾
-	  --# Antro builds invariants right into the...
+	  --# Antro bakes invariants right into the...
 	  --# ... programming model of the language 💯
 	  
 	  defer -> invariants {
@@ -112,13 +115,22 @@ The `eject_on` keyword is the _antro_ equivalent of a [catch block](https://www.
 #### Exception Handling - Part 2
 The  `panic_on` keyword is the _antro_ equivalent of [panic](https://gobyexample.com/panic) keyword in [Golang](https://go.dev/) which triggers abandonment.
 
+NOTE: Antro does not support multiple return value
+NOTE: Antro does not support enums (as they're mostly useless in any language that implements them)
+NOTE: Antro has a build-flag (i.e. `--build-mode`) system on the CLI that relaxes the enforcement of certain compilation rules:
+
+- Using `--build-mode=dev`, any declared yet unused variable does not cause a compilation error
+- Using `--build-mode=prod`, any variable declaration where the right-hand side is a non-standard library API/non-literal must be typed
+- Using `--build-mode=prod`, any function definition without an `invariants` block causes a compilation error
+- Using `--build-mode=dev`, any call to `panic_on` (directly or indirectly) outside of a `use` block does not cause a compilation error 
+
 NOTE: Antro only has 2 broad classifications for errors:
 
 - Recoverable Errors
 - Non-recoverable Errors
 
-#### Exception Handling - Part 3
-The `use` keyword is the _antro_ equivalent of [finally](https://www.w3schools.com/java/ref_keyword_finally.asp) keyword in most c-based programming languages like Java, C#, Python or PHP
+#### Error Handling - Part 3
+The `use` keyword is the _antro_ equivalent of [finally](https://www.w3schools.com/java/ref_keyword_finally.asp) keyword in most c-based programming languages like Java, C#, Python or PHP. Yet, it is used specifically to 
 
 #### Invaraints
 The `invariants` keyword is used to setup [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) within a **local scope** (i.e. within functions). For the design of _antro_, i believe that [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) ought to be baked into the programming model (i.e. the programming language). In the future, i plan to setup [macros](https://doc.rust-lang.org/book/ch20-05-macros.html) just like they are used in [Rust](https://www.rust-lang.org/) to make the `invariants` block shorter and more compact. All function definitions MUST contain an `invariants` block else the _antro_ runtime will throw an error.
@@ -126,8 +138,12 @@ The `invariants` keyword is used to setup [invariants](https://softwareengineeri
 #### Defering Action
 The `defer` keyword is the _antro_ equivalent of the [defer](https://gobyexample.com/defer) keyword in [Golang](https://go.dev/).
 
-#### Outputs
+#### Function Output
 The `retn` keyword is used to return a value from a function definition or `begin` block.
+
+#### Limiting Scope
+The `static` keyword (similar to same in C programming language) is usedd in  _antro_ to limit the lexical scope access of a function or variable within a module source file.
+
 
 ## License 
 
@@ -135,7 +151,7 @@ This is released under the MIT license.
 
 ## Design Inspiration
 
-Antro language design was inspired by Go, Rust, Python and JavaScript all combined.
+Antro language design was inspired by C, Go, Zig, Python and TypeScript all combined.
 
 
 
