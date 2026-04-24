@@ -65,16 +65,25 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 	def: convertToFactor(c, d){
 	  var error_message_prefix = "Argument type error: ";
 
+	  invariants {
+	    error_message_prefix += "calling `convertToFactor(..)`; "
+		var error_message_suffix = "`c` is not a number"
+		var error_message = error_message_prefix + error_message_suffix
+		
+		call: type(c, "number") -> eject_on $$<error_message>;
+		error_message_suffix = "`d` is not a number"
+		error_message = error_message_prefix + error_message_suffix
+		call: type(d, "number") -> eject_on $$<error_message>;
+	  }
+
 	  --# before the `retn` statement below executes...
 	  --# ... we call the invariants below 👇🏾👇🏾
 	  --# Antro builds invariants right into the...
 	  --# ... programming model of the language 💯
+	  
 	  defer -> invariants {
-	    error_message_prefix + "calling `convertToFactor(..)`",
-		call: type(c, "number") -> eject_on $$;
- 	    error_message_prefix + "calling `convertToFactor(..)`",
-		call: type(d, "number") -> eject_on $$;
-	  }
+		call: print("leaving `convertToFactor` function");
+      }
 
 	  retn c * d;
 	};
