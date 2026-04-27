@@ -69,7 +69,27 @@ public class Parser {
             return parseFunction(false);
         }
 
-        return parseExpression(false);
+        ExpressionSet set;
+        List<Expr> expressions = new ArrayList<>();
+
+        do {
+            Expr expr = parseExpression(false);
+            expressions.add(expr);
+            
+            if (matchAny(COMMA)) {
+                advance(); // consume the `COMMA` token and discard it
+                continue;
+            }
+
+            if (matchAny(SEMICOLON)) {
+                advance(); // consume the `SEMICOLON` token and discard it
+            }
+
+            break;
+        } while(true);
+
+        set = new ExpressionSet(expressions);
+        return set;
     }
 
     private Stmt parseBlock() throws Exception {
