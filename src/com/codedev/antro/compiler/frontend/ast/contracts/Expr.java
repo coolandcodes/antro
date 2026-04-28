@@ -1,5 +1,12 @@
 package com.codedev.antro.compiler.frontend.ast.contracts;
 
+import com.codedev.antro.comipler.frontend.ast.rules.Binary;
+import com.codedev.antro.comipler.frontend.ast.rules.Unary;
+import com.codedev.antro.comipler.frontend.ast.rules.Literal;
+import com.codedev.antro.comipler.frontend.ast.rules.Variable;
+import com.codedev.antro.comipler.frontend.ast.rules.Assignment;
+import com.codedev.antro.comipler.frontend.ast.rules.Call;
+
 public abstract class Expr implements Cloneable {
     public interface Visitor<R> {
         R visitBinary(Binary e);

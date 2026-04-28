@@ -2,6 +2,7 @@ package com.codedev.antro.compiler.frontend.ast;
 
 import com.codedev.antro.compiler.frontend.lexer.Token;
 import com.codedev.antro.compiler.frontend.ast.contracts.Expr;
+import com.codedev.antro.compiler.frontend.ast.contracts.Stmt;
 
 import com.codedev.antro.compiler.frontend.ast.rules.*;
 
@@ -24,7 +25,7 @@ public class ExpressionSubTreePrinter implements Expr.Visitor<String> {
     @Override
     public String visitBinary(Binary expr) {
         Token operator = expr.getOperator();
-        return "(" + operator.getImage() + " " + 
+        return "\t (" + operator.getImage() + " " + 
                expr.getLeft().accept(this) + " " + 
                expr.getRight().accept(this) + ")";
     }
@@ -43,7 +44,21 @@ public class ExpressionSubTreePrinter implements Expr.Visitor<String> {
     }
 
     @Override
-    public String visitVariable(Literal expr) {
+    public String visitVariable(Variable expr) {
+        Token identifier = expr.getIdentifier();
+        return "\t\t (" + identifier.getImage() + ")" ;
+    }
+
+     @Override
+    public String visitAssignment(Assignment expr) {
+        Token operator = expr.getOperator();
+        return "\t (" + operator.getImage() + " " +
+               expr.getLeft().accept(this) + " " + 
+               expr.getRight().accept(this) + ")";
+    }
+
+     @Override
+    public String visitCall(Call expr) {
         Token identifier = expr.getIdentifier();
         return "\t\t (" + identifier.getImage() + ")" ;
     }

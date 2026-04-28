@@ -1,5 +1,8 @@
 package com.codedev.antro.compiler.frontend;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.codedev.antro.comipler.frontend.ast.ExpressionSubTreePrinter;
 import com.codedev.antro.comipler.frontend.ast.contracts.Expr;
 import com.codedev.antro.compiler.frontend.ast.rules.*;
@@ -384,7 +387,7 @@ public class Parser {
                         "reserved keywords cannot be used for <identifier> where '"+variableToken.getImage()+"' is found"
                     );
                 }
-                expr = new Assignment(variableToken, value);
+                expr = new Assignment(variableToken, operatorToken, value);
                 return expr;
             }
             ExpressionSubTreePrinter printer = new ExpressionSubTreePrinter();

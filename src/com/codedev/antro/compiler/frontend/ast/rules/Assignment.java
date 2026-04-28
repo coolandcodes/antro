@@ -26,8 +26,9 @@ public class Assignment extends Expr {
      * @param name  The identifier token of the variable.
      * @param value The expression on the right-hand side of the equals sign.
      */
-    public Assignment(Token name, Expr value) {
+    public Assignment(Token name, Token operator, Expr value) {
         this.name = name;
+        this.operator = operator;
         this.value = value;
     }
 
@@ -41,16 +42,23 @@ public class Assignment extends Expr {
     }
 
     /**
+     * Returns the operator token of assignment.
+     */
+    public Token getOperator() {
+        return operator.clone();
+    }
+
+    /**
      * Returns the name token of the variable being assigned.
      */
     public Token getLeft() {
-        return name;
+        return name.clone();
     }
 
     /**
      * Returns the expression representing the value to be assigned.
      */
     public Expr getRight() {
-        return value;
+        return value.clone();
     }
 }

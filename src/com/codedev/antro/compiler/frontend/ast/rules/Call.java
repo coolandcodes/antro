@@ -50,14 +50,14 @@ public class Call extends Expr {
      * Returns the expression representing the function being called.
      */
     public Expr getCallee() {
-        return callee;
+        return callee.clone();
     }
 
     /**
      * Returns the closing parenthesis token.
      */
     public Token getParen() {
-        return paren;
+        return paren.clone();
     }
 
     /**
