@@ -1,6 +1,6 @@
 # antro
 
-This is a toy parser for an experimental programming language called _antro scripting language_ which is still in development. This project is purely educational (for now) as the language cannot be used for any industry work in its current form. Therefore, the sole aim of this project is to show and teach the skills required of designing computer languages and implementing them.
+A compiler project for an experimental programming language called _antro language_ which is still in development. This project is purely educational (for now) as the language cannot be used for any industry work in its current form. Therefore, the sole aim of this project is to show and teach the skills required of designing computer languages and implementing them.
 
 > The [**Regular Grammar**](https://github.com/coolandcodes/antro/blob/master/PARSER_ALGOS_AND_GRAMMAR.md#regular-grammar-productions-rgp-for-antro-scripting-language-tokenizer----ebnf) as details for the **Tokenizer** and the  [**Context-Free Grammar**](https://github.com/coolandcodes/antro/blob/master/PARSER_ALGOS_AND_GRAMMAR.md#context-free-grammar-productions-cfgp-for-antro-scripting-language-parser----ebnf) as production rules for the **Parser** (written in [EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) format) as well as other details of the algorithm used to implement the recursive descent strategy of the parser.
 
