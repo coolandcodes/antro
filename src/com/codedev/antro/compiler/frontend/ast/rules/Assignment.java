@@ -44,21 +44,21 @@ public class Assignment extends Expr {
     /**
      * Returns the operator token of assignment.
      */
-    public Token getOperator() {
+    public final Token getOperator() {
         return operator.clone();
     }
 
     /**
      * Returns the name token of the variable being assigned.
      */
-    public Token getLeft() {
+    public final Token getLeft() {
         return name.clone();
     }
 
     /**
      * Returns the expression representing the value to be assigned.
      */
-    public Expr getRight() {
+    public final Expr getRight() {
         return value.clone();
     }
 }

@@ -42,7 +42,7 @@ public class LexemeQueue {
 
     /**
      * Adds a token to the end of the queue. 
-     * Called by the Tokenizer thread.
+     * Called by the Tokenizer (thread).
      */
     public final boolean pushNextToken(Token token) throws InterruptedException {
         if (token == null) return false;

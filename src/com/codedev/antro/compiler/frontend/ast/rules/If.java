@@ -39,19 +39,19 @@ public class If extends Stmt {
     }
 
     // 4. Accessors (Getters) so the Visitor can inspect the data
-    public Expr getCondition() {
+    public final Expr getCondition() {
         return cond.clone();
     }
 
-    public Stmt getIfBranch() {
+    public final Stmt getIfBranch() {
         return ifBrch;
     }
 
-    public List<Stmt> getElseIfBranches() {
+    public final List<Stmt> getElseIfBranches() {
         return elIfStmts;
     }
 
-    public Stmt getElseBranch() {
+    public final Stmt getElseBranch() {
         return elseBrch;
     }
 }

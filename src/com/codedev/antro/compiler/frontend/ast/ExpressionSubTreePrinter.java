@@ -53,15 +53,13 @@ public class ExpressionSubTreePrinter implements Expr.Visitor<String> {
     public String visitAssignment(Assignment expr) {
         Token operator = expr.getOperator();
         return "\t (" + operator.getImage() + " " +
-               expr.getLeft().accept(this) + " " + 
+               expr.getLeft().getImage() + " " + 
                expr.getRight().accept(this) + ")";
     }
 
      @Override
     public String visitCall(Call expr) {
-        Token identifier = expr.getIdentifier();
-        return "\t\t (" + identifier.getImage() + ")" ;
+        return "\t (" + expr.getCallee().accept(this) + " " +
+                expr.getArguments().accept(this) + ")";
     }
-
-    /* @TODO: implement other visit methods ... */
 }

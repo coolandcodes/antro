@@ -36,7 +36,7 @@ public class Literal extends Expr {
     }
 
     // 2. Accessor (Getter) for the visitor to retrieve the stored value
-    public Object getValue() {
+    public final Object getValue() {
         try {
             return value.clone();
         } catch (CloneNotSupportedException e) {

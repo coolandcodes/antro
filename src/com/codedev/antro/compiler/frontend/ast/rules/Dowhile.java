@@ -1,7 +1,5 @@
 package com.codedev.antro.comipler.frontend.ast.rules;
 
-import java.util.List;
-
 import com.codedev.antro.comipler.frontend.ast.contracts.Expr;
 import com.codedev.antro.comipler.frontend.ast.contracts.Stmt;
 

@@ -35,15 +35,15 @@ public class Binary extends Expr {
     }
 
     // 4. Accessors (Getters) so the Visitor can inspect the data
-    public Expr getLeft() {
+    public final Expr getLeft() {
         return left.clone();
     }
 
-    public Token getOperator() {
+    public final Token getOperator() {
         return operator.clone();
     }
 
-    public Expr getRight() {
+    public final Expr getRight() {
         return right.clone();
     }
 }

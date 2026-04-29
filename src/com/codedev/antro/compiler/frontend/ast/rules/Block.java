@@ -29,7 +29,7 @@ public class Block extends Stmt {
     }
 
     // 4. Accessors (Getters) so the Visitor can inspect the data
-    public List<Stmt> getStatements() {
+    public final List<Stmt> getStatements() {
         return stmts;
     }
 }

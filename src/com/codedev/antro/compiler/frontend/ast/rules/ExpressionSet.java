@@ -1,5 +1,7 @@
 package com.codedev.antro.comipler.frontend.ast.rules;
 
+import java.util.List;
+
 import com.codedev.antro.comipler.frontend.ast.contracts.Expr;
 import com.codedev.antro.comipler.frontend.ast.contracts.Stmt;
 
@@ -13,28 +15,21 @@ import com.codedev.antro.comipler.frontend.ast.contracts.Stmt;
 /**
  * 
  */
-public class While extends Stmt {
-    // 1. Define fields to store state of the while statement
-    private final Expr cond;
-    private final Stmt body;
+public class ExpressionSet extends Stmt {
+    // 1. Define the field to store the state of the expression set
+    private final List<Expr> left;
 
-    // 2. Constructor: Initialize the only node of the tree
-    public While(Expr condition, Stmt body) {
-        this.cond = condition;
-        this.body = body;
+    // 2. Constructor: Initialize the nodes of the tree
+    public Binary(Expr left, Token operator, Expr right) {
+        this.left = left;
+        this.operator = operator;
+        this.right = right;
     }
 
-     @Override
+    @Override
     public <R> R accept(Stmt.Visitor<R> visitor) {
-        return visitor.visitWhile(this);
+        return visitor.visitExpressionSet(this);
     }
 
     // 4. Accessors (Getters) so the Visitor can inspect the data
-    public Expr getCondition() {
-        return cond.clone();
-    }
-
-    public Stmt getBody() {
-        return body;
-    }
 }

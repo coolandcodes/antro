@@ -35,11 +35,11 @@ public class Unary extends Expr {
     }
 
     // 3. Accessors (Getters) for the visitor to retrieve the node data
-    public Token getOperator() {
+    public final Token getOperator() {
         return operator.clone();
     }
 
-    public Expr getRight() {
+    public final Expr getRight() {
         return right.clone();
     }
 }

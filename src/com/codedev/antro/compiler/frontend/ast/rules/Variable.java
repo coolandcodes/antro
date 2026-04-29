@@ -40,7 +40,7 @@ public class Variable extends Expr {
      * Returns the name token of the variable.
      * Use this in the visitor to get the variable's identifier string.
      */
-    public Token getIdentifier() {
+    public final Token getIdentifier() {
         return name.clone();
     }
 }
