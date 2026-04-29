@@ -48,6 +48,8 @@ public class Switch extends Stmt {
         this.defltBrch = defaultBranch;
     }
 
+    // 3. The 'accept' method: This is the core of the Visitor Pattern.
+    // It calls the specific visit method on the visitor intended for Switch nodes.
     @Override
     public <R> R accept(Stmt.Visitor<R> visitor) {
         return visitor.visitSwitch(this);

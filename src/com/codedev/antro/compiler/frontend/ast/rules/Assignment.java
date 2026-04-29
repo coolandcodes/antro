@@ -23,7 +23,8 @@ public class Assignment extends Expr {
 
     /**
      * Constructs a new Assignment expression.
-     * @param name  The identifier token of the variable.
+     * @param name  The identifier token of the variable on the left-hand side.
+     * @param operator The assignment operator token
      * @param value The expression on the right-hand side of the equals sign.
      */
     public Assignment(Token name, Token operator, Expr value) {

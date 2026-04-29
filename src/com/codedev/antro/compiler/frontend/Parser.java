@@ -286,9 +286,9 @@ public class Parser {
                 }
             }
 
-            // Check possible error states 
+            // @TODO: Check possible error states 
             if (foundDefault_Keyword && matchAny(CASE)) {
-                ;
+                continue;
             }
 
         }

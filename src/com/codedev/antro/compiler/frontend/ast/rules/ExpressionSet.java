@@ -17,19 +17,22 @@ import com.codedev.antro.comipler.frontend.ast.contracts.Stmt;
  */
 public class ExpressionSet extends Stmt {
     // 1. Define the field to store the state of the expression set
-    private final List<Expr> left;
+    private final List<Expr> exprsns;
 
     // 2. Constructor: Initialize the nodes of the tree
-    public Binary(Expr left, Token operator, Expr right) {
-        this.left = left;
-        this.operator = operator;
-        this.right = right;
+    public ExpressionSet(Expr expressions) {
+        this.exprsns = expressions;
     }
 
+    // 3. The 'accept' method: This is the core of the Visitor Pattern.
+    // It calls the specific visit method on the visitor intended for ExpressionSet nodes.
     @Override
     public <R> R accept(Stmt.Visitor<R> visitor) {
         return visitor.visitExpressionSet(this);
     }
 
     // 4. Accessors (Getters) so the Visitor can inspect the data
+    public final getExpressions () {
+        return exprsns;
+    }
 }

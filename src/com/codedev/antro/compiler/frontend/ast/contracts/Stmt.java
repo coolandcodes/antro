@@ -11,7 +11,7 @@ import com.codedev.antro.comipler.frontend.ast.rules.For;
 import com.codedev.antro.comipler.frontend.ast.rules.Switch;
 import com.codedev.antro.comipler.frontend.ast.rules.Function;
 
-public abstract class Stmt {
+public abstract class Stmt implements Cloneable {
     public interface Visitor<R> {
         R visitBlock(Block stmt);
         R visitIf(If stmt);
@@ -20,8 +20,18 @@ public abstract class Stmt {
         R visitFor(For stmt);
         R visitSwitch(Switch stmt);
         R visitFunction(Function stmt);
-        R visitExpressionSet(List<Expr> exprs);
+        R visitExpressionSet(ExpressionSet exprs);
     }
 
     public abstract <R> R accept(Visitor<R> visitor);
+
+    @Override
+    public Stmt clone() {
+        try {
+            return (Stmt) super.clone();
+        } catch (CloneNotSupportedException e) {
+            //throw new AssertionError(e);
+            return this;
+        }
+    }
 }

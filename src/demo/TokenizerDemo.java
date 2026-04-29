@@ -20,13 +20,17 @@ public class TokenizerDemo {
           LexemeQueue sharedQueue = new LexemeQueue();
 
           Thread spawn = new Thread(() -> {
-               try {
-                    while (sharedQueue.hasMoreTokens()) {
+               while (true) {
+                    try {
+                         if (!sharedQueue.hasMoreTokens()) {
+                              break;
+                         }
                          Token t = sharedQueue.pullNextToken();
                          System.out.println("Token image: " + t.getImage() + "; Token line number: " + t.getLineNumber());
+                    } catch (InterruptedException ex) {
+                         Thread.currentThread().interrupt();
+                         continue;
                     }
-               } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
                }
           });
       
@@ -46,8 +50,7 @@ public class TokenizerDemo {
 
           spawn.start();
 
-          spawn.join();
-          
+          spawn.join(); 
      
      }
   
