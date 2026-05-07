@@ -29,7 +29,76 @@ public class Parser {
     }
 
     /* =========================
-        XXXXXX
+        COMPOUND EXPRESSIONS
+        ======================== */
+    private CallExpr parseCallExpression() {
+
+        setExpectationForTokenType(COLON, "Expected ':' after `call`");
+        advance(); // consume the `COLON` token and discard it
+        setExpectationForTokenType(IDENTIFIER, "Expected [function name]");
+        Token functionNameToken = advance(); // consume the `IDENTIFIER token and keep it
+
+        if (functionNameToken == null) {
+            error(
+                new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1),
+                "unrecoverable parser state encountered",
+                new NullPointerException("Expected <function name> token where 'nullish' value is found")
+            );
+        }
+
+        setExpectationForTokenType(LPAREN, "Expected '('");
+        advance(); // consume the `LPAREN` token and discard it
+
+        List<Expr> args = new ArrayList<>();
+
+        if (!matchAny(RPAREN)) {
+            do {
+                args.add(parseExpression(false));
+            } while (matchAny(COMMA));
+        }
+
+        setExpectationForTokenType(RPAREN, "Expected ')'");
+        advance(); // consume the `RPAREN` token and discard it
+
+        return new CallExpr(name, args);
+    }
+
+    private Expr parseTrialSubExpression(CallExpr prefix, Expr call) {
+
+        List<TrialExpr.Chain> chains = new ArrayList<>();
+
+        /* @FIXME: Right now there's a bug here that allows continous chaining of `-> eject_on error -> use { ... } -> eject_on -> use { ... }` */
+        while (matchAny(ARROW)) {
+            advance(); // consume token
+
+            if (matchAny(EJECT_ON)) {
+                Token type = advacnce();
+
+                Expr value;
+
+                if (matchAny(IDENTIFIER)) {
+                    value = new Variable(advance());
+                } else {
+                    setExpectationForLookAhead("Expected <error-identifier> after `eject_on`");
+                }
+
+                chains.add(new TrialExpr.Chain(type, value));
+            }
+
+            if (matchAny(USE)) {
+                Token type = advance(); // consume token and keep it
+                Stmt block = parseBlock();
+
+                chains.add(new TrialExpr.Chain(type, block));
+            }
+        }
+
+        /* @FIXME: The second argument to the `TrialExpr.Chain` constructor should be an novel interface that both `Expr` and `Stmt` implement */
+        return new TrialExpr(prefix, call, chains);
+    }
+
+    /* =========================
+        STATEMENTS
        ========================= */
     
     private Stmt parseStatement() throws Exception {
@@ -72,10 +141,18 @@ public class Parser {
             return parseFunction(false);
         }
 
+        if (matchAny(RETURN)) {
+            ; /* @TOO: Implementation goes here */
+        }
+
+         if (matchAny(PANIC_ON)) {
+            ; /* @TOO: Implementation goes here */
+        }
+
         ExpressionSet set;
         List<Expr> expressions = new ArrayList<>();
 
-        do {
+        while (true) {
             Expr expr = parseExpression(false);
             expressions.add(expr);
             
@@ -89,7 +166,7 @@ public class Parser {
             }
 
             break;
-        } while(true);
+        }
 
         set = new ExpressionSet(expressions);
         return set;
@@ -342,9 +419,9 @@ public class Parser {
     }
 
 
-    /* =========================
+    /* ===========================
        RIGHT-RECURSIVE EXTRACTION
-       ========================= */
+       ========================== */
 
     public Expr parseExpression(boolean isDelimited) throws Exception {
         Expr expr = return parseAssignment();
@@ -357,9 +434,9 @@ public class Parser {
         return expr;
     }
 
-    /* =========================
-       ASSIGNMENT (lowest precedence)
-       ========================= */
+    /* ====================================
+       EXPRESSIONS (with lowest precedence)
+       ==================================== */
 
     private Expr parseAssignment() throws Exception {
         Expr expr = parseLogicalOr();
@@ -519,8 +596,40 @@ public class Parser {
     }
 
     private Expr parseUnary() throws Exception {
+        if (isTrialStart()) {
+            CallExpr call = null;
+            Expr prefix = null;
+
+            if (matchAny(STRING, FORMATTED_STRING)) {
+                Token literalToken = advance(); // consume token
+
+                if (literalToken == null) {
+                    error(
+                        new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1),
+                        "unrecoverable parser state encountered",
+                        new NullPointerException(
+                            "Expected <literal> token where 'nullish' value is found"
+                        )
+                    );
+                }
+                prefix = new Literal(literalToken.getImage());
+                setExpectationForTokenType(COMMA, "Expected ',' after [string prefix]");
+                advance(); // consume token an discard it
+            }
+
+            if (matchAny(CALL)) {
+                advance(); // consume token
+                call = parseCallExpression();
+
+                if (check(ARROW)) {
+                    return parseTrialSubExpression(prefix, call);
+                }
+                return expr;
+            }
+        }
+
         if (matchAny(LOGICAL_NOT, PLUS, MINUS, INCREMENT, DECREMENT)) {
-            Token operatorToken = advance();
+            Token operatorToken = advance(); // consume token
             Expr right = parseUnary();
             if (operatorToken == null) {
                 error(
@@ -671,6 +780,13 @@ public class Parser {
             Thread.currentThread().interrupt(); // Restore interrupted status
             return new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1);
         }
+    }
+
+    /**
+     * Check if a trail compound expression is up ahead in the stream of tokens
+     */
+    private boolean isTrialStart() {
+        return check(STRING) || check(FORMATTED_STRING) || check(CALL);
     }
 
     /**
