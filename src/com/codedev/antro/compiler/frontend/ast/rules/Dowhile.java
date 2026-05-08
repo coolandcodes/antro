@@ -1,7 +1,7 @@
 package com.codedev.antro.comipler.frontend.ast.rules;
 
-import com.codedev.antro.comipler.frontend.ast.contracts.Expr;
-import com.codedev.antro.comipler.frontend.ast.contracts.Stmt;
+import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project

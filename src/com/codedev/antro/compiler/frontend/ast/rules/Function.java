@@ -3,8 +3,8 @@ package com.codedev.antro.comipler.frontend.ast.rules;
 import java.util.List;
 
 import com.codedev.antro.comipler.frontend.lexer.Token;
-import com.codedev.antro.comipler.frontend.ast.contracts.Expr;
-import com.codedev.antro.comipler.frontend.ast.contracts.Stmt;
+import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project

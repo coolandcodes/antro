@@ -104,7 +104,7 @@ public class LexemeQueue {
             token = canIdleWait ? tokenQueue.take() : tokenQueue.poll(150, TimeUnit.MILLISECONDS);
         }
 
-        while ((token = peekLookAheadToken()) == null) {
+        while (token == null && (token = peekLookAheadToken()) == null) {
             Thread.sleep(120);
             if (!tokenQueue.isEmpty()) {
                 continue;
@@ -117,7 +117,7 @@ public class LexemeQueue {
         }
 
         if (token != null) {
-            tokensHistoryList.add(token);
+            tokensHistoryList.add(token.clone());
 
             if (tokensHistoryList.size() > 5) {
                 tokensHistoryList.get(tokensHistoryList_HeadIndex);

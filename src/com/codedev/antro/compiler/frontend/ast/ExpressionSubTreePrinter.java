@@ -1,8 +1,8 @@
 package com.codedev.antro.compiler.frontend.ast;
 
 import com.codedev.antro.compiler.frontend.lexer.Token;
-import com.codedev.antro.compiler.frontend.ast.contracts.Expr;
-import com.codedev.antro.compiler.frontend.ast.contracts.Stmt;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 
 import com.codedev.antro.compiler.frontend.ast.rules.*;
 

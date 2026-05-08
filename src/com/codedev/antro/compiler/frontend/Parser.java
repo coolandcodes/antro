@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.codedev.antro.comipler.frontend.ast.ExpressionSubTreePrinter;
-import com.codedev.antro.comipler.frontend.ast.contracts.Expr;
+import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
 import com.codedev.antro.compiler.frontend.ast.rules.*;
+
 import com.codedev.antro.compiler.frontend.lexer.LexemeQueue;
 import static com.codedev.antro.compiler.frontend.lexer.TokenType.*;
 
@@ -32,7 +34,6 @@ public class Parser {
         COMPOUND EXPRESSIONS
         ======================== */
     private CallExpr parseCallExpression() {
-
         setExpectationForTokenType(COLON, "Expected ':' after `call`");
         advance(); // consume the `COLON` token and discard it
         setExpectationForTokenType(IDENTIFIER, "Expected [function name]");
@@ -53,11 +54,15 @@ public class Parser {
 
         if (!matchAny(RPAREN)) {
             do {
+                if (args.size() > 0) {
+                    advance(); // consume the `COMMA` token and discard it
+                }
+
                 args.add(parseExpression(false));
             } while (matchAny(COMMA));
         }
 
-        setExpectationForTokenType(RPAREN, "Expected ')'");
+        setExpectationForTokenType(RPAREN, "Expected ')' after [function argument]");
         advance(); // consume the `RPAREN` token and discard it
 
         return new CallExpr(name, args);
@@ -72,14 +77,20 @@ public class Parser {
             advance(); // consume token
 
             if (matchAny(EJECT_ON)) {
-                Token type = advacnce();
+                Token type = advance();
 
-                Expr value;
+                Expr value = null;
 
                 if (matchAny(IDENTIFIER)) {
                     value = new Variable(advance());
-                } else {
-                    setExpectationForLookAhead("Expected <error-identifier> after `eject_on`");
+                }
+                
+                if (value == null) {
+                    if (!check(ARROW)) {
+                        /* @TODO: I'm lost here... 😅🤣 */
+                    }
+
+                    setExpectationForLookAhead("Expected [error-identifier] after `eject_on`");
                 }
 
                 chains.add(new TrialExpr.Chain(type, value));
@@ -93,7 +104,7 @@ public class Parser {
             }
         }
 
-        /* @FIXME: The second argument to the `TrialExpr.Chain` constructor should be an novel interface that both `Expr` and `Stmt` implement */
+        /* @FIXME: The second argument to the `TrialExpr.Chain` constructor should be of type/interface `Attribution` */
         return new TrialExpr(prefix, call, chains);
     }
 
@@ -133,20 +144,66 @@ public class Parser {
             setExpectationForTokenType(COLON, "Expected ':' (after `def`)");
             advance(); // consume the `COLON` token and discard it
 
-            return parseFunction(true);
+            setExpectationForTokenType(IDENTIFIER, "Expected [function name] after ':'");
+            Token identifier = advance(); // consume the `IDENTIFIER` token
+            
+            if (identifier == null) {
+                error(
+                    new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1),
+                    "unrecoverable parser state encountered",
+                    new NullPointerException(
+                        "Expected <function-name> token where 'nullish' value is found"
+                    )
+                );
+            }
+
+            return parseFunction(true, identifier);
         }
 
         if (matchAny(VAR)) {
             advance(); // consume the `VAR` token and discard it
-            return parseFunction(false);
+
+            Token nextToken = advance(); // consume the `IDENTIFIER` token and keep it
+            
+            if (nextToken == null) {
+                error(
+                    new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1),
+                    "unrecoverable parser state encountered",
+                    new NullPointerException(
+                        "Expected <identifier> token where 'nullish' value is found"
+                    )
+                );
+            }
+        
+
+            if (check(ASSIGN)) {
+                backtrackOnToken(nextToken); // after token is pushed back here ...
+                return parseVarDeclaration(); // ... it gets consumed here 👈🏼
+            }
+            
+            if (nextToken.getType() != IDENTIFIER) {
+                if (nextToken.getType() == ASSIGN) {
+                    error(
+                        nextToken,
+                        "Expected [variable name] after `var` where '"+nextToken.getImage()+"' is found"
+                    );
+                } else {
+                    error(
+                        nextToken,
+                        "Expected [function name] after `var` where '"+nextToken.getImage()+"' is found"
+                    );
+                }
+            }
+
+            return parseFunction(false, nextToken);
         }
 
         if (matchAny(RETURN)) {
-            ; /* @TOO: Implementation goes here */
+            ; /* @TODO: Implementation goes here */
         }
 
          if (matchAny(PANIC_ON)) {
-            ; /* @TOO: Implementation goes here */
+            ; /* @TODO: Implementation goes here */
         }
 
         ExpressionSet set;
@@ -173,7 +230,7 @@ public class Parser {
     }
 
     private Stmt parseBlock() throws Exception {
-        setExpectationForTokenType(LBRACE, "Expected '{'");
+        setExpectationForTokenType(LBRACE, "Expected '{' after [...]");
         advance(); // consume the `LBRACE` token and discard it
 
         List<Stmt> statements = new ArrayList<>();
@@ -182,10 +239,51 @@ public class Parser {
             statements.add(parseStatement());
         }
 
-        setExpectationForTokenType(RBRACE, "Expected '}'");
+        setExpectationForTokenType(RBRACE, "Expected '}' after [... statement body]");
         advance(); // consume the `RBRACE` token and discard it
 
         return new Block(statements);
+    }
+
+    private Stmt parseVarDeclaration() {
+
+        List<Expr> declarations = new ArrayList<>();
+
+        do {
+            if (declarations.size() > 0) {
+                advance(); // consume the `COMMA` token and discard it
+            }
+
+            setExpectationForTokenType(IDENTIFIER, "Expected [variable name] after `var`");
+            Token name = advance(); // consume token
+
+            Expr initializer = null;
+            Token operator = null;
+
+            if (matchAny(ASSIGN)) {
+                operator = advance(); // consume token and keep it
+            }
+
+            if (operator == null) {
+                if (matchAny(COMMA)) {
+                    declarations.add(new Variable(name));
+                    continue;
+                }
+
+                setExpectationForLookAhead("Expected [assignment operator] after [variable name]");
+            }
+
+            initializer = parseExpression(false);
+
+            declarations.add(new Assignment(name, operator, initializer));
+
+        } while (matchAny(COMMA));
+
+        if (matchAny(SEMICOLON)) {
+            advance(); // consume token and discard it
+        }
+
+        return new ExpressionSet(declarations);
     }
     
     private Stmt parseIf() throws Exception {
@@ -370,44 +468,42 @@ public class Parser {
 
         }
 
-        setExpectationForTokenType(RBRACE, "Expected '}'");
+        setExpectationForTokenType(RBRACE, "Expected '}' after [switch body]");
         advance(); // consume the `RBRACE` token and discard it
 
         return new Switch(expr, cases, defaultBranch);
     }
 
-    private Stmt parseFunction(boolean isGlobalDefinition) throws Exception {
-        setExpectationForTokenType(IDENTIFIER, "Expected function name");
-        Token identifier = advance(); // consume the `IDENTIFIER` token
+    private Stmt parseFunction(boolean isGlobalDefinition, Token functionName) throws Exception {
 
-        if (identifier == null) {
-            error(
-                new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1),
-                "unrecoverable parser state encountered",
-                new NullPointerException(
-                    "Expected <assignment-operator> token where 'nullish' value is found"
-                )
-            );
-        }
-
-        setExpectationForTokenType(LPAREN, "Expected '('");
+        setExpectationForTokenType(LPAREN, "Expected '(' after [function name]");
         advance(); // consume the `LPAREN` token and discard it
 
         List<Token> params = new ArrayList<>();
         if (!matchAny(RPAREN)) {
+            boolean startFlag = true;
             do {
-                setExpectationForTokenType(IDENTIFIER, "Expected function parameter");
+                if (params.size() > 0) {
+                    advance(); // consume the `COMMA` token and discard it
+                }
+
+                String message = startFlag
+                ? "Expected [function parameter] after '('"
+                : "Expected [function parameter] after ','";
+
+                setExpectationForTokenType(IDENTIFIER, message);
                 params.add(advance()); // consume the `IDENTIFIER` token
+                startFlag = false;
             } while (matchAny(COMMA));
         }
 
-        setExpectationForTokenType(RPAREN, "Expected ')' or ','");
+        setExpectationForTokenType(RPAREN, "Expected ')' or ',' after [function parameter]");
         advance(); // consume the `RPAREN` token and discard it
 
         Stmt body = parseBlock();
         
         if (isGlobalDefinition) {
-            setExpectationForTokenType(SEMICOLON, "Expected ';' (after function body)");
+            setExpectationForTokenType(SEMICOLON, "Expected ';' after [function body]");
             advance(); // consume the `SEMICOLON` token and discard it
         } else {
             if (matchAny(SEMICOLON)) {
@@ -415,7 +511,7 @@ public class Parser {
             }
         }
 
-        return new Function(identifier, params, body, isGlobalDefinition);
+        return new Function(functionName, params, body, isGlobalDefinition);
     }
 
 
@@ -613,8 +709,16 @@ public class Parser {
                     );
                 }
                 prefix = new Literal(literalToken.getImage());
-                setExpectationForTokenType(COMMA, "Expected ',' after [string prefix]");
-                advance(); // consume token an discard it
+                
+                if (matchAny(COMMA)) {
+                    advance(); // consume token an discard it
+
+                    if (!check(CALL)) {
+                        return prefix;
+                    }
+                } else {
+                    ; /* @TODO: Figure out the state of the parser at this point and derive an invariant */
+                }
             }
 
             if (matchAny(CALL)) {
@@ -624,7 +728,8 @@ public class Parser {
                 if (check(ARROW)) {
                     return parseTrialSubExpression(prefix, call);
                 }
-                return expr;
+
+                return call;
             }
         }
 

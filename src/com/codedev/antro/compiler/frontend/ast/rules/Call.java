@@ -3,7 +3,7 @@ package com.coolandcodes.antro.frontend.ast.rules;
 import java.util.List;
 
 import com.codedev.antro.comipler.frontend.lexer.Token;
-import com.codedev.antro.comipler.frontend.ast.contracts.Expr;
+import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
 
 /*
  * Antro Compiler Project

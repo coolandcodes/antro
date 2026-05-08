@@ -1,4 +1,4 @@
-package com.codedev.antro.compiler.frontend.ast.contracts;
+package com.codedev.antro.compiler.frontend.ast.vocabulary;
 
 import com.codedev.antro.comipler.frontend.ast.rules.Binary;
 import com.codedev.antro.comipler.frontend.ast.rules.Unary;
@@ -7,7 +7,7 @@ import com.codedev.antro.comipler.frontend.ast.rules.Variable;
 import com.codedev.antro.comipler.frontend.ast.rules.Assignment;
 import com.codedev.antro.comipler.frontend.ast.rules.Call;
 
-public abstract class Expr implements Cloneable {
+public abstract class Expr implements Cloneable, Attribution {
     public interface Visitor<R> {
         R visitBinary(Binary e);
         R visitUnary(Unary e);
@@ -18,6 +18,11 @@ public abstract class Expr implements Cloneable {
     }
 
     public abstract <R> R accept(Visitor<R> visitor);
+
+    @Override
+    public String getVocabularyTitle() {
+        return 'com.codedev.antro.compiler.frontend.ast.vocabulary.Expr';
+    }
 
     @Override
     public Expr clone() {

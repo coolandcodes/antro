@@ -1,7 +1,7 @@
-package com.codedev.antro.compiler.frontend.ast..rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
 import com.codedev.antro.comipler.frontend.lexer.Token;
-import com.codedev.antro.comipler.frontend.ast.contracts.Expr;
+import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
 
 /*
  * Antro Compiler Project

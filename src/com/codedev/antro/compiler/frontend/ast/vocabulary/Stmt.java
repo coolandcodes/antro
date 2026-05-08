@@ -1,8 +1,8 @@
-package com.codedev.antro.compiler.frontend.ast;
+package com.codedev.antro.compiler.frontend.ast.vocabulary;
 
 import java.util.List;
 
-import com.codedev.antro.compiler.frontend.ast.contracts.Expr;
+import com.codedev.antro.compiler.frontend.ast.rules.ExpressionSet;
 import com.codedev.antro.comipler.frontend.ast.rules.Block;
 import com.codedev.antro.comipler.frontend.ast.rules.If;
 import com.codedev.antro.comipler.frontend.ast.rules.While;
@@ -11,7 +11,7 @@ import com.codedev.antro.comipler.frontend.ast.rules.For;
 import com.codedev.antro.comipler.frontend.ast.rules.Switch;
 import com.codedev.antro.comipler.frontend.ast.rules.Function;
 
-public abstract class Stmt implements Cloneable {
+public abstract class Stmt implements Cloneable, Attribution {
     public interface Visitor<R> {
         R visitBlock(Block stmt);
         R visitIf(If stmt);
@@ -24,6 +24,11 @@ public abstract class Stmt implements Cloneable {
     }
 
     public abstract <R> R accept(Visitor<R> visitor);
+
+    @Override
+    public String getVocabularyTitle() {
+        return 'com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt';
+    }
 
     @Override
     public Stmt clone() {
