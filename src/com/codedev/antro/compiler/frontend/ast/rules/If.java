@@ -13,7 +13,9 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  */
 
 /**
- * 
+ * Represents an if statement (e.g., `if (...) { ... } else { ... }`)
+ * It stores the `if` condition, the then block (i.e. a set of statments)
+ * as well as the `else` block and any `else if` conditions and block. 
  */
 public class If extends Stmt {
     // 1. Define fields to store state of the if statement

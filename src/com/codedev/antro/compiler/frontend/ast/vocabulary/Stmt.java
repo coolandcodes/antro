@@ -21,6 +21,9 @@ public abstract class Stmt implements Cloneable, Attribution {
         R visitSwitch(Switch stmt);
         R visitFunction(Function stmt);
         R visitExpressionSet(ExpressionSet exprs);
+        R visitBreak(Break brk);
+        R visitReturn(Return retn);
+        R visitContinue(Continue cont);
     }
 
     public abstract <R> R accept(Visitor<R> visitor);

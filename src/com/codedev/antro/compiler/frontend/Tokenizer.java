@@ -90,13 +90,13 @@ public class Tokenizer {
        ============================ */
 
     public Tokenizer(String source, LexemeQueue tokenQueue) {
-        this.reader = new BufferedReader(new StringReader(source), 2000); /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
+        this.reader = new BufferedReader(new StringReader(source), 2000); /* @FIXME: Modify this to use `NameBufferedReader` instead in the future */
         this.tokenQueue = tokenQueue;
         this.multiCharScanActive = false;
     }
 
     public Tokenizer(BufferedReader reader, LexemeQueue tokenQueue) {
-        this.reader = reader; /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
+        this.reader = reader; /* @FIXME: Modify this to use `NameBufferedReader` instead in the future */
         this.tokenQueue = tokenQueue;
         this.multiCharScanActive = false;
     }

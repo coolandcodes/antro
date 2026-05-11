@@ -30,11 +30,11 @@ public class Switch extends Stmt {
             this.body = body;
         }
 
-        public Expr getValue() {
+        public final Expr getValue() {
             return value.clone();
         }
 
-        public List<Stmt> getBody() {
+        public final List<Stmt> getBody() {
             return body;
         }
     }

@@ -18,6 +18,8 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
  * the arguments passed to it, and the closing parenthesis for location info.
  */
 public class Call extends Expr {
+    // The identifier for the function/object being called
+    private final Token name;
     // The expression that evaluates to the function/object being called
     private final Expr callee;
     // The token for the closing parenthesis (useful for error reporting)
@@ -27,11 +29,13 @@ public class Call extends Expr {
 
     /**
      * Constructs a new Call expression.
+     * @param name      The token holding the function name.
      * @param callee    The expression representing the function.
      * @param paren     The closing parenthesis token.
      * @param arguments The list of argument expressions.
      */
-    public Call(Expr callee, Token paren, List<Expr> arguments) {
+    public Call(Token name, Expr callee, Token paren, List<Expr> arguments) {
+        this.name = name;
         this.callee = callee;
         this.paren = paren;
         this.arguments = arguments;
@@ -47,6 +51,13 @@ public class Call extends Expr {
     }
 
     /**
+     * Returns the function name
+     */
+    public final Token getIdentifier() {
+        return name;
+    }
+
+    /**
      * Returns the expression representing the function being called.
      */
     public final Expr getCallee() {
@@ -56,7 +67,7 @@ public class Call extends Expr {
     /**
      * Returns the closing parenthesis token.
      */
-    public final Token getParen() {
+    public final Token getClosingParen() {
         return paren.clone();
     }
 

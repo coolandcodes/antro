@@ -14,7 +14,10 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  */
 
 /**
- * 
+ * Represents a function definition (e.g., `def: doSeomthing() { ... };` ).
+ * It stores the name of the. function being ddefined as well as
+ * the list of parameters and the set of statements that make up
+ * the body of the function definition..
  */
 public class Function extends Stmt {
     // 1. Define fields to store the state of the function

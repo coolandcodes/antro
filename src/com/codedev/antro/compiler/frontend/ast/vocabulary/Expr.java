@@ -15,6 +15,7 @@ public abstract class Expr implements Cloneable, Attribution {
         R visitVariable(Variable e);
         R visitAssignment(Assignment e);
         R visitCall(Call e);
+        R visitTrial(Trial e);
     }
 
     public abstract <R> R accept(Visitor<R> visitor);
