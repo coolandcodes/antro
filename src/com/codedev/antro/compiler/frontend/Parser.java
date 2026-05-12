@@ -947,10 +947,6 @@ public class Parser {
      */
     private Token advance() {
         try {
-            if (tokenQueue.isAtEnd()) {
-                return null;
-            }
-
             Token nextToken = tokenQueue.pullNextToken(true);
             int MAX_WAIT_CYCLE = 2;
             int CURR_WAIT_CYCLE = 0;
@@ -967,6 +963,7 @@ public class Parser {
             return nextToken;
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt(); // Restore interrupted status
+        } finally {
             return null;
         }
     }
@@ -984,10 +981,13 @@ public class Parser {
      */
     private Token peek() {
         try {
-            return tokenQueue.peekLookAheadToken();
+            if (!tokenQueue.isAtEnd()) {
+                return tokenQueue.peekLookAheadToken();
+            }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt(); // Restore interrupted status
-            return new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1);
+        } finally {
+          return new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1);
         }
     }
 
