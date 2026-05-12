@@ -33,7 +33,7 @@ public class Parser {
     /* =========================
         COMPOUND EXPRESSIONS
         ======================== */
-    private Call parseCallExpression() {
+    private Call parseCallExpression() throws Exception {
         setExpectationForTokenType(COLON, "Expected ':' after `call`");
         advance(); // consume the `COLON` token and discard it
         setExpectationForTokenType(IDENTIFIER, "Expected [function name]");
@@ -68,18 +68,22 @@ public class Parser {
         return new Call(name, null, paren, args);
     }
 
-    private Expr parseTrialSubExpression(Call prefix, Expr call) {
+    private Expr parseTrialSubExpression(Call prefix, Expr call) throws Exception {
 
         List<Trial.Chain> chains = new ArrayList<>();
 
         boolean foundEjectOn_Keyword = false;
         boolean foundUse_Keyword = false;
 
-        /* @FIXME: Right now there's a bug here that allows continous chaining of `-> eject_on error -> use { ... } -> eject_on -> use { ... }` */
+        /* @FIXME:
+        
+            Right now there's a bug here that allows continous chaining 
+            of `-> eject_on error -> use { ... } -> eject_on -> use { ... }`
+        */
         while (matchAny(ARROW)) {
             advance(); // consume the `ARROW` token and discard it
 
-            if (!foundUse_Keyword && matchAny(EJECT_ON)) {
+            if (!foundUse_Keyword && (!foundEjectOn_Keyword && matchAny(EJECT_ON))) {
                 Token type = advance(); // consume the `EJECT_ON` token and keep it
 
                 Expr value = null;
@@ -115,12 +119,11 @@ public class Parser {
 
         // @HINT: Check probable error states
         //
-        // e.g. a use block not followed by an arrow
-        if (foundUse_Keyword && matchAny(ARROW)) {
-            setExpectationForLookAhead("Expected '->' after [`eject_on` error-identifier]");
+        // e.g. a eject_on expression followed by an arrow and then another eject_on
+        if (foundEjectOn_Keyword && !foundUse_Keyword && matchAny(EJECT_ON)) {
+            setExpectationForLookAhead("Expected 'use' after `->`");
         }
 
-        /* @FIXME: The second argument to the `Trial.Chain` constructor should be of type/interface `Attribution` */
         return new Trial(prefix, call, chains);
     }
 
@@ -248,7 +251,7 @@ public class Parser {
         return set;
     }
 
-    private Stmt parseReturn() {
+    private Stmt parseReturn() throws Exception {
         Expr value = null;
 
         if (!matchAny(SEMICOLON)) {
@@ -906,6 +909,11 @@ public class Parser {
         setExpectationForLookAhead("Expected a <literal> or a <parentesized-expression>");
     }
 
+
+
+
+
+    
     /* =========================
        PARSER HELPERS
        ========================= */
@@ -948,7 +956,7 @@ public class Parser {
             int CURR_WAIT_CYCLE = 0;
 
             while (nextToken == null || tokenQueue.isAtCapacity()) {
-                Thread.sleep(100);
+                Thread.sleep(10);
                 if (CURR_WAIT_CYCLE >= MAX_WAIT_CYCLE) {
                     break;
                 }
