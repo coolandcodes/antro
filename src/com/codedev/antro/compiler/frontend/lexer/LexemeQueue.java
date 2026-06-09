@@ -69,6 +69,13 @@ public class LexemeQueue {
             return lookaheadStack.peek();
         }
 
+        /* @NOTE: I do't want to use `poll()` cos i'm goinng to have to re-add the token back */
+        
+        // This achieves your exact wait logic (4 cycles of 100ms = 400ms) efficiently:
+        // `Token token = tokenQueue.poll(400, TimeUnit.MILLISECONDS);`
+        
+        /* @INFO: Therefore, use `peek()` and `Thread.sleep()` instead */
+
         Token token = null;
         int MAX_IDLE_WAIT_CYCLE = 4;
         int CURR_IDLE_WAIT_CYCLE = 0;
@@ -79,7 +86,7 @@ public class LexemeQueue {
                 continue;
             }
 
-            if (CURR_IDLE_WAIT_CYCLE >= MAX_IDLE_WAIT_CYCLE) {
+            if (CURR_IDLE_WAIT_CYCLE >= MAX_IDLE_WAIT_CYCLE || tokenQueue.isEmpty()) {
                 break;
             }
             CURR_IDLE_WAIT_CYCLE++;

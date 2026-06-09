@@ -295,6 +295,34 @@ public class Parser {
         return new Break(label);
     }
 
+    private Stmt parseRequire() {
+
+        setExpectationForTokenType(COLON, "Expected ':' after `require`");
+        advance(); // consume the `COLON` token and discard it
+
+        setExpectationForTokenType(STRING, "Expected string representing module path");
+        Token modulePath = advance(); // consume the `STRING` token and keep it
+
+        setExpectationForTokenType(SEMICOLON, "Expected ';'");
+        advance(); // consume the `SEMICOLON` token and discard it
+
+        return new Require(modulePath);
+    }
+
+    private Stmt parseModule() {
+
+        setExpectationForTokenType(COLON, "Expected ':'");
+        advance(); // consume the `COLON` token and discard it
+
+        setExpectationForTokenType(STRING, "Expected module path");
+        Token path = advance(); // consume the `STRING` token and keep it
+
+        setExpectationForTokenType(SEMICOLON, "Expected ';'");
+        advance(); // consume the `SEMICOLON` token and discard it
+
+        return new Module(path);
+    }
+
     private Stmt parseBlock(String owner) throws Exception {
         setExpectationForTokenType(LBRACE, "Expected '{' after "+owner);
         advance(); // consume the `LBRACE` token and discard it
@@ -962,7 +990,13 @@ public class Parser {
 
             return nextToken;
         } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt(); // Restore interrupted status
+            /* 
+                @INFO:
+                
+                Restore the interrupted status so the thread pool / runtime 
+                knows this thread was told to shut down.
+            */
+            Thread.currentThread().interrupt();
         } finally {
             return null;
         }
@@ -985,7 +1019,13 @@ public class Parser {
                 return tokenQueue.peekLookAheadToken();
             }
         } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt(); // Restore interrupted status
+            /* 
+                @INFO:
+                
+                Restore the interrupted status so the thread pool / runtime 
+                knows this thread was told to shut down.
+            */
+            Thread.currentThread().interrupt();
         } finally {
           return new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1);
         }
