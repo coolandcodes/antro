@@ -1,6 +1,8 @@
 package com.codedev.antro.comipler.frontend.ast.rules;
 
-import com.codedev.antro.comipler.frontend.lexer.Token;
+import java.util.List;
+
+import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
 import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
 
 /*
@@ -13,6 +15,6 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
 /**
  * 
  */
-public class Module extends Stmt {
+public class Invariants extends Stmt {
 
 }

@@ -35,9 +35,9 @@ public class Parser {
         ======================== */
     private Call parseCallExpression() throws Exception {
         setExpectationForTokenType(COLON, "Expected ':' after `call`");
-        advance(); // consume the `COLON` token and discard it
+        advance(); // @HINT: consume the `COLON` token and discard it
         setExpectationForTokenType(IDENTIFIER, "Expected [function name]");
-        Token functionNameToken = advance(); // consume the `IDENTIFIER token and keep it
+        Token functionNameToken = advance(); // @HINT: consume the `IDENTIFIER token and keep it
 
         if (functionNameToken == null) {
             error(
@@ -48,14 +48,14 @@ public class Parser {
         }
 
         setExpectationForTokenType(LPAREN, "Expected '(' after [function name]");
-        advance(); // consume the `LPAREN` token and discard it
+        advance(); // @HINT: consume the `LPAREN` token and discard it
 
         List<Expr> args = new ArrayList<>();
 
         if (!matchAny(RPAREN)) {
             do {
                 if (args.size() > 0) {
-                    advance(); // consume the `COMMA` token and discard it
+                    advance(); // @HINT: consume the `COMMA` token and discard it
                 }
 
                 args.add(parseExpression(false));
@@ -63,7 +63,7 @@ public class Parser {
         }
 
         setExpectationForTokenType(RPAREN, "Expected ')' after last [function argument]");
-        Token paren = advance(); // consume the `RPAREN` token and keep it (for error handling purposes)
+        Token paren = advance(); // @HINT: consume the `RPAREN` token and keep it (for error handling purposes)
 
         return new Call(name, null, paren, args);
     }
@@ -75,26 +75,30 @@ public class Parser {
         boolean foundEjectOn_Keyword = false;
         boolean foundUse_Keyword = false;
 
-        /* @FIXME:
+        /* 
+            @FIXME:
         
             Right now there's a bug here that allows continous chaining 
             of `-> eject_on error -> use { ... } -> eject_on -> use { ... }`
+            and so on and so forth.
+
+            Take care to investigate and provision the right set of invariants
         */
         while (matchAny(ARROW)) {
-            advance(); // consume the `ARROW` token and discard it
+            advance(); // @HINT: consume the `ARROW` token and discard it
 
             if (!foundUse_Keyword && (!foundEjectOn_Keyword && matchAny(EJECT_ON))) {
-                Token type = advance(); // consume the `EJECT_ON` token and keep it
+                Token type = advance(); // @HINT: consume the `EJECT_ON` token and keep it
 
                 Expr value = null;
 
                 if (matchAny(IDENTIFIER)) {
-                    value = new Variable(advance());
+                    value = new Variable(advance()); // @HINT: consume the `IDENTIFIER` token and keep it
                 }
                 
                 if (value == null) {
                     if (!check(ARROW)) {
-                        /* @FIXME: I'm lost here... 😅🤣 */
+                        /* @FIXME: I'm lost here... 😅🤣  I will check this out later */
                     }
 
                     setExpectationForLookAhead("Expected [error-identifier] after `eject_on`");
@@ -106,7 +110,7 @@ public class Parser {
             }
 
             if (foundEjectOn_Keyword && (!foundUse_Keyword && matchAny(USE))) {
-                Token type = advance(); // consume the `USE` token and keep it
+                Token type = advance(); // @HINT: consume the `USE` token and keep it
                 Stmt block = parseBlock('`use`');
 
                 foundUse_Keyword = true;
@@ -117,8 +121,9 @@ public class Parser {
             break;
         }
 
-        // @HINT: Check probable error states
-        //
+        // @HINT: Check probable error states:
+
+        // @INFO:
         // e.g. a eject_on expression followed by an arrow and then another eject_on
         if (foundEjectOn_Keyword && !foundUse_Keyword && matchAny(EJECT_ON)) {
             setExpectationForLookAhead("Expected 'use' after `->`");
@@ -133,38 +138,38 @@ public class Parser {
     
     private Stmt parseStatement() throws Exception {
         if (matchAny(IF)) {
-            advance(); // consume the `IF` token and discard it
+            advance(); // @HINT: consume the `IF` token and discard it
             return parseIf();
         }
 
         if (matchAny(WHILE)) {
-            advance(); // consume the `WHILE` token and discard it
+            advance(); // @HINT: consume the `WHILE` token and discard it
             return parseWhile();
         }
 
         if (matchAny(DO)) {
-            advance(); // consume the `DO` token and discard it
+            advance(); // @HINT: consume the `DO` token and discard it
             return parseDoWhile();
         }
 
         if (matchAny(FOR)) {
-            advance(); // consume the `FOR` token and discard it
+            advance(); // @HINT: consume the `FOR` token and discard it
             return parseFor();
         }
 
         if (matchAny(SWITCH)) {
-            advance(); // consume the `SWITCH` token and discard it
+            advance(); // @HINT: consume the `SWITCH` token and discard it
             return parseSwitch();
         }
 
         if (matchAny(DEF)) {
-            advance(); // consume the `DEF` token and discard it
+            advance(); // @HINT: consume the `DEF` token and discard it
 
             setExpectationForTokenType(COLON, "Expected ':' after `def`");
-            advance(); // consume the `COLON` token and discard it
+            advance(); // @HINT: consume the `COLON` token and discard it
 
             setExpectationForTokenType(IDENTIFIER, "Expected [function name] after ':'");
-            Token identifier = advance(); // consume the `IDENTIFIER` token
+            Token identifier = advance(); // @HINT: consume the `IDENTIFIER` token
             
             if (identifier == null) {
                 error(
@@ -176,13 +181,13 @@ public class Parser {
                 );
             }
 
-            return parseFunction(true, identifier);
+            return parseFunction(false, identifier);
         }
 
         if (matchAny(VAR)) {
-            advance(); // consume the `VAR` token and discard it
+            advance(); // @HINT: consume the `VAR` token and discard it
 
-            Token nextToken = advance(); // consume the `IDENTIFIER` token and keep it
+            Token nextToken = advance(); // @HINT: consume the `IDENTIFIER` token and keep it
             
             if (nextToken == null) {
                 error(
@@ -196,8 +201,8 @@ public class Parser {
         
 
             if (check(ASSIGN)) {
-                backtrackOnToken(nextToken); // after token is pushed back here ...
-                return parseVarDeclaration(); // ... it gets consumed here 👈🏼
+                backtrackOnToken(nextToken); // @INFO: after token is pushed back here
+                return parseVarDeclaration(); // @INFO: it subsequently gets consumed here 👈🏼
             }
             
             if (nextToken.getType() != IDENTIFIER) {
@@ -217,15 +222,104 @@ public class Parser {
             return parseFunction(false, nextToken);
         }
 
-        if (matchAny(RETURN)) {
-            advance(); // consume the `RETURN` token and discard it
-            return parseReturn();
+        ExpressionSet set;
+        List<Expr> expressions = new ArrayList<>();
+
+        while (true) {
+            Expr expr = parseExpression(false);
+            expressions.add(expr);
+            
+            if (matchAny(COMMA)) {
+                advance(); // @HINT: consume the `COMMA` token and discard it
+                continue;
+            }
+
+            if (matchAny(SEMICOLON)) {
+                advance(); // @HINT: consume the `SEMICOLON` token and discard it
+            }
+
+            break;
         }
 
-        if (matchAny(PANIC_ON)) {
-            advance(); // consume the `PANIC_ON` token and discard it
+        set = new ExpressionSet(expressions);
+        return set;
+    }
 
-            /* @TODO: Implementation goes here */
+    private Stmt parseExport() throws Exception {
+
+        setExpectationForTokenType(COLON, "Expected ':' after `export`");
+        advance(); // @HINT: consume the `COLON` token and discard it
+
+        Token aliasToken = null;
+        List<Token> exports = new ArrayList<>();
+
+        if (matchAny(STAR)) {
+            exports.add(
+                advance() // @HINT: consume the `STAR` token and discard it
+            );
+        } else {
+            do {
+                if (exports.size() > 0) {
+                    advance(); // @HINT: consume the `COMMA` token and discard it
+                }
+
+                String errorSuffix = exports.size() > 0 ? "','" : "`export`";
+                setExpectationForTokenType(IDENTIFIER, "Expected <identifier> after " + errorSuffix);
+
+                exports.add(
+                    advance() // @HINT: consume the `IDENTIFIER` token and keep it
+                );
+            } while (matchAny(COMMA));
+        }
+
+        if (matchAny(ALIASER)) {
+            aliasToken = advance(); // @HINT: consume the `ALIASER` token and discard it
+
+            setExpectationForTokenType(IDENTIFIER, "Expected <identifier> after `as`");
+            advance(); // @HINT: consume the `IDENTIFIER` token and keep it
+
+            setExpectationForTokenType(SEMICOLON, "Expected ';' after [alias export identifier]");
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
+        } else {
+            setExpectationForTokenType(SEMICOLON, "Expected ';' after [export identifier list]");
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
+        }
+
+        return new Export(exports, aliasToken);
+    }
+
+    private Stmt parseInvariants() throws Exception {
+        setExpectationForTokenType(LBRACE, "Expected '{' after `invariants`");
+        advance(); // @HINT: consume the `LBRACE` token an discard it
+
+        List<Expr> expressions = new ArrayList<>();
+
+        while (!check(RBRACE) && !tokenQueue.isAtEnd()) {
+            expressions.add(parseExpression(false));
+
+            if (matchAny(SEMICOLON)) {
+                advance(); // @HINT: consume the `SEMICOLON` token and discard it
+            }
+        }
+
+        setExpectationForTokenType(RBRACE, "Expected '}'");
+        advance(); // @HINT: consume the `RBRACE` token and discard it
+
+        return new Invariants(expressions);
+    }
+
+    private Stmt parseDefer() throws Exception {
+
+        if (matchAny(ARROW)) {
+            advance(); // @HINT: consume the `ARROW` token and discard it
+
+            if (matchAny(INVARIANTS)) {
+                advance(); // @HINT: consume the `INVARIANTS` token and discard it
+
+                return new Defer(parseInvariants());
+            } else {
+                setExpectationForLookAhead(INVARIANTS, "Expected `invariants` after '->'");
+            }
         }
 
         ExpressionSet set;
@@ -236,19 +330,20 @@ public class Parser {
             expressions.add(expr);
             
             if (matchAny(COMMA)) {
-                advance(); // consume the `COMMA` token and discard it
+                advance(); // @HINT: consume the `COMMA` token and discard it
                 continue;
             }
 
             if (matchAny(SEMICOLON)) {
-                advance(); // consume the `SEMICOLON` token and discard it
+                advance(); // @HINT: consume the `SEMICOLON` token and discard it
             }
 
             break;
         }
 
         set = new ExpressionSet(expressions);
-        return set;
+
+        return new Defer(set);
     }
 
     private Stmt parseReturn() throws Exception {
@@ -257,10 +352,17 @@ public class Parser {
         if (!matchAny(SEMICOLON)) {
             value = parseExpression(false);
         } else {
-            advance(); // consume the `SEMICOLON` token and discard it
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
         }
 
         return new Return(value);
+    }
+
+    private Stmt parsePanic () throws Exception {
+        setExpectationForTokenType(IDENTIFIER, "Expected <identifier> after `panic_on`");
+        Token errorVariable = advance(); // @HINT: cosume the `IDENTIFIER` token and keep it
+
+        return new PanicOn(errorVariable);
     }
 
     private Stmt parseContinue(boolean checkForLabel) {
@@ -268,12 +370,12 @@ public class Parser {
 
         if (checkForLabel) {
             if (matchAny(IDENTIFIER)) {
-                label = advance(); // consume the `IDENTIFIER` token
+                label = advance(); // @HINT: consume the `IDENTIFIER` token
             }
         }
 
         if (matchAny(SEMICOLON)) {
-            advance(); // consume the `SEMICOLON` token and discard it
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
         }
 
         return new Continue(label);
@@ -284,12 +386,12 @@ public class Parser {
 
         if (checkForLabel) {
             if (matchAny(IDENTIFIER)) {
-                label = advance(); // consume the `IDENTIFIER` token
+                label = advance(); // @HINT: consume the `IDENTIFIER` token
             }
         }
 
         if (matchAny(SEMICOLON)) {
-            advance(); // consume the `SEMICOLON` token and discard it
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
         }
 
         return new Break(label);
@@ -298,13 +400,13 @@ public class Parser {
     private Stmt parseRequire() {
 
         setExpectationForTokenType(COLON, "Expected ':' after `require`");
-        advance(); // consume the `COLON` token and discard it
+        advance(); // @HINT: consume the `COLON` token and discard it
 
         setExpectationForTokenType(STRING, "Expected string representing module path");
-        Token modulePath = advance(); // consume the `STRING` token and keep it
+        Token modulePath = advance(); // @HINT: consume the `STRING` token and keep it
 
         setExpectationForTokenType(SEMICOLON, "Expected ';'");
-        advance(); // consume the `SEMICOLON` token and discard it
+        advance(); // @HINT: consume the `SEMICOLON` token and discard it
 
         return new Require(modulePath);
     }
@@ -312,13 +414,13 @@ public class Parser {
     private Stmt parseModule() {
 
         setExpectationForTokenType(COLON, "Expected ':'");
-        advance(); // consume the `COLON` token and discard it
+        advance(); // @HINT: consume the `COLON` token and discard it
 
         setExpectationForTokenType(STRING, "Expected module path");
-        Token path = advance(); // consume the `STRING` token and keep it
+        Token path = advance(); // @HINT: consume the `STRING` token and keep it
 
         setExpectationForTokenType(SEMICOLON, "Expected ';'");
-        advance(); // consume the `SEMICOLON` token and discard it
+        advance(); // @HINT: consume the `SEMICOLON` token and discard it
 
         return new Module(path);
     }
@@ -331,25 +433,172 @@ public class Parser {
 
         while (!matchAny(RBRACE)) {
             if (matchAny(CONTINUE)) {
-                advance(); // consume the `CONTINUE` token and discard it
+                advance(); // @HINT: consume the `CONTINUE` token and discard it
                 statements.add(parseContinue(true));
             }
 
             else if (matchAny(BREAK)) {
-                advance(); // consume the `BREAK` token and discard it
+                advance(); // @HINT: consume the `BREAK` token and discard it
                 statements.add(parseBreak(true));
             }
 
             else {
+
+                if (owner.equals("`function`")) {
+                    if (matchAny(RETURN)) {
+                        advance(); // @HINT: consume the `RETURN` token and discard it
+
+                        statements.add(parseReturn());
+                    }
+
+                    if (matchAny(PANIC_ON)) {
+                        advance(); // @HINT: consume the `PANIC_ON` token and discard it
+
+                        statements.add(parsePanic());
+                    }
+
+                    if (matchAny(DEFER)) {
+                        advance(); // @HINT: consume the `DEFER` token and discard it
+
+                        statements.add(parseDefer());
+                    }
+                }
+
                 statements.add(parseStatement());
             }
         }
 
         String tag = owner.equals("`function`") ? " declaration body" : " statement body";
         setExpectationForTokenType(RBRACE, "Expected '}' after ["+owner+tag+"]");
-        advance(); // consume the `RBRACE` token and discard it
+        advance(); // @HINT: consume the `RBRACE` token and discard it
 
         return new Block(statements);
+    }
+
+    private Root parseRoot() {
+
+        setExpectationForTokenType(COLON, "Expected ':' after `main`");
+        advance(); // @HINT: consume the `COLON` token and discard it
+
+        setExpectationForTokenType(LPAREN, "Expected '(' after `:`");
+        advance(); // @HINT: consume the `LPAREN` token and discard it
+
+        List<Token> params = new ArrayList<>();
+
+        if (matchAny(VOID)) {
+            advance(); // @HINT: consume the `VOID` token and discard it
+        } else {
+
+            do {
+                if (params.size() > 0) {
+                    advance(); // consume the `COMMA` token and discard it
+                }
+
+                String errorSuffix = params.size() > 0 ? "','" : "'('";
+                setExpectationForTokenType(IDENTIFIER, "Expected <parameter> after " + errorSuffix);
+
+                params.add(
+                    advance() // @HINT: consume the `IDENTIFIER` token and keep it
+                );
+            } while (matchAny(COMMA));
+        }
+
+        setExpectationForTokenType(RPAREN, "Expected ')' after [parameter list]");
+        advance(); // @HINT: consume the `RPAREN` token and discard it
+
+        List<Stmt> body = new ArrayList<>();
+
+        while (!check(END) && !tokenQueue.isAtEnd()) {
+            body.add(parseStatement());
+        }
+
+        setExpectationForTokenType(END, "Expected 'end'");
+        advance(); // @HINT: consume the `END` token and discard it
+
+        if (matchAny(SEMICOLON)) {
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
+        }
+
+        return new Root(params, body);
+    }
+
+    public Program parse() throws ParseException {
+
+        List<Module> modules = new ArrayList<>();
+        List<Require> requires = new ArrayList<>();
+        List<Stmt> definitions = new ArrayList<>();
+
+
+        Export export = null;
+        MainBlock main = null;
+
+        while (!tokenQueue.isAtEnd()) {
+
+            try {
+
+                if (matchAny(MODULE)) {
+                    advance(); // @HINT: consume the `MODULE` token and discard it
+
+                    modules.add(parseModule());
+                }
+
+                else if (matchAny(REQUIRE)) {
+                    advance(); // @HINT: consume the `REQUIRE` token and discard it
+                    
+                    requires.add(parseRequire());
+                }
+
+                else if (matchAny(DEF)) {
+                    advance(); // @HINT: consume the `DEF` token and discard it
+
+                    setExpectationForTokenType(COLON, "Expected ':' after `def`");
+                    advance(); // @HINT: consume the `COLON` token and discard it
+
+                    setExpectationForTokenType(IDENTIFIER, "Expected [function name] after ':'");
+                    Token identifier = advance(); // @HINT: consume the `IDENTIFIER` token
+                    
+                    if (identifier == null) {
+                        error(
+                            new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1),
+                            "unrecoverable parser state encountered",
+                            new NullPointerException(
+                                "Expected <function-name> token where 'nullish' value is found"
+                            )
+                        );
+                    }
+
+                    definitions.add(parseFunction(true, identifier));
+                }
+
+                else if (matchAny(BEGIN)) {
+                    advance(); // @HINT: consume the `BEGIN` token and discard it
+
+                    main = parseRoot();
+                }
+
+                else if (matchAny(EXPORT)) {
+                    advance(); // @HINT: consume the `EXPORT` token and discard it
+
+                    export = parseExport();
+                }
+
+                else {
+                    setExpectationForLookAhead("Unexpected top-level construct");
+                }
+
+            } catch (Exception e) {
+                ParseException exp = new ParseException();
+                synchronize();
+            }
+        }
+
+        return new Program(
+            modules,
+            requires,
+            definitions,
+            main,
+            export
+        );
     }
 
     private Stmt parseVarDeclaration() {
@@ -358,17 +607,17 @@ public class Parser {
 
         do {
             if (declarations.size() > 0) {
-                advance(); // consume the `COMMA` token and discard it
+                advance(); // @HINT: consume the `COMMA` token and discard it
             }
 
             setExpectationForTokenType(IDENTIFIER, "Expected [variable name] after `var`");
-            Token name = advance(); // consume token
+            Token name = advance(); // @HINT: consume the `IDENTIFIER` token and keep it
 
             Expr initializer = null;
             Token operator = null;
 
             if (matchAny(ASSIGN)) {
-                operator = advance(); // consume token and keep it
+                operator = advance(); // @HINT: consume the `ASSIGN` token and keep it
             }
 
             if (operator == null) {
@@ -387,7 +636,7 @@ public class Parser {
         } while (matchAny(COMMA));
 
         if (matchAny(SEMICOLON)) {
-            advance(); // consume token and discard it
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
         }
 
         return new ExpressionSet(declarations);
@@ -395,27 +644,27 @@ public class Parser {
     
     private Stmt parseIf() throws Exception {
         setExpectationForTokenType(LPAREN, "Expected '(' after `if`");
-        advance(); // consume the `LPAREN` token and discard it
+        advance(); // @HINT: consume the `LPAREN` token and discard it
 
         Expr IfCondition = parseExpression(false);
 
         setExpectationForTokenType(RPAREN, "Expected ')' after [condition]");
-        advance(); // consume the `RPAREN` token and discard it
+        advance(); // @HINT: consume the `RPAREN` token and discard it
 
         Stmt thenBranch = parseBlock('`if`');
 
         List<Stmt> elifs = new ArrayList<>();
 
         while (matchAny(ELIF)) {
-            advance(); // consume the `ELIF` token and discard it
+            advance(); // @HINT: consume the `ELIF` token and discard it
 
             setExpectationForTokenType(LPAREN, "Expected '(' after `elif`");
-            advance(); // consume the `LPAREN` token and discard it
+            advance(); // @HINT: consume the `LPAREN` token and discard it
 
             Expr elIfCondition = parseExpression(false);
 
             setExpectationForTokenType(RPAREN, "Expected ')' after [condition]");
-            advance(); // consume the `RPAREN` token and discard it
+            advance(); // @HINT: consume the `RPAREN` token and discard it
 
             Stmt block = parseBlock('`else if`');
 
@@ -425,7 +674,7 @@ public class Parser {
         Stmt elseBranch = null;
 
         if (matchAny(ELSE)) {
-            advance(); // consume the `ELSE` token and discard it
+            advance(); // @HINT: consume the `ELSE` token and discard it
 
             elseBranch = parseBlock('`else`');
         }
@@ -435,12 +684,12 @@ public class Parser {
     
     private Stmt parseWhile() throws Exception {
         setExpectationForTokenType(LPAREN, "Expected '(' after `while`");
-        advance(); // consume the `LPAREN` token and discard it
+        advance(); // @HINT: consume the `LPAREN` token and discard it
 
         Expr condition = parseExpression(false);
 
         setExpectationForTokenType(RPAREN, "Expected ')' after [condition]");
-        advance(); // consume the `RPAREN` token and discard it
+        advance(); // @HINT: consume the `RPAREN` token and discard it
 
         Stmt body = parseBlock('`while`');
 
@@ -451,25 +700,24 @@ public class Parser {
         Stmt body = parseBlock('`do while`');
 
         setExpectationForTokenType(WHILE, "Expected 'while' after [do block]");
-        advance(); // consume the `WHILE` token and discard it
+        advance(); // @HINT: consume the `WHILE` token and discard it
 
-        setExpectationForTokenType(LPAREN, "Expected '('");
-        advance(); // consume the `LPAREN` token and discard it
+        setExpectationForTokenType(LPAREN, "Expected '(' after `while`");
+        advance(); // @HINT: consume the `LPAREN` token and discard it
 
         Expr condition = parseExpression(false);
 
-
         setExpectationForTokenType(RPAREN, "Expected ')' after [condition]");
-        advance(); // consume the `RPAREN` token and discard it
+        advance(); // @HINT: consume the `RPAREN` token and discard it
 
         return new DoWhile(body, condition);
     }
 
     private Stmt parseFor() throws Exception {
         setExpectationForTokenType(LPAREN, "Expected '(' (after `for`)");
-        advance(); // consume the `LPAREN` token and discard it
+        advance(); // @HINT: consume the `LPAREN` token and discard it
 
-        // @HINT: initializer (can be empty)
+        // @HINT: initializer part (can be empty)
         Stmt initializer = null;
 
         if (!matchAny(SEMICOLON)) {
@@ -477,9 +725,9 @@ public class Parser {
         }
 
         setExpectationForTokenType(SEMICOLON, "Expected ';'");
-        advance(); // consume the `SEMICOLON` token and discard it
+        advance(); // @HINT: consume the `SEMICOLON` token and discard it
 
-        // @HINT: condition (can be empty too)
+        // @HINT: condition part (can be empty too)
         Expr condition = null;
 
         if (!matchAny(SEMICOLON)) {
@@ -487,9 +735,9 @@ public class Parser {
         }
 
         setExpectationForTokenType(SEMICOLON, "Expected ';'");
-        advance(); // consume the `SEMICOLON` token and discard it
+        advance(); // @HINT: consume the `SEMICOLON` token and discard it
 
-        // @HINT: increment (also possibly empty)
+        // @HINT: increment part (also possibly empty)
         Expr increment = null;
 
         if (!matchAny(RPAREN)) {
@@ -497,7 +745,7 @@ public class Parser {
         }
 
         setExpectationForTokenType(RPAREN, "Expected ')'");
-        advance(); // consume the `RPAREN` token and discard it
+        advance(); // @HINT: consume the `RPAREN` token and discard it
 
         Stmt body = parseBlock('`for`');
 
@@ -506,15 +754,15 @@ public class Parser {
 
     private Stmt parseSwitch() throws Exception {
         setExpectationForTokenType(LPAREN, "Expected '(' after `switch`");
-        advance(); // consume the `LPAREN` token and discard it
+        advance(); // @HINT: consume the `LPAREN` token and discard it
 
         Expr expr = parseExpression(false);
 
         setExpectationForTokenType(RPAREN, "Expected ')' after [switch expression/value]");
-        advance(); // consume the `RPAREN` token and discard it
+        advance(); // @HINT: consume the `RPAREN` token and discard it
 
         setExpectationForTokenType(LBRACE, "Expected '{' after '('");
-        advance(); // consume the `LBRACE` token and discard it
+        advance(); // @HINT: consume the `LBRACE` token and discard it
 
         List<Case> cases = new ArrayList<>();
         Stmt defaultBranch = null;
@@ -526,17 +774,17 @@ public class Parser {
 
             /* @HINT: Cannot have a `default` statement before a `case` statement */
             if (!foundDefault_Keyword && matchAny(CASE)) {
-                advance(); // consume the `CASE` token and discard it
+                advance(); // @HINT: consume the `CASE` token and discard it
                 Expr value = parseExpression(false);
 
                 setExpectationForTokenType(COLON, "Expected ':' after [case expression/value]");
-                advance(); // consume the `COLON` token and discard it
+                advance(); // @HINT: consume the `COLON` token and discard it
 
                 List<Stmt> body = new ArrayList<>();
                 
                 while (!check(CASE) && !check(RBRACE)) {
                     if (matchAny(CONTINUE)) {
-                        advance(); // consume the `CONTINUE` token and discard it
+                        advance(); // @HINT: consume the `CONTINUE` token and discard it
                         statements.add(parseContinue(false));
                     } else {
                         body.add(parseStatement());
@@ -549,16 +797,16 @@ public class Parser {
 
             /* @HINT: Cannot have more than one `default` statement */
             else if (!foundDefault_Keyword && matchAny(DEFAULT)) {
-                advance(); // consume the `DEFAULT` token and discard it
+                advance(); // @HINT: consume the `DEFAULT` token and discard it
 
                 setExpectationForTokenType(COLON, "Expected ':' after `default`");
-                advance(); // consume the `COLON` token and discard it
+                advance(); // @HINT: consume the `COLON` token and discard it
 
                 List<Stmt> body = new ArrayList<>();
 
                 while (!check(RBRACE)) {
                     if (matchAny(CONTINUE)) {
-                        advance(); // consume the `CONTINUE` token and discard it
+                        advance(); // @HINT: consume the `CONTINUE` token and discard it
                         statements.add(parseContinue(false));
                     } else {
                         body.add(parseStatement());
@@ -570,13 +818,14 @@ public class Parser {
             }
 
             // @HINT: Check for probable error states:
-            //
+
+            // @INFO
             // e.g. having a case after a default block
             if (foundDefault_Keyword && matchAny(CASE)) {
                 setExpectationForLookAhead("Expected 'break' after `default`");
             }
 
-            //
+            // @INFO
             // e.g. having a default block after a default block
             if (foundDefault_Keyword && matchAny(DEFAULT)) {
                 setExpectationForLookAhead("Expected 'break' after `default`");
@@ -586,31 +835,31 @@ public class Parser {
             if ((foundCase_Keyword && !matchAny(CASE)) || foundDefault_Keyword) {
                 String type = foundDefault_Keyword ? "default" : "case";
                 setExpectationForTokenType(BREAK, "Expected 'break' after ["+type+" block body]");
-                advance(); // consume the `BREAK` token and discard it
+                advance(); // @HINT: consume the `BREAK` token and discard it
 
-                parseBreak(false); // discard break statement details
+                parseBreak(false); // @HINT: discard break statement details
             }
 
             /* @HINT: Deal with fall-through cases */
             continue;
         }
 
-        setExpectationForTokenType(RBRACE, "Expected '}' after [`switch` statement body]");
-        advance(); // consume the `RBRACE` token and discard it
+        setExpectationForTokenType(RBRACE, "Expected '}' after [switch statement body]");
+        advance(); // @HINT: consume the `RBRACE` token and discard it
 
         return new Switch(expr, cases, defaultBranch);
     }
 
     private Stmt parseFunction(boolean isGlobalDefinition, Token functionName) throws Exception {
         setExpectationForTokenType(LPAREN, "Expected '(' after [function name]");
-        advance(); // consume the `LPAREN` token and discard it
+        advance(); // @HINT: consume the `LPAREN` token and discard it
 
         List<Token> params = new ArrayList<>();
         if (!matchAny(RPAREN)) {
             boolean startFlag = true;
             do {
                 if (params.size() > 0) {
-                    advance(); // consume the `COMMA` token and discard it
+                    advance(); // @HINT: consume the `COMMA` token and discard it
                 }
 
                 String message = startFlag
@@ -618,22 +867,22 @@ public class Parser {
                 : "Expected [function parameter] after ','";
 
                 setExpectationForTokenType(IDENTIFIER, message);
-                params.add(advance()); // consume the `IDENTIFIER` token
+                params.add(advance()); // @HINT: consume each `IDENTIFIER` token and keep it
                 startFlag = false;
             } while (matchAny(COMMA));
         }
 
         setExpectationForTokenType(RPAREN, "Expected ')' or ',' after [function parameter]");
-        advance(); // consume the `RPAREN` token and discard it
+        advance(); // @HINT: consume the `RPAREN` token and discard it
 
         Stmt body = parseBlock('`function`');
         
         if (isGlobalDefinition) {
             setExpectationForTokenType(SEMICOLON, "Expected ';' after [`function` declaration body]");
-            advance(); // consume the `SEMICOLON` token and discard it
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
         } else {
             if (matchAny(SEMICOLON)) {
-                advance(); // consume the `SEMICOLON` token and discard it
+                advance(); // @HINT: consume the `SEMICOLON` token and discard it
             }
         }
 
@@ -650,7 +899,7 @@ public class Parser {
 
         if (isDelimited) {
             setExpectationForTokenType(SEMICOLON, "Expected ';' after [expression]");
-            advance(); // consume the `SEMICOLON` token and discard it
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
         }
 
         return expr;
@@ -664,7 +913,7 @@ public class Parser {
         Expr expr = parseLogicalOr();
 
         if (matchAny(ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN, STAR_ASSIGN, SLASH_ASSIGN, MOD_ASSIGN)) {
-            Token operatorToken = advance();
+            Token operatorToken = advance(); // @HINT: consume the `*_ASSIGN` token and keep it
             Expr value = parseAssignment();
 
             if (operatorToken == null) {
@@ -701,7 +950,7 @@ public class Parser {
         Expr expr = parseLogicalAnd();
 
         while (matchAny(LOGICAL_OR)) {
-            Token operatorToken = advance();
+            Token operatorToken = advance(); // @HINT: consume the `LOGICAL_OR` token and keep it 
             Expr right = parseLogicalAnd();
             if (operatorToken == null) {
                 error(
@@ -714,6 +963,7 @@ public class Parser {
             }
             expr = new Binary(expr, operatorToken, right);
         }
+
         return expr;
     }
 
@@ -721,7 +971,7 @@ public class Parser {
         Expr expr = parseEquality();
 
         while (matchAny(LOGICAL_AND)) {
-            Token operatorToken = advance();
+            Token operatorToken = advance(); // @HINT: consume the `LOGICAL_AND` token and keep it 
             Expr right = parseEquality();
             if (operatorToken == null) {
                 error(
@@ -734,6 +984,7 @@ public class Parser {
             }
             expr = new Binary(expr, operatorToken, right);
         }
+
         return expr;
     }
 
@@ -754,6 +1005,7 @@ public class Parser {
             }
             expr = new Binary(expr, operatorToken, right);
         }
+
         return expr;
     }
 
@@ -761,7 +1013,7 @@ public class Parser {
         Expr expr = parseBitwise();
 
         while (matchAny(LESS, LESS_EQUAL, GREATER, GREATER_EQUAL)) {
-            Token operatorToken = advance();
+            Token operatorToken = advance(); // @HINT: consume any of the relational operator token(s) and keep it 
             Expr right = parseBitwise();
             if (operatorToken == null) {
                 error(
@@ -774,6 +1026,7 @@ public class Parser {
             }
             expr = new Binary(expr, operatorToken, right);
         }
+
         return expr;
     }
 
@@ -781,7 +1034,7 @@ public class Parser {
         Expr expr = parseArithmetic();
 
         while (matchAny(BIT_AND, BIT_OR, SHIFT_LEFT, SHIFT_RIGHT)) {
-            Token operatorToken = advance();
+            Token operatorToken = advance(); // @HINT: consume any of the bitwise operator token(s) and keep it
             Expr right = parseArithmetic();
             if (operatorToken == null) {
                 error(
@@ -794,6 +1047,7 @@ public class Parser {
             }
             expr = new Binary(expr, operatorToken, right);
         }
+
         return expr;
     }
 
@@ -801,7 +1055,7 @@ public class Parser {
         Expr expr = parseUnary();
 
         while (matchAny(PLUS, MINUS, STAR, SLASH, MODULO)) {
-            Token operatorToken = advance();
+            Token operatorToken = advance(); // @HINT: consume any of the binary arithmetic operator token(s) and keep it
             Expr right = parseUnary();
             if (operatorToken == null) {
                 error(
@@ -824,7 +1078,7 @@ public class Parser {
             Expr prefix = null;
 
             if (matchAny(STRING, FORMATTED_STRING)) {
-                Token literalToken = advance(); // consume token
+                Token literalToken = advance(); // @HINT: consume the `*_STRING` token and keep it
 
                 if (literalToken == null) {
                     error(
@@ -838,7 +1092,7 @@ public class Parser {
                 prefix = new Literal(literalToken.getImage());
                 
                 if (matchAny(COMMA)) {
-                    advance(); // consume token an discard it
+                    advance(); // @HINT: consume the `COMMA` token an discard it
 
                     if (!check(CALL)) {
                         return prefix;
@@ -849,7 +1103,7 @@ public class Parser {
             }
 
             if (matchAny(CALL)) {
-                advance(); // consume token
+                advance(); // @HINT: consume the `CALL` token and discard it
                 call = parseCallExpression();
 
                 if (check(ARROW)) {
@@ -861,7 +1115,7 @@ public class Parser {
         }
 
         if (matchAny(LOGICAL_NOT, PLUS, MINUS, INCREMENT, DECREMENT)) {
-            Token operatorToken = advance(); // consume token
+            Token operatorToken = advance(); // @HINT: consume any of the unary arithmetic operator token(s) and keep it
             Expr right = parseUnary();
             if (operatorToken == null) {
                 error(
@@ -880,7 +1134,7 @@ public class Parser {
 
     private Expr parsePrimary() throws Exception {
         if (matchAny(INT_LITERAL, FLOAT_LITERAL, STRING, FORMATTED_STRING, BOOLEAN, NULL)) {
-            Token literalToken = advance();
+            Token literalToken = advance(); // comsume any of the literal type token(s) andd keep it
             if (literalToken == null) {
                 error(
                     new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1),
@@ -916,7 +1170,7 @@ public class Parser {
         }
 
         if (matchAny(IDENTIFIER)) {
-            Token identifierToken = advance();
+            Token identifierToken = advance(); // @HINT: consume the `IDENTIFIER` token and keep it
             if (identifierToken == null) {
                 error(
                     new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1),
@@ -930,7 +1184,8 @@ public class Parser {
         if (matchAny(LPAREN)) {
             Expr expr = parseExpression();
             setExpectationForTokenType(RPAREN, "Expected token ')'");
-            advance(); // consume the `RPAREN` token and discard it
+            advance(); // @HINT: consume the `RPAREN` token and discard it
+            
             return expr;
         }
 
@@ -942,6 +1197,9 @@ public class Parser {
 
 
     
+
+
+
     /* =========================
        PARSER HELPERS
        ========================= */
@@ -965,7 +1223,8 @@ public class Parser {
         try {
             return !tokenQueue.isAtEnd() && peek().getType() == type;
         } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt(); // Restore interrupted status
+            // @INFO: Restore interrupted status
+            Thread.currentThread().interrupt(); 
             return false;
         }
     }
@@ -1055,6 +1314,9 @@ public class Parser {
         }
     }
 
+    /**
+     * Report syntax errors using the token at the point of offending sequence
+     */
     private void error(Token token, String msgText) throws Exception {
         String messagePrefix = "[line: " + token.getLineNumber() + ", column: " + token.getColumnNumber() + "]; ";
 
@@ -1073,6 +1335,9 @@ public class Parser {
         );
     }
 
+    /**
+     * Report null reference and runtime issues
+     */
     private void error(Token token, String msgText, RuntimeException ex) throws Exception {
         String messagePrefix = "[line: " + token.getLineNumber() + ", column: " + token.getColumnNumber() + "]; ";
 

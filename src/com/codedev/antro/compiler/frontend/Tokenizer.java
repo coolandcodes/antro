@@ -81,7 +81,8 @@ public class Tokenizer {
         Map.entry("export", TokenType.EXPORT),
         Map.entry("require", TokenType.REQUIRE),
         Map.entry("defer", TokenType.DEFER),
-        Map.entry("invariants", TokenType.INVARIANTS)
+        Map.entry("invariants", TokenType.INVARIANTS),
+        Map.entry("as", TokenType.ALIASER)
     );
 
 
@@ -96,7 +97,7 @@ public class Tokenizer {
     }
 
     public Tokenizer(BufferedReader reader, LexemeQueue tokenQueue) {
-        this.reader = reader; /* @FIXME: Modify this to use `NameBufferedReader` instead in the future */
+        this.reader = reader; /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
         this.tokenQueue = tokenQueue;
         this.multiCharScanActive = false;
     }

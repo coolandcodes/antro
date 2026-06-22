@@ -1,6 +1,5 @@
 package com.codedev.antro.comipler.frontend.ast.rules;
 
-import com.codedev.antro.comipler.frontend.lexer.Token;
 import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
 
 /*
@@ -13,6 +12,6 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
 /**
  * 
  */
-public class Module extends Stmt {
+public class Defer extends Stmt {
 
 }

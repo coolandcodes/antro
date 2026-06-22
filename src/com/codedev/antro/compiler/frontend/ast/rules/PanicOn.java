@@ -13,6 +13,6 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
 /**
  * 
  */
-public class Module extends Stmt {
+public class PanicOn extends Stmt {
 
 }

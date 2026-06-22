@@ -34,9 +34,16 @@ public class LexemeQueue {
 
     private int lastSeenLineNumber = 0;
 
+    // @INFO: Default constructor (Arity = 0)
     public LexemeQueue() {
+        // pass default value of 15 inline
+        this(15);
+    }
+
+    // @INFO: Single-argument constructor (Arity = 1)
+    public LexemeQueue(int queueCapacity) {
         this.tokensHistoryList = new ArrayList<>();
-        this.tokenQueue = new LinkedBlockingQueue<>(15);
+        this.tokenQueue = new LinkedBlockingQueue<>(queueCapacity);
         this.ALL_TOKENS_QUEUED = false;
     }
 
@@ -68,13 +75,18 @@ public class LexemeQueue {
         if (!lookaheadStack.isEmpty()) {
             return lookaheadStack.peek();
         }
-
-        /* @NOTE: I do't want to use `poll()` cos i'm goinng to have to re-add the token back */
         
-        // This achieves your exact wait logic (4 cycles of 100ms = 400ms) efficiently:
+        // This snippet achieves the exact wait logic (4 cycles of 100ms = 400ms) efficiently:
         // `Token token = tokenQueue.poll(400, TimeUnit.MILLISECONDS);`
-        
-        /* @INFO: Therefore, use `peek()` and `Thread.sleep()` instead */
+
+        /* 
+            @NOTE:
+            
+            However, i don't want to use `tokenQueue.poll(...)` because i'm going to have to 
+            re-add the token back to the queue after calling `tokenQueue.poll(...)`.
+
+            Therefore, i'll use `tokenQueue.peek(...)` along with `Thread.sleep(...)` instead
+        */
 
         Token token = null;
         int MAX_IDLE_WAIT_CYCLE = 4;
