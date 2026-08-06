@@ -36,7 +36,8 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 
 	begin: (void) void ->> .Err
 	  # A novel programming language design for error handling (antro)
-	  # This uses chained exceptions behind the scenes (within the runtime).
+	  # This uses the concept of "chained exceptions" behind the scenes 
+   	  # i.e. within the antro runtime.
 	  
 	  var error = call: Error::new("Program crashed");
 	  
@@ -112,6 +113,7 @@ In _antro_, all data types are prefixed with a `.` (dot) character. The built-in
 - `.uint32` for an unsigned integer type (32 bits)
 - `.uint64` for an unsigned integer type (64 bits)
 - `.float` for a float type
+- `.double` for a double type
 - `.long` for a long type
 - `.ulong` for an unsigned long type
 - `.char`  for an signed char type
