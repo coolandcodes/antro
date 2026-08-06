@@ -1,14 +1,16 @@
 # antro
 
-A compiler project for an experimental programming language called _antro language_ which is still in development. This project is purely educational (for now) as the language cannot be used for any industry work in its current form. Therefore, the sole aim of this project is to show and teach the skills required of designing computer languages and implementing them.
+A compiler project for an experimental programming language called _antro language_ which is still in development. This project is purely educational and full or experimentation (for now) as the language cannot be used for any industry work in its current form. Therefore, the sole aim of this project is to show and teach the skills required of designing computer languages and implementing them.
 
-> The [**Regular Grammar**](https://github.com/coolandcodes/antro/blob/master/PARSER_ALGOS_AND_GRAMMAR.md#regular-grammar-productions-rgp-for-antro-scripting-language-tokenizer----ebnf) as details for the **Tokenizer** and the  [**Context-Free Grammar**](https://github.com/coolandcodes/antro/blob/master/PARSER_ALGOS_AND_GRAMMAR.md#context-free-grammar-productions-cfgp-for-antro-scripting-language-parser----ebnf) as production rules for the **Parser** (written in [EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) format) as well as other details of the algorithm used to implement the recursive descent strategy of the parser.
+The Antro project is implemented as a predictive recursive descent parser with a [lookahead of 2 tokens](https://www.quora.com/What-is-a-%E2%80%9Clookahead-operator%E2%80%9D-in-compiler-designs) (at most) and some backtracking to deal with parts of the grammar that aren't left-factored (... to be fixed).
+
+> The [**Regular Grammar**](https://github.com/coolandcodes/antro/blob/master/PARSER_ALGOS_AND_GRAMMAR.md#regular-grammar-productions-rgp-for-antro-scripting-language-tokenizer----ebnf) as details for the **Tokenizer** and the  [**Context-Free Grammar**](https://github.com/coolandcodes/antro/blob/master/PARSER_ALGOS_AND_GRAMMAR.md#context-free-grammar-productions-cfgp-for-antro-scripting-language-parser----ebnf) as production rules for the **Parser** (both written in [EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) format) as well as other details of the algorithm used to implement the recursive descent strategy of the parser.
 
 ## FrontEnd Design
 
 -  **Tokenizer** (lexical analysis)
--  **Parser**  (semantic analysis)
--  **Executor** (a concurrent thread-safe queue for passing tokens from the **Tokenizer** to the **Parser** with a [lookahead of 1](https://www.quora.com/What-is-a-%E2%80%9Clookahead-operator%E2%80%9D-in-compiler-designs))
+-  **Parser**  (syntactic analysis)
+-  **Executor** (a concurrent thread-safe queue for passing tokens from the **Tokenizer** to the **Parser**)
 
 ## Backend Design
 
@@ -24,33 +26,36 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 
 ## Sample program written in antro
 
-```ada
+```antro
 
-	require: "sys.module";
-	require: "errors.module";
-	require: "logging.module";
-	require: "types.module";
+	require: "sys.module/io"; # `print(...)` is defined here
+	require: "asserts.module"; # `UNSAFE_type(...)` is defined here
+	require: "errors.module"; # `.Err` trait + the `Error` impl is defined here
 
 	def: MAX 200;
 
-	begin: (void)
-	  --# A novel programming language design for error handling (antro)
-	  --# This uses chained exceptions behind the scenes (within the runtime).
-	  var error = call: error("Program crashed");
+	begin: (void) void ->> .Err
+	  # A novel programming language design for error handling (antro)
+	  # This uses chained exceptions behind the scenes (within the runtime).
+	  
+	  var error = call: Error::new("Program crashed");
+	  
 	  var ty = call: factorUpBy2(MAX) -> eject_on error -> use {
  	    if (error) {
-	      call: output(f"{error.message} - {error.context.cause}");
+	      call: print(f"{error.message} - {error.context.cause}");
 	    }
 		
   	    call: print("A fatal error occurred");
 
 		panic_on error;
 	  };
+	  
 	  call: print(ty);
 	end;
 
-	def: factorUpBy2(x){
+	def: factorUpBy2(x .int) .int ->> .Err {
 	  var y, g = true;
+      var error = call: Error::new("could not factor value by 2");
 
 	   if (x > 0) {
 	     y = (x / 2) * 4;
@@ -58,50 +63,69 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 	     g = false;
 	   }
 
-	    y = call: convertToFactor(g, x);
-	    retn y
+	    y = call: convertToFactor(g, x) -> eject_on error;
+	    retn y;
 	};
 
-	def: convertToFactor(c, d){
+	def: convertToFactor(c .bool, d .int) .int ->> .Err {
 	  var error_message_prefix = "Argument type error: ";
 
-	  invariants {
-	    error_message_prefix += "calling `convertToFactor(..)`; "
-		var error_message_suffix = "`c` is not a number"
-		var error_message = error_message_prefix + error_message_suffix
-
-		--# `$$<...>` is a macro call into the runtime internal API
-		--# for auto error propagation and chaining used here as
-		--# `$$<error_message>`
-		call: type(c, "number") -> eject_on $$<error_message>;
-		error_message_suffix = "`d` is not a number"
-		error_message = error_message_prefix + error_message_suffix
-		call: type(d, "number") -> eject_on $$<error_message>;
-	  }
-
-	  --# before the `retn` statement below executes...
-	  --# ... we call the invariants below 👇🏾👇🏾
-	  --# Antro bakes invariants right into the...
-	  --# ... programming model of the language 💯
-	  
 	  defer -> invariants {
-		call: print("leaving `convertToFactor` function");
+		call: print("leaving `convertToFactor(...)` function");
       }
 
-	  retn c * d;
+	  invariants {
+	     error_message_prefix += "calling `convertToFactor(..)` ~ ";
+	     var next_error_message = "";
+	     var error_message = error_message_prefix + "`c` is not a boolean";
+	
+	     var error = call: Error::new(error_message);
+	     call: UNSAFE_type(c, "boolean") -> eject_on error;
+	
+	     next_error_message = error_message_prefix + "`d` is not a number";
+	
+	     var _error = call: Error::new(next_error_message);
+	     call: UNSAFE_type(d, "number") -> eject_on _error;
+	  }
+
+	  # before the `retn` statement below executes...
+	  # ... we call the invariants below 👇🏾👇🏾
+	  
+	  # Antro bakes invariants right into the...
+	  # ... programming model of the language 💯
+
+	  retn c ? d * 2 : 0; # ternary operator
 	};
 
 ```
 
-Though the above program doesn't do anything useful for now (i.e. the parser as currently written does not yet produce an Absract Syntax Tree - AST nor does it provide an Immediate Representation - IR), one can still get to understand the basics of what's going on.
+Though the above program doesn't do anything useful for now (i.e. the parser as currently written does not yet produce an **Abstract Syntax Tree - AST** nor does it provide an Immediate Representation - IR), one can still get to understand the basics of what's going on.
 
 ## About
 
+#### Data Types
+In _antro_, all data types are prefixed with a `.` (dot) character. The built-in types are as follows:
+
+- `.int` for an integer type
+- `.uint8` for an unsigned integer type (8 bits)
+- `.uint16` for an unsigned integer type (16 bits)
+- `.uint32` for an unsigned integer type (32 bits)
+- `.uint64` for an unsigned integer type (64 bits)
+- `.float` for a float type
+- `.long` for a long type
+- `.ulong` for an unsigned long type
+- `.char`  for an signed char type
+- `.byte` for a unsigned char type
+- `.str` for a string type
+- `.bool` for a boolean type
+- `.Error` for an error type
+- `.File` for a file type
+
 #### Module/File Imports
-The `require` keyword is used to require/import a module (i.e. a folder) or a single source (i.e. a file) as an implicit dependency. For example, `require: "sys.module";` is a statement that requires/imports a folder named **"sys.module"**. This folder must dircetly contain a **root.antro** file. The folder can also contain other files and folders. 
+The `require` keyword is used to require/import a module (i.e. a folder) or a single source (i.e. a file) as an implicit dependency. For example, `require: "sys.module/io";` is a statement that requires/imports a folder named **"sys.module"** and a sub folder named **io**. This **sys.module** folder is defined as a standard library entry which directly contain a **root.antro** file. The folder can also contain other _antro_ source files and folders. 
 
 #### Entry Point Definition
-The `begin` keyword is used to defined the [**entry point**](https://en.wikipedia.org/wiki/Entry_point) of the _antro_ program. It is truncated by the `end` keyword.
+The `begin` keyword is used to defined the [**entry point**](https://en.wikipedia.org/wiki/Entry_point) of the _antro_ program. It is completed by the `end` keyword.
 
 #### Other Definitions
 The  `def`  keyword is used to define variables in the **global scope** (i.e. outside functions) that cannot be changed. When using `def`, it doesn't matter if the variable is defined in a **global scope** or **local scope**, it will always be a **globally-scoped** variable. Also, variables created with the `def` keyword cannot have their values changed/mutated but only copied into a variable whose value can be changed/mutated. NOTE: Antro makes use of lexical scoping.
@@ -109,15 +133,20 @@ The  `def`  keyword is used to define variables in the **global scope** (i.e. ou
 #### Variable Creation
 The `var` keyword is used to define variables or functions within a **local scope** (i.e. within functions) only. When using the `var` keyword, it matters that it isn't used in a **global scope** (i.e. outside functions) else the _antro_ parser will throw a parse error. Also, variables created with the `var` keyword can have their value changed/mutated.
 
-#### Exception Handling - Part 1
-The `eject_on` keyword is the _antro_ equivalent of a [catch block](https://www.geeksforgeeks.org/try-catch-block-in-programming/#what-is-a-catchexcept-block) in other scripting languages like JavaScript. _Antro_ does not directly use the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) model for error handling. It uses an error to catch other errors that occur higher up on the call stack. In this way, the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) block [is abstracted away](https://github.com/isocroft/runn) from the source-level (hidden from the programmer) and handled by the _antro_ compiler and runtime.
+#### Multiple Return Values
+_antro_ does not have multiple return values. This is a very meticulously determined feature. As time goes on, it will become clear why this decision was made.
 
-#### Exception Handling - Part 2
-The  `panic_on` keyword is the _antro_ equivalent of [panic](https://gobyexample.com/panic) keyword in [Golang](https://go.dev/) which triggers abandonment.
+#### Error Handling - Part 1
+The `eject_on` keyword in _antro_ is the equivalent of a [catch block](https://www.geeksforgeeks.org/try-catch-block-in-programming/#what-is-a-catchexcept-block) in other programming languages like C#, Java and JavaScript. _antro_ does not directly use the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) model for error handling. It uses an error to catch other errors that occur higher up on the call stack. In this way, the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) block [is abstracted away](https://github.com/isocroft/runn) from the source-level (hidden from the programmer) and handled by the _antro_ compiler and runtime.
+
+The semantics for `eject_on` here is exactly returning immediately from a function once an error is encountered (think `throw` in languages like Java and TypeScript). This is based on a novel error model designed for _antro_ called [Error Ejection](https://isocroft.medium.com/designing-a-novel-ergonomic-error-model-besides-an-exception-based-model-2afa3b97198c).
+
+#### Error Handling - Part 2
+The  `panic_on` keyword is the _antro_ equivalent of [panic](https://gobyexample.com/panic) keyword in [Golang](https://go.dev/) which triggers abandonment with no way to recover or stop the propagation of the panic yet merely `pause` it using a `pause` block (more on this later).
 
 NOTE: Antro does not support multiple return value
-NOTE: Antro does not support enums (as they're mostly useless in any language that implements them)
-NOTE: Antro has a build-flag (i.e. `--build-mode`) system on the CLI that relaxes the enforcement of certain compilation rules:
+NOTE: Antro does not support enums (as they're mostly 'useless' in most languages (like C, Go) that implements them) better to use a struct.
+NOTE: Antro compiler has a **build mode** build-flag (i.e. `--build-mode`) on the CLI that relaxes the enforcement of certain compilation rules:
 
 - Using `--build-mode=dev`, any declared yet unused variable does not cause a compilation error
 - Using `--build-mode=prod`, any variable declaration where the right-hand side is a non-standard library API/non-literal must be typed
@@ -130,20 +159,87 @@ NOTE: Antro only has 2 broad classifications for errors:
 - Non-recoverable Errors
 
 #### Error Handling - Part 3
-The `use` keyword is the _antro_ equivalent of [finally](https://www.w3schools.com/java/ref_keyword_finally.asp) keyword in most c-based programming languages like Java, C#, Python or PHP. Yet, it is used specifically to 
+The `use` keyword is not the _antro_ equivalent of [finally](https://www.w3schools.com/java/ref_keyword_finally.asp) keyword in most C-based programming languages like Java, Python or PHP. However, it is used specifically to recover and try again after a non-panic error has occurred. The `use` block is not meant to be used as another `defer` block where a resource is released (e.g. a lock or allocated memory) or where panics are `pause`d (more on this later) and should not be treated as such. It is simple an inline recovery mechanism that allows the programmer to "try again" to return a valid value or otherwise (in an extreme case) panic or eject using `panic_on` and `eject_on` respectively.
 
-#### Invaraints
-The `invariants` keyword is used to setup [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) within a **local scope** (i.e. within functions). For the design of _antro_, i believe that [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) ought to be baked into the programming model (i.e. the programming language). In the future, i plan to setup [macros](https://doc.rust-lang.org/book/ch20-05-macros.html) just like they are used in [Rust](https://www.rust-lang.org/) to make the `invariants` block shorter and more compact. All function definitions MUST contain an `invariants` block else the _antro_ runtime will throw an error.
+Finally, _antro_ has **checked errors** (a much more constrained and healthy implementation of [Checked Exceptions in Java](https://www.baeldung.com/java-checked-unchecked-exceptions#checked). Checked Errors build on top of **Error Ejection** and ensure that the only error type a function can possibly eject is included in the function signature.
 
-#### Defering Action
-The `defer` keyword is the _antro_ equivalent of the [defer](https://gobyexample.com/defer) keyword in [Golang](https://go.dev/).
+#### Invariants
+The `invariants` keyword is used to setup [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) within a **local scope** (i.e. within functions). For the design of _antro_, i believe that [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) ought to be baked into the programming model (i.e. the programming language design). In the future, i plan to setup [macros](https://doc.rust-lang.org/book/ch20-05-macros.html) just like they are used in [Rust](https://www.rust-lang.org/) to make the `invariants` block shorter and more compact. All function definitions MUST contain an `invariants` block else the _antro_ runtime will throw an error.
+
+#### Deferring An Action
+The `defer` keyword is the _antro_ equivalent of the [defer](https://gobyexample.com/defer) keyword in [Golang](https://go.dev/). The `defer` keyword in _antro_ works in a very specific set of ways. This includes `defer` being used to execute invariants as a function scope is about to be exited:
+
+```antro
+	defer -> invariants {
+		# More code goes here...
+	}
+```
+
+Or `defer` being used to execute a `pause` for a panic:
+
+```antro
+	defer {
+		pause (err) {
+			# More code goes here...
+		}
+	}
+```
+
+Within a `defer` block, trying to access a variable that is in the global scope will result in a compilation error irrespective of the `--build-mode` (see section on **build modes**).
 
 #### Function Output
-The `retn` keyword is used to return a value from a function definition or `begin` block.
+The `retn` (return) keyword is used to return a value from a function definition or `begin` block.
 
 #### Limiting Scope
-The `static` keyword (similar to same in C programming language) is usedd in  _antro_ to limit the lexical scope access of a function or variable within a module source file.
+The `static` keyword (similar to same in C programming language) is used in  _antro_ to limit the lexical scope access of a function or variable within a module source file.
 
+#### Structs And Inheritance
+The `struct` keyword is used to create structs in _antro_ just like in Go, C, Odin and Zig. However, the only novel thing is that _antro_ implements is inheritance of an  abstract struct but not a type struct. Inheritance in _antro_ is restricted to `struct`s and `impl`s that cannot be instantiated (i.e. they are `abstract`).  
+
+```antro
+	# A single type struct (think `dict` type in Python)
+	
+	struct Student {
+	  name .str,
+      grade .char,
+	  age .uint8,
+	};
+
+	var student .Student = Student::new(name = "Patrick",grade = "A",age = 11); # no compiler error
+	var grad_student = Student::new(name = "Efosa",grade = "B",age = 23); # no compiler error
+```
+
+```antro
+	# A single abstract struct (not a concrete type)
+
+	struct Student {
+	  name .str,
+	  age .uint8,
+	} as abstract;
+
+	# A single type trait (think `interface` in TypeScript or Java and also an `abstract` class in PHP or Java)
+	
+	trait Person {
+	  inherits Student { name };
+	  
+	   old .bool,
+	   walk (void) void ->> .Error,
+	};
+
+	impl Me on Person {
+	  
+	  init () {
+		prv >> old = false;
+		pub >> name = "";
+	  }
+
+	  prv >> self&: walk (void) void ->> .Error {
+		call: print("walk called...");
+	  }
+	} as abstract;
+
+	var me .Person = Me::new(); # compiler error since `impl Me on Person` is abstract
+```
 
 ## License 
 
@@ -151,7 +247,7 @@ This is released under the MIT license.
 
 ## Design Inspiration
 
-Antro language design was inspired by C, Go, Zig, Python and TypeScript all combined.
+_antro_ language design was inspired by 9 languages: C, Go, Zig, Python, PHP, Java, Odin, Rust and TypeScript all combined.
 
 
 
