@@ -88,8 +88,8 @@ public class Tokenizer {
         Map.entry("struct", TokenType.STRUCT),
         Map.entry("impl", TokenType.IMPLEMENTATION),
         Map.entry("pause", TokenType.PAUSE),
-        Map.entry(("inherits", INHERITS),
-        Map.entry("trait", TRAIT)
+        Map.entry(("inherits", TokenType.INHERITS),
+        Map.entry("trait", TokenType.TRAIT)
     );
 
 
@@ -514,7 +514,12 @@ public class Tokenizer {
             }
         }
 
-        emit(new Token(isFloat ? TokenType.FLOAT_LITERAL : TokenType.INT_LITERAL, sb.toString(), line, col));
+        emit(new Token(
+            isFloat ? TokenType.FLOAT_LITERAL : TokenType.INT_LITERAL,
+            sb.toString(),
+            line,
+            col
+        ));
     }
 
 
