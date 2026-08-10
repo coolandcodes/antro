@@ -85,6 +85,8 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - cursor := ":" ;
 
+- joiner := cursor, cursor ;
+
 - terminator := ";" ;
 
 - openbracket := "(" ;
@@ -133,17 +135,23 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - end := "end" ;
 
-- main := "main" ;
-
 - void := "void" ;
 
 - null := "null" ;
 
-- type := ".int" | ".flt" | ".str" | ".arr" | ".bool" | ".nil" ;
+- type := ".int" | ".float" | ".str" | ".arr" | ".bool" | ".nil" | ".char" | ".byte" | ".double" | ".long" ;
 
 - defer := "defer" ;
 
 - require := "require" ;
+
+- inherits := "inherits" ;
+
+- pause := "pause" ;
+
+- implementation := "impl" ;
+
+- binder := "on" ;
 
 - def := "def" ;
 
@@ -181,13 +189,21 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - continue := "continue" ;
 
+- struct := "struct" ;
+
+- trait := "trait" ;
+
 - export := "export" ;
+
+- as := "as" ;
 
 - retn := "retn" ;
 
 - var := "var" ;
 
 - whitespace := "\f" | "\t" | "\r" | "\n" | "\b" | " " | ?? ;
+
+- annotation := module, modulo ;
 
 - arithmeticunaryoperators := plus, plus | minus, minus ;
 
@@ -211,6 +227,8 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - link := "->" ;
 
+- signlink := "->>" ;
+
 - comma := "," ;
 
 - allchars := whitespace | [ letterordigit | pipe | and | cursor | terminator | hash | pound | dquote | squote | logicalunaryoperator | relationaloperator | retn | ace | multiply | divide | modulo | comma | uscore | plus | minus | assignmentoperator | openbracket | openbrace | closebracket | closebrace | dot ]
@@ -219,7 +237,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - formattedstring := stringformatprefix, string ;
 
-- identifier := ( pound | letter ), {  letterordigit | uscore  } ;
+- identifier := ( pound | letter | uscore ), {  letterordigit | uscore  } ;
 
 - comment := hash, { allchars - hash } ;
 
