@@ -181,7 +181,7 @@ Or `defer` being used to execute a `pause` for a panic:
 
 ```antro
 	defer {
-		pause (err) {
+		pause (err .Err) {
 			# More code goes here...
 		}
 	}
@@ -231,11 +231,11 @@ The `struct` keyword is used to create structs in _antro_ just like in Go, C, Od
 	impl Me on Person {
 	  
 	  init () {
-		prv >> old = false;
-		pub >> name = "";
+		prv |> old = false;
+		pub |> name = "";
 	  }
 
-	  prv >> self&: walk (void) void ->> .Error {
+	  prv |> self&: walk (void) void ->> .Error {
 		call: print("walk called...");
 	  }
 	} as abstract;
