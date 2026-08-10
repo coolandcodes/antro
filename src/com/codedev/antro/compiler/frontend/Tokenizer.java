@@ -578,6 +578,10 @@ public class Tokenizer {
     private char advance() throws Exception {
         boolean READER_EOF = false;
         char c = ' ';
+
+        Exception exp = new Exception(
+            "could not advance to next character in stream"
+        );
         
         try {
             if (bufferPos >= buffer.length()) {
@@ -598,9 +602,6 @@ public class Tokenizer {
                 column++;
             }
         } catch (IOException ex) {
-            Exception exp = new Exception(
-                "could not advance to next character in stream"
-            );
             exp.initCause(ex);
             throw exp;
         }
@@ -732,7 +733,7 @@ public class Tokenizer {
         return false;
     }
 
-    private boolean isCommentEnd(char start, char curr) throws IOException {
+    private boolean isCommentEnd(char start, char curr) throws Exception {
         if (start == '#') {
             return isAtNewLine(curr);
         }
@@ -750,7 +751,7 @@ public class Tokenizer {
     }
 
     private boolean isIdentifierStart(char c) {
-        return Character.isLetter(c) || c == '$';
+        return Character.isLetter(c) || c == '$' || c == '_';
     }
 
     private boolean isIdentifierPart(char c) {
