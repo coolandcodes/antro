@@ -10,7 +10,7 @@ The Antro project is implemented as a predictive recursive descent parser with a
 
 -  **Tokenizer** (lexical analysis)
 -  **Parser**  (syntactic analysis)
--  **Executor** (a concurrent thread-safe queue for passing tokens from the **Tokenizer** to the **Parser**)
+-  **Executor** (a concurrent thread-safe blocking queue for passing tokens from the **Tokenizer** to the **Parser**)
 
 ## Backend Design
 
@@ -41,9 +41,9 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 	  
 	  var error = call: Error::new("Program crashed");
 	  
-	  var ty = call: factorUpBy2(MAX) -> eject_on error -> use {
- 	    if (error) {
-	      call: print(f"{error.message} - {error.context.cause}");
+	  var ty = call: UNSAFE_factorUpBy2(MAX) -> eject_on error -> use {
+ 	    if (error:isEjected) {
+	      call: print(f"{error:message} - {error:context:cause}");
 	    }
 		
   	    call: print("A fatal error occurred");
@@ -51,10 +51,10 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 		panic_on error;
 	  };
 	  
-	  call: print(ty);
+	  call: print(f"{ty}");
 	end;
 
-	def: factorUpBy2(x .int) .int ->> .Err {
+	def: UNSAFE_factorUpBy2(x .int) .int ->> .Err {
 	  var y, g = true;
       var error = call: Error::new("could not factor value by 2");
 
@@ -64,19 +64,19 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 	     g = false;
 	   }
 
-	    y = call: convertToFactor(g, x) -> eject_on error;
+	    y = call: UNSAFE_convertToFactor(g, x) -> eject_on error;
 	    retn y;
 	};
 
-	def: convertToFactor(c .bool, d .int) .int ->> .Err {
+	def: UNSAFE_convertToFactor(c .bool, d .int) .int ->> .Err {
 	  var error_message_prefix = "Argument type error: ";
 
 	  defer -> invariants {
-		call: print("leaving `convertToFactor(...)` function");
+		call: print("leaving `UNSAFE_convertToFactor(...)` function");
       }
 
 	  invariants {
-	     error_message_prefix += "calling `convertToFactor(..)` ~ ";
+	     error_message_prefix += "calling `UNSAFE_convertToFactor(..)` ~ ";
 	     var next_error_message = "";
 	     var error_message = error_message_prefix + "`c` is not a boolean";
 	
@@ -89,7 +89,7 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 	     call: UNSAFE_type(d, "number") -> eject_on _error;
 	  }
 
-	  # before the `retn` statement below executes...
+	  # before the `retn` (return) statement below executes...
 	  # ... we call the invariants below 👇🏾👇🏾
 	  
 	  # Antro bakes invariants right into the...
