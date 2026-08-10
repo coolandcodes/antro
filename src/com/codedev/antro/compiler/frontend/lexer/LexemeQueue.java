@@ -154,7 +154,7 @@ public class LexemeQueue {
     }
 
     /**
-     * Check if the last token is aout to be consumed by the
+     * Check if the last token is about to be consumed by the
      * consumer (i.e. Parser)
      */
     public final boolean isAtEnd() throws InterruptedException {
@@ -174,7 +174,9 @@ public class LexemeQueue {
      * Check if the token queue is full.
      */
     public final boolean isAtCapacity () {
-        return tokenQueue.size() === 15;
+        int currentSize = tokenQueue.size();
+        int totalCapacity = currentSize + tokenQueue.remainingCapacity();
+        return currentSize == totalCapacity;
     }
 
     /**
