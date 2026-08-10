@@ -250,33 +250,33 @@ public class Parser {
         setExpectationForTokenType(COLON, "Expected ':' after `export`");
         advance(); // @HINT: consume the `COLON` token and discard it
 
-        Token aliasToken = null;
-        List<Token> exports = new ArrayList<>();
+        Token namespaceToken = null;
+        List<Token> _exports = new ArrayList<>();
 
         if (matchAny(STAR)) {
-            exports.add(
-                advance() // @HINT: consume the `STAR` token and discard it
+            _exports.add(
+                advance() // @HINT: consume the `STAR` token and keep it
             );
         } else {
             do {
-                if (exports.size() > 0) {
+                if (_exports.size() > 0) {
                     advance(); // @HINT: consume the `COMMA` token and discard it
                 }
 
-                String errorSuffix = exports.size() > 0 ? "','" : "`export`";
+                String errorSuffix = _exports.size() > 0 ? "','" : "`export`";
                 setExpectationForTokenType(IDENTIFIER, "Expected <identifier> after " + errorSuffix);
 
-                exports.add(
+                _exports.add(
                     advance() // @HINT: consume the `IDENTIFIER` token and keep it
                 );
             } while (matchAny(COMMA));
         }
 
         if (matchAny(ALIASER)) {
-            aliasToken = advance(); // @HINT: consume the `ALIASER` token and discard it
+            advance(); // @HINT: consume the `ALIASER` token and discard it
 
             setExpectationForTokenType(IDENTIFIER, "Expected <identifier> after `as`");
-            advance(); // @HINT: consume the `IDENTIFIER` token and keep it
+            namespaceToken = advance(); // @HINT: consume the `IDENTIFIER` token and keep it
 
             setExpectationForTokenType(SEMICOLON, "Expected ';' after [alias export identifier]");
             advance(); // @HINT: consume the `SEMICOLON` token and discard it
@@ -285,7 +285,7 @@ public class Parser {
             advance(); // @HINT: consume the `SEMICOLON` token and discard it
         }
 
-        return new Export(exports, aliasToken);
+        return new Export(_exports, namespaceToken);
     }
 
     private Stmt parseInvariants() throws Exception {
@@ -398,17 +398,33 @@ public class Parser {
     }
 
     private Stmt parseRequire() {
-
+        
         setExpectationForTokenType(COLON, "Expected ':' after `require`");
         advance(); // @HINT: consume the `COLON` token and discard it
 
+        Token namespaceToken = null;
+        Token modulePath = null;
+
         setExpectationForTokenType(STRING, "Expected string representing module path");
-        Token modulePath = advance(); // @HINT: consume the `STRING` token and keep it
+        modulePath = advance(); // @HINT: consume the `STRING` token and keep it
 
         setExpectationForTokenType(SEMICOLON, "Expected ';'");
         advance(); // @HINT: consume the `SEMICOLON` token and discard it
 
-        return new Require(modulePath);
+        if (matchAny(ALIASER)) {
+            advance(); // @HINT: consume the `ALIASER` token and discard it
+
+            setExpectationForTokenType(IDENTIFIER, "Expected <identifier> after `as`");
+            namespaceToken = advance(); // @HINT: consume the `IDENTIFIER` token and keep it
+
+            setExpectationForTokenType(SEMICOLON, "Expected ';' after [alias export identifier]");
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
+        } else {
+            setExpectationForTokenType(SEMICOLON, "Expected ';' after [export identifier list]");
+            advance(); // @HINT: consume the `SEMICOLON` token and discard it
+        }
+
+        return new Require(modulePath, namespaceToken);
     }
 
     private Stmt parseModule() {
