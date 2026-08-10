@@ -13,7 +13,7 @@ package com.codedev.antro.compiler.frontend.lexer;
 public enum TokenType {
 
     // Special
-    EOF,
+    EOF, UNKNOWN,
 
     // Identifiers & literals
     IDENTIFIER,
@@ -33,9 +33,13 @@ public enum TokenType {
     THROW, PANIC_ON, EJECT_ON,
     USE, CALL,
     NEW, INVARIANTS, ALIASER,
+    STRUCT, STATIC, IMPLEMENTATION,
+    PAUSE, INHERITS, TRAIT,
 
     // Types
-    TYPE_INT, TYPE_FLT, TYPE_STR, TYPE_ARR, TYPE_BOOL, TYPE_NIL,
+    TYPE_INT, TYPE_FLT, TYPE_STR, TYPE_ARR,
+    TYPE_BOOL, TYPE_NIL, TYPE_BYTE, TYPE_CHAR,
+    TYPE_DBL, TYPE_CUSTOM,
 
     // Operators
     PLUS, MINUS, STAR, SLASH, MODULO,
@@ -46,12 +50,12 @@ public enum TokenType {
     LESS, LESS_EQUAL,
     LOGICAL_AND, LOGICAL_OR, LOGICAL_NOT,
     BIT_AND, BIT_OR, SHIFT_LEFT, SHIFT_RIGHT,
-    ARROW,
+    ARROW, DOUBLE_ARROW,
 
     // Delimiters
     LPAREN, RPAREN,
     LBRACE, RBRACE,
     LBRACKET, RBRACKET,
     COMMA, DOT, COLON, SEMICOLON,
-    AT
+    AT, ANNOTATION, JOINER
 }
