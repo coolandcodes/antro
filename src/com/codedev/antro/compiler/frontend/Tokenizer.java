@@ -33,6 +33,7 @@ public class Tokenizer {
     private final BufferedReader reader; /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
     private final boolean multiCharScanActive;
 
+    private StringBuilder multiCharScanBuffer = new StringBuilder();
     private String buffer = "";
     private int bufferPos = 0;
 
@@ -82,7 +83,13 @@ public class Tokenizer {
         Map.entry("require", TokenType.REQUIRE),
         Map.entry("defer", TokenType.DEFER),
         Map.entry("invariants", TokenType.INVARIANTS),
-        Map.entry("as", TokenType.ALIASER)
+        Map.entry("as", TokenType.ALIASER),
+        Map.entry("static", TokenType.STATIC),
+        Map.entry("struct", TokenType.STRUCT),
+        Map.entry("impl", TokenType.IMPLEMENTATION),
+        Map.entry("pause", TokenType.PAUSE),
+        Map.entry(("inherits", INHERITS),
+        Map.entry("trait", TRAIT)
     );
 
 
@@ -109,21 +116,24 @@ public class Tokenizer {
     public final void tokenize() throws LexisException {
         try {
             while (true) {
-                char c = advance();
+                char c = peek();
                 if (isAtEnd(c)) {
                   break;
                 }
-                scanToken(c);
+                scanToken(advance());
             }
         } catch (Exception e) {
-            LexisException lexisEx = new LexisException("lexical scan of source failed", e);
+            LexisException lexisEx = new LexisException(
+                "lexical scan of source failed", 
+                e
+            );
             throw lexisEx;
         }
 
         emit(new Token(TokenType.EOF, "\0", line, column));
     }
 
-    private char readUnicodeEscape() throws IOException {
+    private char readUnicodeEscape() throws Exception {
         int value = 0;
     
         for (int charCount = 0; charCount < 4; charCount++) {
@@ -156,7 +166,9 @@ public class Tokenizer {
 
         // Comment
         if (isCommentStart(c)) {
-            multiCharScanActive = true;
+            if (multiCharScanActive) {
+                multiCharScanActive = false;
+            }
             while (!isAtEnd(peek())) {
                 if (isCommentEnd(c, peek())) {
                     break;
@@ -170,32 +182,25 @@ public class Tokenizer {
                     "unterminated comment found at the end of source on line: " + line
                 );
             }
-            multiCharScanActive = false;
             return;
         }
 
         // Strings
         if (c == '"' || c == '\'') {
-            multiCharScanActive = true;
             readString(c, false, startColumn);
-            multiCharScanActive = false;
             return;
         }
 
         // Formatted string
         if (c == 'f' && (peek() == '"' || peek() == '\'')) {
             char quote = advance();
-            multiCharScanActive = true;
             readString(quote, true, startColumn);
-            multiCharScanActive = false;
             return;
         }
 
         // Numbers
         if (isDigit(c) || (c == '-' && isDigit(peek()))) {
-            multiCharScanActive = true;
             readNumber(c, startColumn);
-            multiCharScanActive = false;
             return;
         }
 
@@ -207,23 +212,165 @@ public class Tokenizer {
 
         // Operators & punctuation
         switch (c) {
-            case '+': emit(simple(c, match('+') ? TokenType.INCREMENT :
-                                    match('=') ? TokenType.PLUS_ASSIGN : TokenType.PLUS)); break;
-            case '-': emit(simple(c, match('>') ? TokenType.ARROW :
-                                    match('-') ? TokenType.DECREMENT :
-                                    match('=') ? TokenType.MINUS_ASSIGN : TokenType.MINUS)); break;
-            case '*': emit(simple(c, match('=') ? TokenType.STAR_ASSIGN : TokenType.STAR)); break;
-            case '/': emit(simple(c, match('=') ? TokenType.SLASH_ASSIGN : TokenType.SLASH)); break;
-            case '%': emit(simple(c, match('=') ? TokenType.MOD_ASSIGN : TokenType.MODULO)); break;
-            case '&': emit(simple(c, match('&') ? TokenType.LOGICAL_AND : TokenType.BIT_AND)); break;
-            case '|': emit(simple(c, match('|') ? TokenType.LOGICAL_OR : TokenType.BIT_OR)); break;
-            case '<': emit(simple(c, match('<') ? TokenType.SHIFT_LEFT :
-                                    match('=') ? TokenType.LESS_EQUAL : TokenType.LESS)); break;
-            case '>': emit(simple(c, match('>') ? TokenType.SHIFT_RIGHT :
-                                    match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER)); break;
-            case '!': emit(simple(c, match('=') ? TokenType.NOT_EQUAL : TokenType.LOGICAL_NOT)); break;
-            case '=': emit(simple(c, TokenType.ASSIGN)); break;
+            case '+': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
 
+                if (match('+')) {
+                    emit(simple(c, TokenType.INCREMENT));
+                } else if (match('=')) {
+                    emit(simple(c, TokenType.PLUS_ASSIGN));
+                } else {
+                    emit(simple(c, TokenType.PLUS));
+                }
+                break;
+            }
+            case '-': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+                
+                if (match('>')) {
+                    if (match('>')) {
+                        emit(simple(c, TokenType.DOUBLE_ARROW));
+                    } else {
+                        emit(simple(c, TokenType.ARROW));
+                    }
+                } else if (match('-')) {
+                    emit(simple(c, TokenType.DECREMENT));
+                } else if (match('=')) {
+                    emit(simple(c, TokenType.MINUS_ASSIGN));
+                } else {
+                    emit(simple(c, TokenType.MINUS));                 
+                }
+                break;
+            }
+            case '*': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+
+                if (match('=')) {
+                    emit(simple(c, TokenType.STAR_ASSIGN));
+                } else {
+                    emit(simple(c, TokenType.STAR));
+                }
+                break;
+            }
+            case '/': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+
+                if (match('=')) {
+                    emit(simple(c, TokenType.SLASH_ASSIGN));
+                } else {
+                    emit((simple(c, TokenType.SLASH));
+                }
+                break;
+            }
+            case '%': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+
+                if (match('=')) {
+                    emit(simple(c, TokenType.MOD_ASSIGN));
+                } else if (match('%')) {
+                    emit(simple(c, TokenType.ANNOTATION));
+                } else {
+                    emit(simple(c, TokenType.MODULO));
+                }
+                break;
+            }
+            case '&': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+
+                if (match('&')) {
+                    emit(simple(c, TokenType.LOGICAL_AND));
+                } else {
+                    emit(simple(c, TokenType.BIT_AND));
+                }
+                break;
+            }
+            case '|': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+
+                if (match('|')) {
+                    emit(simple(c, TokenType.LOGICAL_OR));
+                } else {
+                    emit(simple(c, TokenType.BIT_OR));
+                }
+                break;
+            }
+            case '<': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+
+                if (match('<')) {
+                    emit(simple(c, TokenType.SHIFT_LEFT));
+                } else if (match('=')) {
+                    emit(simple(c, TokenType.LESS_EQUAL));
+                } else {
+                    emit(simple(c, TokenType.LESS));
+                }
+                break;
+            }
+            case '>': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+
+                if ( match('>')) {
+                    emit(simple(c, TokenType.SHIFT_RIGHT));
+                } else if (match('=')) {
+                    emit(simple(c, TokenType.GREATER_EQUAL));
+                } else {
+                    emit(simple(c, TokenType.GREATER));
+                }
+                break;
+            }
+            case '!': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+
+                if (match('=')) {
+                    emit(simple(c, TokenType.NOT_EQUAL));
+                } else {
+                    emit(simple(c, TokenType.LOGICAL_NOT));
+                }
+                break;
+            }
+            case '=': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+
+                if (match(('=')) {
+                    emit(simple(c, TokenType.EQUAL));
+                } else {
+                    emit(simple(c, TokenType.ASSIGN));
+                }
+                break;
+            }
             case '(': emit(simple(c, TokenType.LPAREN)); break;
             case ')': emit(simple(c, TokenType.RPAREN)); break;
             case '{': emit(simple(c, TokenType.LBRACE)); break;
@@ -231,12 +378,73 @@ public class Tokenizer {
             case '[': emit(simple(c, TokenType.LBRACKET)); break;
             case ']': emit(simple(c, TokenType.RBRACKET)); break;
             case ',': emit(simple(c, TokenType.COMMA)); break;
-            case '.': emit(simple(c, TokenType.DOT)); break;
-            case ':': emit(simple(c, TokenType.COLON)); break;
+            case '.': {
+                if (!peekWhitespace())  {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+
+                if (Character.isLetter(peek()) && Character.isLetter(peek(true))) {
+                    // @HINT: About to match a static type (e.g. `.int32`, `.byte`, `.bool`)
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(c);
+                    while (!peekWhitespace()) {
+                        sb.append(advance());
+                    }
+                    
+                    String text = sb.toString();
+                    
+                    if (text.equals(new String(".bool"))) {
+                        emit(new Token(TokenType.TYPE_BOOL, text, line, column));
+                    } else if (text.equals(new String(".byte"))) {
+                        emit(new Token(TokenType.TYPE_BYTE, text, line, column));
+                    } else if (text.equals(new String(".uint8"))) {
+                        emit(new Token(TokenType.TYPE_INT, text, line, column));
+                    } else if (text.equals(new String(".uint16"))) {
+                        emit(new Token(TokenType.TYPE_INT, text, line, column));
+                    } else if (text.equals(new String(".double"))) {
+                        emit(new Token(TokenType.TYPE_DBL, text, line, column));
+                    } else if (text.equals(new String(".float"))) {
+                        emit(new Token(TokenType.TYPE_FLT, text, line, column));
+                    } else if (text.equals(new String(".uint32"))) {
+                        emit(new Token(TokenType.TYPE_INT, text, line, column));
+                    } else if (text.equals(new String(".uint64"))) {
+                        emit(new Token(TokenType.TYPE_INT, text, line, column));
+                    } else if (text.equals(new String(".str"))) {
+                        emit(new Token(TokenType.TYPE_STR, text, line, column));
+                    } else if (text.equals(new String(".char"))) {
+                        emit(new Token(TokenType.TYPE_CHAR, text, line, column));
+                    } else if (text.equals(new String(".nil"))) {
+                        emit(new Token(TokenType.TYPE_NIL, text, line, column));
+                    } else if (text.equals(new String(".int"))) {
+                        emit(new Token(TokenType.TYPE_INT, text, line, column));
+                    } else {
+                        emit(new Token(TokenType.TYPE_CUSTOM, text, line, column));
+                    }
+                } else {
+                    emit(simple(c, TokenType.DOT));
+                } else {
+                    emit(simple(c, TokenType.UNKNOWN));
+                }
+                break;
+            }
+            case ':': {
+                if (!peekWhitespace()) {
+                    multiCharScanActive = true;
+                    multiCharScanBuffer.append(c);
+                }
+                
+                if (match(':')) {
+                    emit(simple(c, TokenType.JOINER));
+                } else {
+                    emit(simple(c, TokenType.COLON));
+                }
+                break;
+            }
             case ';': emit(simple(c, TokenType.SEMICOLON)); break;
             case '@': emit(simple(c, TokenType.AT)); break;
 
-            default: error("Unexpected character found: '" + c + "'"); break;
+            default: error("Unexpected character found: '" + String.valueOf(c) + "'"); break;
         }
     }
 
@@ -262,21 +470,19 @@ public class Tokenizer {
         String text = sb.toString();
 
         char currCharacter = peek();
-        if (isWhitespace(currCharacter) || isCommentStart(currCharacter)) {
-            multiCharScanActive = false;
-        } else {
-            NoticeConsoleLogger.logMessage(
-                "TOKENIZER",
-                "extra character: '"+currCharacter+"' found close to identifier=['"+text+"']"
-            );
-        }
+        NoticeConsoleLogger.logMessage(
+            "TOKENIZER",
+            "extra character: '"+currCharacter+"' found close to identifier=['"+text+"']"
+        );
 
         
-        TokenType type = KEYWORDS.getOrDefault(text, TokenType.IDENTIFIER);
+        TokenType type = text.equals(new String("null"))
+            ? TokenType.NULL
+            : KEYWORDS.getOrDefault(text, TokenType.IDENTIFIER);
         emit(new Token(type, text, line, col));
     }
 
-    private void readNumber(char first, int col) throws IOException {
+    private void readNumber(char first, int col) throws Exception {
         multiCharScanActive = true;
         StringBuilder sb = new StringBuilder().append(first);
 
@@ -287,11 +493,6 @@ public class Tokenizer {
             sb.append(advance());
             isHex = true;
             while (isHexDigit(peek())) sb.append(advance());
-            
-            char currCharacter = peek();
-            if (isWhitespace(currCharacter) || isCommentStart(currCharacter)) {
-                multiCharScanActive = false;
-            }
 
             emit(new Token(TokenType.INT_LITERAL, sb.toString(), line, col));
             return;
@@ -300,9 +501,6 @@ public class Tokenizer {
         while (isDigit(peek())) sb.append(advance());
 
         char currCharacter = peek();
-        if (isWhitespace(currCharacter) || isCommentStart(currCharacter)) {
-            multiCharScanActive = false;
-        }
 
         if (currCharacter == '.') {
             isFloat = true;
@@ -321,8 +519,9 @@ public class Tokenizer {
 
 
     private void readString(char quote, boolean formatted, int col) throws Exception {
+        multiCharScanActive = true;
         StringBuilder sb = new StringBuilder();
-        sb.append(formatted ? "f" + quote : quote);
+        sb.append(formatted ? "f/" + quote : quote);
     
         while (peek() != quote) {
             char c = advance();
@@ -373,7 +572,7 @@ public class Tokenizer {
      */
     private char advance() throws Exception {
         boolean READER_EOF = false;
-        char c = " ";
+        char c = ' ';
         
         try {
             if (bufferPos >= buffer.length()) {
@@ -382,7 +581,7 @@ public class Tokenizer {
                 if (buffer == null) {
                     READER_EOF = true;
                 } else {
-                    buffer += "\n";
+                    buffer += '\n';
                 }
                 bufferPos = 0;
             }
@@ -394,11 +593,11 @@ public class Tokenizer {
                 column++;
             }
         } catch (IOException ex) {
-            Exception ex = new Exception(
+            Exception exp = new Exception(
                 "could not advance to next character in stream"
             );
-            ex.initCause(ex);
-            throw ex;
+            exp.initCause(ex);
+            throw exp;
         }
         
         if (isAtNewLine(c)) {
@@ -430,7 +629,11 @@ public class Tokenizer {
 
     private boolean match(char expected) throws Exception {
         if (peek() != expected) return false;
-        advance();
+        if (multiCharScanActive) {
+            multiCharScanBuffer.append(advance())
+        } else {
+            advance();
+        }
         return true;
     }
 
@@ -442,24 +645,65 @@ public class Tokenizer {
         return nextOnAdvance == '\n';
     }
 
-    private void emit(Token token) {
+    private void emit(Token token) throws Exception {   
+        boolean interrupted = false;
+        
+        if (multiCharScanActive) {
+            multiCharScanActive = false;
+        }
+
+        
         try {
-            tokenQueue.pushNextToken(token);
-        } catch (InterruptedException ex) {
-            NoticeConsoleLogger.logMessage(
-                "TOKENIZER",
-                "thread running interrupted with message: " + ex.getMessage()
-            );
-            Thread.currentThread().interrupt(); // Restore interrupted status
+            while (true) {
+                try {
+                    if (token.getType() != TokenType.UNKNOWN) {
+                        tokenQueue.pushNextToken(token);
+                    } else {
+                        error("Unexpected token image: '"+token.getImage()+"'");
+                    }
+                    interrupted = false;
+                    return;
+                } catch (InterruptedException ex) {
+                    NoticeConsoleLogger.logMessage(
+                        "TOKENIZER",
+                        "thread running interrupted with message: " + ex.getMessage()
+                    );
+                    
+                    /* 
+                        @HINT: 
+                        
+                        Record that an interruption happened but defer 
+                        restoring the interrupted status.
+                    */
+                    interrupted = true;
+                }
+            }
+        } finally {
+            if (interrupted) {
+                // @HINT: Restore interrupted status
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
     private Token simple(char c, TokenType type) {
-        return new Token(type, String.valueOf(c), line, column);
+        String text = multiCharScanBuffer.toString();
+        multiCharScanBuffer.delete(0, multiCharScanBuffer.length()); 
+        return new Token(
+            type,
+            multiCharScanActive ? text : String.valueOf(c),
+            line,
+            column
+        );
     }
 
     private boolean isWhitespace(char c) {
         return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f' || c == '\b';
+    }
+
+    private boolean peekWhitespace() {
+        if (isWhitespace(peek())) return true;
+        return false;
     }
 
     private boolean isDigit(char c) {
@@ -471,13 +715,13 @@ public class Tokenizer {
     }
 
     private boolean isCommentStart(char c) throws Exception {
-        if (c == "#") {
+        if (c == '#') {
             return true;
         }
 
-        if (c == "/") {
-            char characterAhead = peek(true);
-            return characterAhead == "*";
+        if (c == '/') {
+            char characterAhead = peek();
+            return characterAhead == '*';
         }
 
         return false;
@@ -488,9 +732,9 @@ public class Tokenizer {
             return isAtNewLine(curr);
         }
         
-        if (start == "/") {
-            char characterAhead = peek(true);
-            return curr == "*" && characterAhead == "/";
+        if (start == '/') {
+            char characterAhead = peek();
+            return curr == "*" && characterAhead == '/';
         }
 
         NoticeConsoleLogger.logMessage(
