@@ -89,7 +89,9 @@ public class Tokenizer {
         Map.entry("impl", TokenType.IMPLEMENTATION),
         Map.entry("pause", TokenType.PAUSE),
         Map.entry(("inherits", TokenType.INHERITS),
-        Map.entry("trait", TokenType.TRAIT)
+        Map.entry("trait", TokenType.TRAIT),
+        Map.entry("on", TokenType.MODIFIER),
+        Map.entry("abstract", TokenType.QUALIFIER)
     );
 
 
@@ -249,7 +251,14 @@ public class Tokenizer {
                 break;
             }
             case '*': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional character can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
@@ -257,12 +266,20 @@ public class Tokenizer {
                 if (match('=')) {
                     emit(simple(c, TokenType.STAR_ASSIGN));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.STAR));
                 }
                 break;
             }
             case '/': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional character can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
@@ -270,12 +287,20 @@ public class Tokenizer {
                 if (match('=')) {
                     emit(simple(c, TokenType.SLASH_ASSIGN));
                 } else {
+                    multiCharScanActive = false;
                     emit((simple(c, TokenType.SLASH));
                 }
                 break;
             }
             case '%': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional character can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
@@ -285,12 +310,20 @@ public class Tokenizer {
                 } else if (match('%')) {
                     emit(simple(c, TokenType.ANNOTATION));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.MODULO));
                 }
                 break;
             }
             case '&': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional character can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
@@ -298,12 +331,20 @@ public class Tokenizer {
                 if (match('&')) {
                     emit(simple(c, TokenType.LOGICAL_AND));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.BIT_AND));
                 }
                 break;
             }
             case '|': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional character can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
@@ -311,12 +352,20 @@ public class Tokenizer {
                 if (match('|')) {
                     emit(simple(c, TokenType.LOGICAL_OR));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.BIT_OR));
                 }
                 break;
             }
             case '<': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional character can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
@@ -326,6 +375,7 @@ public class Tokenizer {
                 } else if (match('=')) {
                     emit(simple(c, TokenType.LESS_EQUAL));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.LESS));
                 }
                 break;
@@ -341,12 +391,20 @@ public class Tokenizer {
                 } else if (match('=')) {
                     emit(simple(c, TokenType.GREATER_EQUAL));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.GREATER));
                 }
                 break;
             }
             case '!': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional character can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
@@ -354,12 +412,20 @@ public class Tokenizer {
                 if (match('=')) {
                     emit(simple(c, TokenType.NOT_EQUAL));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.LOGICAL_NOT));
                 }
                 break;
             }
             case '=': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional character can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
@@ -367,6 +433,7 @@ public class Tokenizer {
                 if (match(('=')) {
                     emit(simple(c, TokenType.EQUAL));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.ASSIGN));
                 }
                 break;
@@ -379,13 +446,22 @@ public class Tokenizer {
             case ']': emit(simple(c, TokenType.RBRACKET)); break;
             case ',': emit(simple(c, TokenType.COMMA)); break;
             case '.': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional character can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
 
-                if (Character.isLetter(peek()) && Character.isLetter(peek(true))) {
-                    // @HINT: About to match a static type (e.g. `.int32`, `.byte`, `.bool`)
+                if (Character.isDigit(peek())) {
+                    emit(simple(c, TokenType.UNKNOWN));
+                } else if (Character.isLetter(peek()) && Character.isLetter(peek(true))) {
+                    // @HINT: About to match a type annotation (e.g. `.int32`, `.byte`, `.bool`)
                     StringBuilder sb = new StringBuilder();
                     sb.append(c);
                     while (!peekWhitespace()) {
@@ -422,9 +498,8 @@ public class Tokenizer {
                         emit(new Token(TokenType.TYPE_CUSTOM, text, line, column));
                     }
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.DOT));
-                } else {
-                    emit(simple(c, TokenType.UNKNOWN));
                 }
                 break;
             }
@@ -437,6 +512,7 @@ public class Tokenizer {
                 if (match(':')) {
                     emit(simple(c, TokenType.JOINER));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.COLON));
                 }
                 break;
@@ -616,8 +692,10 @@ public class Tokenizer {
 
     private char peek() throws Exception {
         char c = advance();
+        
         bufferPos--;
         column--;
+        
         return c;
     }
 
@@ -628,18 +706,22 @@ public class Tokenizer {
 
         char c = advance();
         c = advance();
+        
         bufferPos-=2;
         column-=2;
+        
         return c;
     }
 
     private boolean match(char expected) throws Exception {
         if (peek() != expected) return false;
+        
         if (multiCharScanActive) {
             multiCharScanBuffer.append(advance())
         } else {
             advance();
         }
+        
         return true;
     }
 
@@ -693,17 +775,24 @@ public class Tokenizer {
     }
 
     private Token simple(char c, TokenType type) {
-        String text = multiCharScanBuffer.toString();
-        multiCharScanBuffer.delete(0, multiCharScanBuffer.length()); 
+        String text = multiCharScanActive
+            ? multiCharScanBuffer.toString()
+            : String.valueOf(c);
+        
+        multiCharScanBuffer.delete(
+            0,
+            multiCharScanBuffer.length()
+        );
         return new Token(
             type,
-            multiCharScanActive ? text : String.valueOf(c),
+            text,
             line,
             column
         );
     }
 
     private boolean isWhitespace(char c) {
+        // Character.isWhitespace(c);
         return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f' || c == '\b';
     }
 
@@ -713,6 +802,7 @@ public class Tokenizer {
     }
 
     private boolean isDigit(char c) {
+        // Character.isDigit(c);
         return c >= '0' && c <= '9';
     }
 
