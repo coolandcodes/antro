@@ -441,6 +441,62 @@ public class Parser {
         return new Module(path);
     }
 
+    private void synchronize() throws Exception {
+
+        Token currentToken = advance();
+    
+        while (!tokenQueue.isAtEnd()) {
+    
+            if (currentToken.getType() == SEMICOLON) {
+                return;
+            }
+    
+            switch (peek().getType()) {
+    
+                // declarations
+                case DEF:
+                case VAR:
+            
+                // control statements
+                case IF:
+                case ELIF:
+                case ELSE:
+                case FOR:
+                case WHILE:
+                case DO:
+                case SWITCH:
+            
+                // flow
+                case BREAK:
+                case CONTINUE:
+                case RETN:
+            
+                // module
+                case MODULE:
+                case REQUIRE:
+                case EXPORT:
+            
+                // main
+                case BEGIN:
+                case END:
+            
+                // switch labels
+                case CASE:
+                case DEFAULT:
+            
+                // block boundaries
+                case LBRACE:
+                case RBRACE:
+            
+                // EOF
+                case EOF:
+                    return;
+            }
+    
+            currentToken = advance();
+        }
+    }
+
     private Stmt parseBlock(String owner) throws Exception {
         setExpectationForTokenType(LBRACE, "Expected '{' after "+owner);
         advance(); // consume the `LBRACE` token and discard it
