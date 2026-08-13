@@ -26,7 +26,7 @@ public enum TokenType {
 
     // Keywords
     IF, ELSE, ELIF, FOR, WHILE, DO, BEGIN, END,
-    DEF, VAR, RETURN, MAIN, VOID,
+    DEF, VAR, RETURN, MODULE, VOID,
     SWITCH, CASE, DEFAULT,
     BREAK, CONTINUE,
     EXPORT, REQUIRE, DEFER,
