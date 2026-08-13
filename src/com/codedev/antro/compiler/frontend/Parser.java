@@ -547,7 +547,7 @@ public class Parser {
         return new Block(statements);
     }
 
-    private Root parseRoot() {
+    private MainBlock parseEntryRoot() throws Exception {
 
         setExpectationForTokenType(COLON, "Expected ':' after `main`");
         advance(); // @HINT: consume the `COLON` token and discard it
@@ -591,36 +591,83 @@ public class Parser {
             advance(); // @HINT: consume the `SEMICOLON` token and discard it
         }
 
-        return new Root(params, body);
+        return new MainBlock(params, body);
     }
 
-    public Program parse() throws ParseException {
+    public Program parseProgram() throws ParseException {
 
-        List<Module> modules = new ArrayList<>();
-        List<Require> requires = new ArrayList<>();
-        List<Stmt> definitions = new ArrayList<>();
+        List<Exception> _exceptions = new ArrayList<>();
+        List<Require> _requires = new ArrayList<>();
+        List<Stmt> _definitions = new ArrayList<>();
 
+        Module _modules = null;
+        Export _export = null;
+        MainBlock _main = null;
 
-        Export export = null;
-        MainBlock main = null;
+        ParseException parseError = new ParseException("Syntax error encountered");
+
+        boolean found_ModuleLead = false;
+        boolean found_ExportPoint = false;
+        boolean found_EntryPoint = false;
+
+        while (!tokenQueue.isAtEnd()) {
+            try {
+                if (found_ModuleLead && matchAny(MODULE)) {
+                    setExpectationForLookAhead(
+                        "Unexpected top-level construct - duplicate occurence found;"
+                    );
+                }
+                
+                if (!found_ModuleLead && matchAny(MODULE)) {
+                    found_ModuleLead = true;
+                    advance(); // @HINT: consume the `MODULE` token and discard it
+        
+                    _modules.add(parseModule());
+                    continue;
+                }
+                
+                if (matchAny(REQUIRE)) {
+                    advance(); // @HINT: consume the `REQUIRE` token and discard it
+                    
+                    requires.add(parseRequire());
+                    continue;
+                }
+            } catch (Exception err) {
+                _exceptions.add(err);
+                synchronize();
+            }
+            break;
+        }
+
+        if (!found_ModuleLead) {
+            _exceptions.add(
+                error(
+                    peek(),
+                    "No `package` statement found"
+                )
+            );
+        }
 
         while (!tokenQueue.isAtEnd()) {
 
             try {
 
-                if (matchAny(MODULE)) {
-                    advance(); // @HINT: consume the `MODULE` token and discard it
-
-                    modules.add(parseModule());
+                if (found_EntryPoint && matchAny(BEGIN)) {
+                    setExpectationForLookAhead(
+                        "Unexpected top-level construct - duplicate occurence found;"
+                    );
                 }
 
-                else if (matchAny(REQUIRE)) {
-                    advance(); // @HINT: consume the `REQUIRE` token and discard it
+                if (!found_EntryPoint && matchAny(BEGIN)) {
+                    found_EntryPoint = true;
+                    advance(); // @HINT: consume the `BEGIN` token and discard it
+        
+                    _main = parseEntryRoot();
                     
-                    requires.add(parseRequire());
+                    continue;
                 }
 
-                else if (matchAny(DEF)) {
+                if (matchAny(DEF)) {
                     advance(); // @HINT: consume the `DEF` token and discard it
 
                     setExpectationForTokenType(COLON, "Expected ':' after `def`");
@@ -634,46 +681,106 @@ public class Parser {
                             new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1),
                             "unrecoverable parser state encountered",
                             new NullPointerException(
-                                "Expected <function-name> token where 'nullish' value is found"
+                                "Expected <identifier>/<function-name> token where 'nullish' value is found"
                             )
                         );
                     }
 
-                    definitions.add(parseFunction(true, identifier));
+                    if (peek().getType() == LBRACE) {
+                        _definitions.add(parseFunction(true, identifier));
+                    } else {
+                        ExpressionSet set;
+                        List<Expr> expressions = new ArrayList<>();
+                
+                        Expr expr = parsePrimary();
+                        expressions.add(expr);
+            
+                        if (matchAny(SEMICOLON)) {
+                            advance(); // @HINT: consume the `SEMICOLON` token and discard it
+                        }
+
+                        set = new ExpressionSet(expressions);
+                        _definitions.add(set);
+                    }
+
+                    continue;
                 }
-
-                else if (matchAny(BEGIN)) {
-                    advance(); // @HINT: consume the `BEGIN` token and discard it
-
-                    main = parseRoot();
-                }
-
-                else if (matchAny(EXPORT)) {
-                    advance(); // @HINT: consume the `EXPORT` token and discard it
-
-                    export = parseExport();
-                }
-
-                else {
-                    setExpectationForLookAhead("Unexpected top-level construct");
-                }
-
             } catch (Exception e) {
-                ParseException exp = new ParseException();
+                _exceptions.add(e);
                 synchronize();
             }
+            break;
+        }
+
+        // @NOTE: Need more thought around this since every (.antro) source file doesn't require an entry point
+        // @INFO: The code generator itself is required to check for the existence of at least one entry point
+        // if (!found_EntryPoint) {
+        //     _exceptions.add(
+        //         error(
+        //             peek(),
+        //             "No `begin` block found"
+        //         )
+        //     );
+        // }
+
+        while (!tokenQueue.isAtEnd()) {
+            try  {
+                if (!matchAny(EXPORT)) {
+                    setExpectationForLookAhead(
+                        "Unexpected top-level construct - invalid invocation found;"
+                    );
+                }
+
+                if (found_ExportPoint && matchAny(EXPORT)) {
+                    setExpectationForLookAhead(
+                        "Unexpected top-level construct - duplicate occurence found;"
+                    );
+                }
+                
+                if (!found_ExportPoint && matchAny(EXPORT)) {
+                    found_ExportPoint = true;
+                    advance(); // @HINT: consume the `EXPORT` token and discard it
+        
+                    _export = parseExport();
+                    continue;
+                }
+            } catch (Exception ex) {
+                _exceptions.add(ex);
+                synchronize();
+            }
+            break;
+        }
+
+        if (!found_ExportPoint) {
+            _exceptions.add(
+                error(
+                    peek(),
+                    "No `export` statement found for module"
+                )
+            );
+        }
+
+        if (_exceptions.size() > 0) {
+            parseError.setExceptions(_exceptions);
+            throw parseError;
         }
 
         return new Program(
-            modules,
-            requires,
-            definitions,
-            main,
-            export
+            _modules,
+            _requires,
+            _definitions,
+            _main,
+            _export
         );
     }
 
-    private Stmt parseVarDeclaration() {
+    public ParseTree parse () throws ParseException {
+         Program prog = parseProgram();
+
+         return new ParseTree(prog);
+    }
+
+    private Stmt parseVarDeclaration() throws Exception {
 
         List<Expr> declarations = new ArrayList<>();
 
@@ -720,7 +827,7 @@ public class Parser {
 
         Expr IfCondition = parseExpression(false);
 
-        setExpectationForTokenType(RPAREN, "Expected ')' after [condition]");
+        setExpectationForTokenType(RPAREN, "Expected ')' after `if` [condition expression]");
         advance(); // @HINT: consume the `RPAREN` token and discard it
 
         Stmt thenBranch = parseBlock('`if`');
@@ -735,7 +842,7 @@ public class Parser {
 
             Expr elIfCondition = parseExpression(false);
 
-            setExpectationForTokenType(RPAREN, "Expected ')' after [condition]");
+            setExpectationForTokenType(RPAREN, "Expected ')' after `elif` [condition expression]");
             advance(); // @HINT: consume the `RPAREN` token and discard it
 
             Stmt block = parseBlock('`else if`');
@@ -906,7 +1013,7 @@ public class Parser {
             /* @HINT: Deal with non-fall-through cases and a single default */
             if ((foundCase_Keyword && !matchAny(CASE)) || foundDefault_Keyword) {
                 String type = foundDefault_Keyword ? "default" : "case";
-                setExpectationForTokenType(BREAK, "Expected 'break' after ["+type+" block body]");
+                setExpectationForTokenType(BREAK, "Expected `break` after ["+type+" block body]");
                 advance(); // @HINT: consume the `BREAK` token and discard it
 
                 parseBreak(false); // @HINT: discard break statement details
@@ -1161,6 +1268,7 @@ public class Parser {
                         )
                     );
                 }
+                
                 prefix = new Literal(literalToken.getImage());
                 
                 if (matchAny(COMMA)) {
@@ -1172,6 +1280,8 @@ public class Parser {
                 } else {
                     ; /* @TODO: Figure out the state of the parser at this point and derive an invariant */
                 }
+
+                return prefix;
             }
 
             if (matchAny(CALL)) {
@@ -1254,7 +1364,7 @@ public class Parser {
         }
 
         if (matchAny(LPAREN)) {
-            Expr expr = parseExpression();
+            Expr expr = parseExpression(false);
             setExpectationForTokenType(RPAREN, "Expected token ')'");
             advance(); // @HINT: consume the `RPAREN` token and discard it
             
@@ -1311,7 +1421,7 @@ public class Parser {
             int CURR_WAIT_CYCLE = 0;
 
             while (nextToken == null || tokenQueue.isAtCapacity()) {
-                Thread.sleep(10);
+                Thread.sleep(100);
                 if (CURR_WAIT_CYCLE >= MAX_WAIT_CYCLE) {
                     break;
                 }
@@ -1338,7 +1448,9 @@ public class Parser {
      * Push the token back into the token queue.
      */
     private void backtrackOnToken (Token token) {
-        tokenQueue.pushBackToken(token);
+        if (token != null) {
+            tokenQueue.pushBackToken(token);
+        }
     }
 
     /**
@@ -1358,7 +1470,7 @@ public class Parser {
             */
             Thread.currentThread().interrupt();
         } finally {
-          return new Token(EOF, '\0', tokenQueue.getLastSeenLineNumber() + 1, 1);
+          return new Token(EOF, String.valueOf('\0'), tokenQueue.getLastSeenLineNumber() + 1, 1);
         }
     }
 
@@ -1372,24 +1484,24 @@ public class Parser {
     /**
      * Enforce grammar rules where a lookahead token-type match fails.
      */
-    private void setExpectationForLookAhead(String msg) throws Exception {
+    private void setExpectationForLookAhead(String messageInfix) throws Exception {
         Token nextToken = peek();
-        error(nextToken, msg + " where '"+nextToken.getImage()+"' is found");
+        error(nextToken, messageInfix + " where '"+nextToken.getImage()+"' is found");
     }
 
     /**
      * Enforce grammar rules where an expected token-type check fails.
      */
-    private void setExpectationForTokenType(TokenType type, String msg) throws Exception {
+    private void setExpectationForTokenType(TokenType type, String messageInfix) throws Exception {
         if (!check(type)) {
-            setExpectationForLookAhead(msg);
+            setExpectationForLookAhead(messageInfix);
         }
     }
 
     /**
      * Report syntax errors using the token at the point of offending sequence
      */
-    private void error(Token token, String msgText) throws Exception {
+    private void error(Token token, String messageSuffix) throws Exception {
         String messagePrefix = "[line: " + token.getLineNumber() + ", column: " + token.getColumnNumber() + "]; ";
 
         if (tokenQueue.hasMoreTokens() && tokenQueue.isEOFToken(token)) {
@@ -1397,20 +1509,20 @@ public class Parser {
                 "parser token queue not exhausted yet EOF token encountered"
             );
             throw new Exception(
-                messagePrefix + msgText,
+                messagePrefix + messageSuffix,
                 eofEx
             );
         }
 
         throw new Exception(
-            messagePrefix + msgText
+            messagePrefix + messageSuffix
         );
     }
 
     /**
      * Report null reference and runtime issues
      */
-    private void error(Token token, String msgText, RuntimeException ex) throws Exception {
+    private void error(Token token, String messageSuffix, RuntimeException ex) throws Exception {
         String messagePrefix = "[line: " + token.getLineNumber() + ", column: " + token.getColumnNumber() + "]; ";
 
         if (tokenQueue.hasMoreTokens() && tokenQueue.isEOFToken(token)) {
@@ -1419,13 +1531,13 @@ public class Parser {
                 ex
             );
             throw new Exception(
-                messagePrefix + msgText,
+                messagePrefix + messageSuffix,
                 eofEx
             );
         }
 
         throw new Exception(
-            messagePrefix + msgText,
+            messagePrefix + messageSuffix,
             ex
         );
     }
