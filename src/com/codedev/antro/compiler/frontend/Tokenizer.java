@@ -73,7 +73,6 @@ public class Tokenizer {
         Map.entry("true", TokenType.BOOLEAN),
         Map.entry("false", TokenType.BOOLEAN),
         Map.entry("null", TokenType.NULL),
-        Map.entry("throw", TokenType.THROW),
         Map.entry("panic_on", TokenType.PANIC_ON),
         Map.entry("eject_on", TokenType.EJECT_ON),
         Map.entry("use", TokenType.USE),
@@ -91,7 +90,8 @@ public class Tokenizer {
         Map.entry(("inherits", TokenType.INHERITS),
         Map.entry("trait", TokenType.TRAIT),
         Map.entry("on", TokenType.MODIFIER),
-        Map.entry("abstract", TokenType.QUALIFIER)
+        Map.entry("abstract", TokenType.QUALIFIER),
+        Map.entry("package", TokenType.MODULE)
     );
 
 
