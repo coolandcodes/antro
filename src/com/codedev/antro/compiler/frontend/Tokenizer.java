@@ -132,7 +132,7 @@ public class Tokenizer {
             throw lexisEx;
         }
 
-        emit(new Token(TokenType.EOF, "\0", line, column));
+        emit(new Token(TokenType.EOF, String.valueOf('\0'), line, column));
     }
 
     private char readUnicodeEscape() throws Exception {
@@ -215,7 +215,14 @@ public class Tokenizer {
         // Operators & punctuation
         switch (c) {
             case '+': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional characters can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
@@ -230,7 +237,14 @@ public class Tokenizer {
                 break;
             }
             case '-': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional characters can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
@@ -257,7 +271,7 @@ public class Tokenizer {
                         
                         Assume multiple character token if there is 
                         no whitespace character until it becomes
-                        clear no additional character can be matched
+                        clear no additional characters can be matched
                     */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
@@ -278,7 +292,7 @@ public class Tokenizer {
                         
                         Assume multiple character token if there is 
                         no whitespace character until it becomes
-                        clear no additional character can be matched
+                        clear no additional characters can be matched
                     */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
@@ -299,7 +313,7 @@ public class Tokenizer {
                         
                         Assume multiple character token if there is 
                         no whitespace character until it becomes
-                        clear no additional character can be matched
+                        clear no additional characters can be matched
                     */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
@@ -322,7 +336,7 @@ public class Tokenizer {
                         
                         Assume multiple character token if there is 
                         no whitespace character until it becomes
-                        clear no additional character can be matched
+                        clear no additional characters can be matched
                     */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
@@ -343,7 +357,7 @@ public class Tokenizer {
                         
                         Assume multiple character token if there is 
                         no whitespace character until it becomes
-                        clear no additional character can be matched
+                        clear no additional characters can be matched
                     */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
@@ -364,7 +378,7 @@ public class Tokenizer {
                         
                         Assume multiple character token if there is 
                         no whitespace character until it becomes
-                        clear no additional character can be matched
+                        clear no additional characters can be matched
                     */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
@@ -381,12 +395,19 @@ public class Tokenizer {
                 break;
             }
             case '>': {
-                if (!peekWhitespace())  {
+                if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional characters can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
 
-                if ( match('>')) {
+                if (match('>')) {
                     emit(simple(c, TokenType.SHIFT_RIGHT));
                 } else if (match('=')) {
                     emit(simple(c, TokenType.GREATER_EQUAL));
@@ -403,7 +424,7 @@ public class Tokenizer {
                         
                         Assume multiple character token if there is 
                         no whitespace character until it becomes
-                        clear no additional character can be matched
+                        clear no additional characters can be matched
                     */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
@@ -424,13 +445,13 @@ public class Tokenizer {
                         
                         Assume multiple character token if there is 
                         no whitespace character until it becomes
-                        clear no additional character can be matched
+                        clear no additional characters can be matched
                     */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
 
-                if (match(('=')) {
+                if (match('=')) {
                     emit(simple(c, TokenType.EQUAL));
                 } else {
                     multiCharScanActive = false;
@@ -452,7 +473,7 @@ public class Tokenizer {
                         
                         Assume multiple character token if there is 
                         no whitespace character until it becomes
-                        clear no additional character can be matched
+                        clear no additional characters can be matched
                     */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
@@ -505,6 +526,13 @@ public class Tokenizer {
             }
             case ':': {
                 if (!peekWhitespace()) {
+                    /*
+                        @HINT: 
+                        
+                        Assume multiple character token if there is 
+                        no whitespace character until it becomes
+                        clear no additional characters can be matched
+                    */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
                 }
