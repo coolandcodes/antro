@@ -39,15 +39,9 @@
 ```java
 
    public ParseTree parse () throws ParseException {
-      try {
-         Block block = parseProgramBlock();
+         Program prog = parseProgram();
 
-         return new ParseTree(block);
-          
-      } catch (Exception e) {
-         ParseException prsEx = new ParseException("parse syntax issue", e);
-         throw prsEx;  
-      }
+         return new ParseTree(prog);
    }
 ```
 
@@ -195,15 +189,17 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - export := "export" ;
 
-- as := "as" ;
+- aliaser := "as" ;
 
 - retn := "retn" ;
 
 - var := "var" ;
 
+- module := "package";
+
 - whitespace := "\f" | "\t" | "\r" | "\n" | "\b" | " " | ?? ;
 
-- annotation := module, modulo ;
+- annotation := modulo, modulo ;
 
 - arithmeticunaryoperators := plus, plus | minus, minus ;
 
@@ -295,7 +291,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - declstatement := { var, declexpressionlist }, terminator ;
 
-- reqrstatement := require, cursor, string, terminator ;
+- reqrstatement := require, cursor, string, { aliaser, identifier }, terminator ;
 
 - retnstatement := retn, [ logicexpression ], [ terminator ] ; (* if we put `logicexpressionlist` instead of `logicexpresion`, we risk making antro an multi-value return language *)
 
@@ -349,7 +345,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - mainblock := begin, cursor, openbracket, (void | declexpressionlist), closebracket, { blockstatement }, end, [ terminator ] ;
 
-- programblock := { modulestatement }, { reqrstatement }, { defnstatement }, [ mainblock ], { defnstatement }, [ exportstatement ], EOF ;
+- programblock := [ modulestatement ], { reqrstatement }, { defnstatement }, [ mainblock ], { defnstatement }, [ exportstatement ], EOF ;
 
 
 
