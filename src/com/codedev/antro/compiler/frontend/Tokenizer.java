@@ -120,9 +120,16 @@ public class Tokenizer {
             while (true) {
                 char c = peek();
                 if (isAtEnd(c)) {
-                  break;
+                    if (multiCharScanActive) {
+                        NoticeConsoleLogger.logMessage(
+                            "TOKENIZER",
+                            "token image truncated prematurely"
+                        );
+                        error("Token image truncated prematurely");
+                    }
+                    break;
                 }
-                scanToken(advance());
+                scanNextByte(advance());
             }
         } catch (Exception e) {
             LexisException lexisEx = new LexisException(
@@ -154,7 +161,7 @@ public class Tokenizer {
        Core scanning
        ============================ */
 
-    private void scanToken(char c) throws Exception {
+    private void scanNextByte(char c) throws Exception {
 
         int startColumn = column;
 
@@ -171,18 +178,24 @@ public class Tokenizer {
             if (multiCharScanActive) {
                 multiCharScanActive = false;
             }
+
+            boolean commentTerminated = false;
+            
             while (!isAtEnd(peek())) {
                 if (isCommentEnd(c, peek())) {
+                    advance();
+                    commentTerminated = true;
                     break;
                 }
                 advance();
             }
 
-            if (c == '/' && isAtEnd(peek())) {
+            if (!commentTerminated && c == '/' && isAtEnd(peek())) {
                 NoticeConsoleLogger.logMessage(
                     "TOKENIZER",
                     "unterminated comment found at the end of source on line: " + line
                 );
+                error("Unterminated comment found");
             }
             return;
         }
@@ -232,6 +245,7 @@ public class Tokenizer {
                 } else if (match('=')) {
                     emit(simple(c, TokenType.PLUS_ASSIGN));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.PLUS));
                 }
                 break;
@@ -260,6 +274,7 @@ public class Tokenizer {
                 } else if (match('=')) {
                     emit(simple(c, TokenType.MINUS_ASSIGN));
                 } else {
+                    multiCharScanActive = false;
                     emit(simple(c, TokenType.MINUS));                 
                 }
                 break;
@@ -302,7 +317,7 @@ public class Tokenizer {
                     emit(simple(c, TokenType.SLASH_ASSIGN));
                 } else {
                     multiCharScanActive = false;
-                    emit((simple(c, TokenType.SLASH));
+                    emit(simple(c, TokenType.SLASH));
                 }
                 break;
             }
@@ -572,17 +587,11 @@ public class Tokenizer {
         while (isIdentifierPart(peek())) sb.append(advance());
 
         String text = sb.toString();
-
-        char currCharacter = peek();
-        NoticeConsoleLogger.logMessage(
-            "TOKENIZER",
-            "extra character: '"+currCharacter+"' found close to identifier=['"+text+"']"
-        );
-
         
         TokenType type = text.equals(new String("null"))
             ? TokenType.NULL
             : KEYWORDS.getOrDefault(text, TokenType.IDENTIFIER);
+        
         emit(new Token(type, text, line, col));
     }
 
@@ -604,9 +613,7 @@ public class Tokenizer {
 
         while (isDigit(peek())) sb.append(advance());
 
-        char currCharacter = peek();
-
-        if (currCharacter == '.') {
+        if (peek() == '.') {
             isFloat = true;
             sb.append(advance());
             while (isDigit(peek())) sb.append(advance());
