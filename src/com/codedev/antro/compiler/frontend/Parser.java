@@ -250,7 +250,6 @@ public class Parser {
         setExpectationForTokenType(COLON, "Expected ':' after `export`");
         advance(); // @HINT: consume the `COLON` token and discard it
 
-        Token namespaceToken = null;
         List<Token> _exports = new ArrayList<>();
 
         if (matchAny(STAR)) {
@@ -272,20 +271,11 @@ public class Parser {
             } while (matchAny(COMMA));
         }
 
-        if (matchAny(ALIASER)) {
-            advance(); // @HINT: consume the `ALIASER` token and discard it
-
-            setExpectationForTokenType(IDENTIFIER, "Expected <identifier> after `as`");
-            namespaceToken = advance(); // @HINT: consume the `IDENTIFIER` token and keep it
-
-            setExpectationForTokenType(SEMICOLON, "Expected ';' after [alias export identifier]");
-            advance(); // @HINT: consume the `SEMICOLON` token and discard it
-        } else {
-            setExpectationForTokenType(SEMICOLON, "Expected ';' after [export identifier list]");
-            advance(); // @HINT: consume the `SEMICOLON` token and discard it
-        }
-
-        return new Export(_exports, namespaceToken);
+    
+        setExpectationForTokenType(SEMICOLON, "Expected ';' after [export identifier list]");
+        advance(); // @HINT: consume the `SEMICOLON` token and discard it
+        
+        return new Export(_exports);
     }
 
     private Stmt parseInvariants() throws Exception {
@@ -600,7 +590,7 @@ public class Parser {
         List<Require> _requires = new ArrayList<>();
         List<Stmt> _definitions = new ArrayList<>();
 
-        Module _modules = null;
+        Module _module = null;
         Export _export = null;
         MainBlock _main = null;
 
@@ -622,7 +612,7 @@ public class Parser {
                     found_ModuleLead = true;
                     advance(); // @HINT: consume the `MODULE` token and discard it
         
-                    _modules.add(parseModule());
+                    _module = parseModule();
                     continue;
                 }
                 
@@ -766,7 +756,7 @@ public class Parser {
         }
 
         return new Program(
-            _modules,
+            _module,
             _requires,
             _definitions,
             _main,
