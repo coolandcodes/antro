@@ -1,8 +1,9 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
 import java.util.List;
+import java.util.Collections;
 
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project
@@ -15,7 +16,7 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  * 
  */
 public class Block extends Stmt {
-    private final List<Stmt> stmts;
+    private List<Stmt> stmts = Collections.emptyList();
 
     /**
      * Constructs a new Block of statements

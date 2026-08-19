@@ -1,9 +1,7 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
-import java.util.List;
-
-import com.codedev.antro.comipler.frontend.lexer.Token;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.compiler.frontend.lexer.Token;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project
@@ -21,7 +19,7 @@ public class Continue extends Stmt {
     /**
      * Constructs a new Continue statement
      * 
-     * @param label the label of the continue statement (if any)
+     * @param label the label of the `continue` statement (if any)
      */
     public Continue(Token label) {
         this.label = label;

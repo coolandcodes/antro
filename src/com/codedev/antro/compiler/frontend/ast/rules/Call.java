@@ -1,9 +1,10 @@
-package com.coolandcodes.antro.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
 import java.util.List;
+import java.util.Collections;
 
-import com.codedev.antro.comipler.frontend.lexer.Token;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.lexer.Token;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
 
 /*
  * Antro Compiler Project
@@ -18,14 +19,11 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
  * the arguments passed to it, and the closing parenthesis for location info.
  */
 public class Call extends Expr {
-    // The identifier for the function/object being called
     private final Token name;
-    // The expression that evaluates to the function/object being called
     private final Expr callee;
-    // The token for the closing parenthesis (useful for error reporting)
     private final Token paren;
-    // The list of expressions passed as arguments
-    private final List<Expr> arguments;
+
+    private List<Expr> arguments = Collections.emptyList();
 
     /**
      * Constructs a new Call expression.

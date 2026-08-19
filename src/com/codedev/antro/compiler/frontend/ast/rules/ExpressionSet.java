@@ -18,11 +18,16 @@ import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 public class ExpressionSet extends Stmt {
     private final List<Expr> exprsns;
 
+    /**
+     * Constructs a new ExpressioSet
+     * 
+     * @param expressions
+     */
     public ExpressionSet(Expr expressions) {
         this.exprsns = expressions;
     }
 
-    // It calls the specific visit method on the visitor intended for ExpressionSet nodes.
+    // @HINT: It calls the specific visit method on the visitor intended for ExpressionSet nodes.
     @Override
     public <R> R accept(Stmt.Visitor<R> visitor) {
         return visitor.visitExpressionSet(this);

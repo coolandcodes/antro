@@ -1,9 +1,7 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
-import java.util.List;
-
-import com.codedev.antro.comipler.frontend.lexer.Token;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.compiler.frontend.lexer.Token;
+import com.codedev.antro.complier.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project
@@ -16,10 +14,13 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  * A concrete implementation class for the `break *;` statement.
  */
 public class Break extends Stmt {
-    // 1. Define field to store the list of statements in a scoped block
     private final Token label;
 
-    // 2. Constructor: Initialize the only node of the tree
+    /**
+     * Constructs a new Break statement
+     * 
+     * @param label the label of the `break` statement (if any)
+     */
     public Break(Token label) {
         this.label = label;
     }
@@ -29,7 +30,6 @@ public class Break extends Stmt {
         return visitor.visitBreak(this);
     }
 
-    // 4. Accessors (Getters) so the Visitor can inspect the data
     public final Token getLabel() {
         return label;
     }
