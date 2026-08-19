@@ -1,9 +1,10 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
 import java.util.List;
+import java.util.Collections;
 
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project
@@ -16,11 +17,12 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  * 
  */
 public class Switch extends Stmt {
-    // 1. Define fields to store state of the switch statement
+    private final List<Case> cases = Collections.emptyList();
+
     private final Expr exprsn;
-    private final List<Case> cases;
     private final Stmt defltBrch;
 
+    // @HINT: Prefer an inner class definition here.
     public class Case {
         private final Expr value;
         private final List<Stmt> body;
@@ -39,7 +41,13 @@ public class Switch extends Stmt {
         }
     }
 
-    // 2. Constructor: Initialize the only node of the tree
+    /**
+     * Constrcuts a new Switch statement
+     * 
+     * @param expression the expression to match
+     * @param cases all the cases within the `switch` block. 
+     * @param defaultBranch the default case within the `switch` block.
+     */
     public Switch(Expr expression,
                  List<Case> cases, 
                  Stmt defaultBranch) {
@@ -48,14 +56,12 @@ public class Switch extends Stmt {
         this.defltBrch = defaultBranch;
     }
 
-    // 3. The 'accept' method: This is the core of the Visitor Pattern.
-    // It calls the specific visit method on the visitor intended for Switch nodes.
+    // @HINT: It calls the specific visit method on the visitor intended for Switch nodes.
     @Override
     public <R> R accept(Stmt.Visitor<R> visitor) {
         return visitor.visitSwitch(this);
     }
 
-    // 4. Accessors (Getters) so the Visitor can inspect the data
     public final Expr getExpression() {
         return exprsn.clone();
     }

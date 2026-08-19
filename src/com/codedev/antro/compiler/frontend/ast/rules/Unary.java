@@ -1,7 +1,7 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
-import com.codedev.antro.comipler.frontend.lexer.Token;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.lexer.Token;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
 
 /*
  * Antro Compiler Project
@@ -15,11 +15,15 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
  * and a single operand (e.g., -5 or !true).
  */
 public class Unary extends Expr {
-    // 1. Define fields for the operator and the expression it acts upon
     private final Token operator;
     private final Expr right;
 
-    // 2. Constructor to initialize the unary expression
+    /**
+     * Constructs a new Unary statement
+     * 
+     * @param operator
+     * @param right
+     */
     public Unary(Token operator, Expr right) {
         this.operator = operator;
         this.right = right;
@@ -34,7 +38,6 @@ public class Unary extends Expr {
         return visitor.visitUnary(this);
     }
 
-    // 3. Accessors (Getters) for the visitor to retrieve the node data
     public final Token getOperator() {
         return operator.clone();
     }

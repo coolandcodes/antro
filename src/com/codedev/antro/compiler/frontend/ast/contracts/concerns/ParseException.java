@@ -9,7 +9,7 @@ import java.util.List;
  * Custom checked exception to accumulate multiple parsing errors.
  */
 public class ParseException extends Exception {
-    rivate static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
     
     // @INFO: Initialized as an empty list to avoid NullPointerExceptions
     private List<Exception> exceptions = Collections.emptyList();

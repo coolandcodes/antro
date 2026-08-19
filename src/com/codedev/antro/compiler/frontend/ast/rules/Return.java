@@ -1,9 +1,9 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
 import java.util.List;
 
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project
@@ -13,13 +13,16 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  */
 
 /**
- * 
+ * A concreate implementation of the `retn *;` statement
  */
 public class Return extends Stmt {
-    // 1. Define field to store the list of statements in a scoped block
     private final Expr value;
 
-    // 2. Constructor: Initialize the only node of the tree
+    /**
+     * Constructs a new Return statement.
+     * 
+     * @param value the expression value returned.
+     */
     public Return(Expr value) {
         this.value = value;
     }
@@ -29,7 +32,6 @@ public class Return extends Stmt {
         return visitor.visitReturn(this);
     }
 
-    // 4. Accessors (Getters) so the Visitor can inspect the data
     public final Token getValue() {
         return value;
     }

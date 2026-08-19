@@ -1,7 +1,7 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project
@@ -11,16 +11,15 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  */
 
 /**
- * 
+ * Represents a for loop and all its parts including the statments
+ * within its body.
  */
 public class For extends Stmt {
-    // 1. Define fields to store state of the for statement
     private final Stmt init;
     private final Expr cond;
     private final Expr incrmt;
     private final Stmt body;
 
-    // 2. Constructor: Initialize the only node of the tree
     public For(Stmt initializer, 
                   Expr condition, 
                   Expr increment, 
@@ -36,7 +35,6 @@ public class For extends Stmt {
         return visitor.visitFor(this);
     }
 
-    // 4. Accessors (Getters) so the Visitor can inspect the data
     public final Stmt getInitializer() {
         return init;
     }

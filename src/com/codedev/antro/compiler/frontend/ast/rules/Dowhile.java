@@ -1,7 +1,7 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project
@@ -11,14 +11,18 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  */
 
 /**
- * 
+ * Represents a `do { * } while(*)` loop.
  */
 public class Dowhile extends Stmt {
-    // 1. Define fields to store state of the do-while statement
     private final Expr cond;
     private final Stmt body;
 
-    // 2. Constructor: Initialize the only node of the tree
+    /**
+     * Constructs a new DoWhile block
+     * 
+     * @param body the body of statements in the `do` block.
+     * @param condition the conddition of the `while` portion.
+     */
     public Dowhile(Stmt body, Expr condition) {
         this.cond = condition;
         this.body = body;
@@ -29,12 +33,11 @@ public class Dowhile extends Stmt {
         return visitor.visitDoWhile(this);
     }
 
-    // 4. Accessors (Getters) so the Visitor can inspect the data
-    public Expr getCondition() {
+    public final Expr getCondition() {
         return cond.clone();
     }
 
-    public Stmt getBody() {
+    public final Stmt getBody() {
         return body;
     }
 }

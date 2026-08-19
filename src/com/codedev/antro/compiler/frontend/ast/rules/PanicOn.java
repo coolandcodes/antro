@@ -1,7 +1,7 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
-import com.codedev.antro.comipler.frontend.lexer.Token;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.compiler.frontend.lexer.Token;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project
@@ -11,8 +11,26 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  */
 
 /**
- * 
+ * A concrete implementation for the `panic_on *;` statement.
  */
 public class PanicOn extends Stmt {
+    private final Token errorVar;
 
+    /**
+     * Constructs a new `panic_on` statement
+     * 
+     * @param _errorVar the error variable to panic on
+     */
+    public PanicOn (Token _errorVar) {
+        this.errorVar = _errorVar;
+    }
+
+    @Override
+    public <R> R accept(Stmt.Visitor<R> visitor) {
+        return visitor.visitPanic(this);
+    }
+
+    public final Token getErrorVariable () {
+        return errorVar;
+    }
 }

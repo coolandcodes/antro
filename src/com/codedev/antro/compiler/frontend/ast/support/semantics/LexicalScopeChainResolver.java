@@ -118,5 +118,8 @@ public final class LexicalScopeChainResolver implements Expr.Visitor<Void>, Stmt
     }
 
     @Override
-    public Void visitLiteral(Literal e) { return null; }
+    public Void visitLiteral(Literal e) {
+        // @TODO: semantic processing of literal
+        return null;
+    }
 }

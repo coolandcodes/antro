@@ -1,9 +1,9 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
 import java.util.List;
 
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project
@@ -18,13 +18,19 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  * as well as the `else` block and any `else if` conditions and block. 
  */
 public class If extends Stmt {
-    // 1. Define fields to store state of the if statement
     private final Expr cond;
     private final Stmt ifBrch;
     private final List<Stmt> elIfStmts;
     private final Stmt elseBrch;
 
-    // 2. Constructor: Initialize the only node of the tree
+    /**
+     * Constructs a new If/ElIf/Else block set
+     * 
+     * @param condition the condtion of the `if` portion of the block set.
+     * @param ifBranch the block of statements for the `if` portion of the block set.
+     * @param elifranches a set of block for the `elif` portion of the block set.
+     * @param elseBranch the block of statements for the `else` portion of the block set.
+     */
     public If(Expr condition, 
                  Stmt ifBranch, 
                  List<Stmt> elifBranches, 
@@ -40,7 +46,6 @@ public class If extends Stmt {
         return visitor.visitIf(this);
     }
 
-    // 4. Accessors (Getters) so the Visitor can inspect the data
     public final Expr getCondition() {
         return cond.clone();
     }

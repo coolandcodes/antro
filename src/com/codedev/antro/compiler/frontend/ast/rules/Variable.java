@@ -1,7 +1,7 @@
 package com.codedev.antro.compiler.frontend.ast.rules;
 
-import com.codedev.antro.comipler.frontend.lexer.Token;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.lexer.Token;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
 
 /*
  * Antro Compiler Project
@@ -16,11 +16,11 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
  * in the current scope during evaluation.
  */
 public class Variable extends Expr {
-    // The token representing the variable's name (holds lexeme and line info)
     private final Token name;
 
     /**
      * Constructs a new Variable expression.
+     * 
      * @param name The identifier token for the variable.
      */
     public Variable(Token name) {

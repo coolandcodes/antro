@@ -1,7 +1,7 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
-import com.codedev.antro.comipler.frontend.lexer.Token;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.lexer.Token;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
 
 /*
  * Antro Compiler Project
@@ -15,11 +15,11 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
  * such as a number, a string, or a boolean (e.g., 42, "hello", or true).
  */
 public class Literal extends Expr {
-    // 1. The raw value of the literal (stored as a generic Object)
     private final Object value;
 
     /**
-     * Constructor for a Literal expression.
+     * Constructs a new Literal expression.
+     * 
      * @param value The actual runtime value of the literal.
      */
     public Literal(Object value) {
@@ -35,7 +35,6 @@ public class Literal extends Expr {
         return visitor.visitLiteral(this);
     }
 
-    // 2. Accessor (Getter) for the visitor to retrieve the stored value
     public final Object getValue() {
         try {
             return value.clone();

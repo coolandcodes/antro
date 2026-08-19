@@ -15,10 +15,13 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  * 
  */
 public class Block extends Stmt {
-    // 1. Define field to store the list of statements in a scoped block
     private final List<Stmt> stmts;
 
-    // 2. Constructor: Initialize the only node of the tree
+    /**
+     * Constructs a new Block of statements
+     * 
+     * @param statements the list of statements for a block.
+     */
     public Block(List<Stmt> statements) {
         this.stmts = statements;
     }
@@ -28,7 +31,6 @@ public class Block extends Stmt {
         return visitor.visitBlock(this);
     }
 
-    // 4. Accessors (Getters) so the Visitor can inspect the data
     public final List<Stmt> getStatements() {
         return stmts;
     }

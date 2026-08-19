@@ -13,7 +13,7 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  */
 
 /**
- * 
+ * A concrete implementation class for the `break *;` statement.
  */
 public class Break extends Stmt {
     // 1. Define field to store the list of statements in a scoped block

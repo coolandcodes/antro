@@ -3,9 +3,9 @@ package com.codedev.antro.compiler.frontend;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.codedev.antro.comipler.frontend.ast.ExpressionSubTreePrinter;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.complier.frontend.ast.ExpressionSubTreePrinter;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 import com.codedev.antro.compiler.frontend.ast.rules.*;
 
 import com.codedev.antro.compiler.frontend.lexer.LexemeQueue;
@@ -704,6 +704,7 @@ public class Parser {
 
         // @NOTE: Need more thought around this since every (.antro) source file doesn't require an entry point
         // @INFO: The code generator itself is required to check for the existence of at least one entry point
+    
         // if (!found_EntryPoint) {
         //     _exceptions.add(
         //         error(

@@ -13,13 +13,16 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  */
 
 /**
- * 
+ * A concrete implementation class for the `continue *;` statement.
  */
 public class Continue extends Stmt {
-    // 1. Define field to store the list of statements in a scoped block
     private final Token label;
 
-    // 2. Constructor: Initialize the only node of the tree
+    /**
+     * Constructs a new Continue statement
+     * 
+     * @param label the label of the continue statement (if any)
+     */
     public Continue(Token label) {
         this.label = label;
     }
@@ -29,7 +32,6 @@ public class Continue extends Stmt {
         return visitor.visitContinue(this);
     }
 
-    // 4. Accessors (Getters) so the Visitor can inspect the data
     public final Token getLabel() {
         return label;
     }

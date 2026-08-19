@@ -16,13 +16,12 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
  * expression that produces the value to be stored.
  */
 public class Assignment extends Expr {
-    // The name of the variable receiving the value
     private final Token name;
-    // The expression whose result will be assigned to the variable
     private final Expr value;
 
     /**
      * Constructs a new Assignment expression.
+     * 
      * @param name  The identifier token of the variable on the left-hand side.
      * @param operator The assignment operator token
      * @param value The expression on the right-hand side of the equals sign.

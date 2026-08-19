@@ -1,7 +1,7 @@
-package com.codedev.antro.comipler.frontend.ast.rules;
+package com.codedev.antro.compiler.frontend.ast.rules;
 
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Expr;
-import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Expr;
+import com.codedev.antro.compiler.frontend.ast.vocabulary.Stmt;
 
 /*
  * Antro Compiler Project
@@ -11,32 +11,34 @@ import com.codedev.antro.comipler.frontend.ast.vocabulary.Stmt;
  */
 
 /**
- * 
+ * Represents a `while` block
  */
 public class While extends Stmt {
-    // 1. Define fields to store state of the while statement
     private final Expr cond;
     private final Stmt body;
 
-    // 2. Constructor: Initialize the only node of the tree
+    /**
+     * Constructs a new While block
+     * 
+     * @param condition the condition for the while loop.
+     * @param body the body of statements for the while loop.
+     */
     public While(Expr condition, Stmt body) {
         this.cond = condition;
         this.body = body;
     }
 
-    // 3. The 'accept' method: This is the core of the Visitor Pattern.
-    // It calls the specific visit method on the visitor intended for While nodes.
+    // @HINT: It calls the specific visit method on the visitor intended for While nodes.
     @Override
     public <R> R accept(Stmt.Visitor<R> visitor) {
         return visitor.visitWhile(this);
     }
 
-    // 4. Accessors (Getters) so the Visitor can inspect the data
-    public Expr getCondition() {
+    public final Expr getCondition() {
         return cond.clone();
     }
 
-    public Stmt getBody() {
+    public final Stmt getBody() {
         return body;
     }
 }
