@@ -1,17 +1,21 @@
 package com.codedev.antro.compiler.frontend.contracts.concerns;
-/* @NOTE: Delibrately avoiding the use of `java.text.ParseException` */
+
+/* @INFO: Deliberately avoiding the use of `java.text.ParseException` */
+
+/* @INFO: `RuntimeException` inheriting from `Exception` was a weird mistake! */
+/* @INFO: Also, both `RuntimeException` and `Exception` should have been abstract! */
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Custom checked exception to accumulate multiple parsing errors.
+ * Custom unchecked exception to accumulate multiple parsing errors.
  */
-public class ParseException extends Exception {
+public class ParseException extends RuntimeException {
     private static final long serialVersionUID = 1L;
     
-    // @INFO: Initialized as an empty list to avoid NullPointerExceptions
+    // @INFO: Initialized as an empty list to avoid `NullPointerException`s
     private List<Exception> exceptions = Collections.emptyList();
 
     /**
@@ -29,9 +33,9 @@ public class ParseException extends Exception {
     public void setExceptions(List<Exception> exceptions) {
         if (exceptions != null) {
             // @HINT: Defensive copy and make immutable to protect integrity
-            this.exceptions = Collections.unmodifiableList(new ArrayList<>(exceptions));
+            exceptions = Collections.unmodifiableList(new ArrayList<>(exceptions));
         } else {
-            this.exceptions = Collections.emptyList();
+            exceptions = Collections.emptyList();
         }
     }
 
@@ -39,6 +43,6 @@ public class ParseException extends Exception {
      * Returns an unmodifiable list of the inner exceptions.
      */
     public List<Exception> getExceptions() {
-        return this.exceptions;
+        return exceptions;
     }
 }
