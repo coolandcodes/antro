@@ -182,6 +182,7 @@ public class Tokenizer {
 
         // Comment
         if (isCommentStart(c)) {
+            advance();
             if (multiCharScanActive) {
                 multiCharScanActive = false;
             }
@@ -501,17 +502,22 @@ public class Tokenizer {
                     multiCharScanBuffer.append(c);
                 }
 
-                if (Character.isDigit(peek())) {
-                    emit(simple(c, TokenType.UNKNOWN));
-                } else if (Character.isLetter(peek()) && Character.isLetter(peek(true))) {
+                char nextChar = peek();
+
+                if (Character.isDigit(nextChar) || isSpecialCharacter(nextChar)) {
+                    emit(simple(nextChar, TokenType.UNKNOWN));
+                } else if (Character.isLetter(nextChar) && Character.isLetter(peek(true))) {
                     // @HINT: About to match a type annotation (e.g. `.int32`, `.byte`, `.bool`)
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(c);
-                    while (!peekWhitespace()) {
-                        sb.append(advance());
-                    }
+
+                    do {
+                        multiCharScanBuffer.append(advance());
+                    } while (!peekWhitespace());
                     
-                    String text = sb.toString();
+                    String text = multiCharScanBuffer.toString();
+                    multiCharScanBuffer.delete(
+                        0,
+                        multiCharScanBuffer.length()
+                    );
                     
                     if (text.equals(new String(".bool"))) {
                         emit(new Token(TokenType.TYPE_BOOL, text, line, column));
@@ -580,10 +586,9 @@ public class Tokenizer {
 
     private void readIdentifier(char first, int col) throws Exception {
         multiCharScanActive = true;
-        StringBuilder sb = new StringBuilder();
 
         if (first !== null) {
-            sb.append(first);
+            multiCharScanBuffer.append(first);
         } else {
             NullPointerException npEx = new NullPointerException(
                 "reading first character (as null) of <identifier> on line: " + line
@@ -591,9 +596,13 @@ public class Tokenizer {
             error("invalid <identifier> found", npEx);
         }
 
-        while (isIdentifierPart(peek())) sb.append(advance());
+        while (isIdentifierPart(peek())) multiCharScanBuffer.append(advance());
 
-        String text = sb.toString();
+        String text = multiCharScanBuffer.toString();
+        multiCharScanBuffer.delete(
+            0,
+            multiCharScanBuffer.length()
+        );
         
         TokenType type = text.equals(new String("null"))
             ? TokenType.NULL
@@ -604,37 +613,49 @@ public class Tokenizer {
 
     private void readNumber(char first, int col) throws Exception {
         multiCharScanActive = true;
-        StringBuilder sb = new StringBuilder().append(first);
+        multiCharScanBuffer.append(first);
 
         boolean isHex = false;
         boolean isFloat = false;
 
         if (first == '0' && peek() == 'x') {
-            sb.append(advance());
+            multiCharScanBuffer.append(advance());
             isHex = true;
-            while (isHexDigit(peek())) sb.append(advance());
+            while (isHexDigit(peek())) multiCharScanBuffer.append(advance());
 
-            emit(new Token(TokenType.INT_LITERAL, sb.toString(), line, col));
+            String text = multiCharScanBuffer.toString();
+            multiCharScanBuffer.delete(
+                0,
+                multiCharScanBuffer.length()
+            );
+
+            emit(new Token(TokenType.INT_LITERAL, text, line, col));
             return;
         }
 
-        while (isDigit(peek())) sb.append(advance());
+        while (isDigit(peek())) multiCharScanBuffer.append(advance());
 
         if (peek() == '.') {
             isFloat = true;
-            sb.append(advance());
-            while (isDigit(peek())) sb.append(advance());
+            advance();
+            while (isDigit(peek())) multiCharScanBuffer.append(advance());
 
             if (peek() == 'e' || peek() == 'E') {
-                sb.append(advance());
-                if (peek() == '+' || peek() == '-') sb.append(advance());
-                while (isDigit(peek())) sb.append(advance());
+                multiCharScanBuffer.append(advance());
+                if (peek() == '+' || peek() == '-') multiCharScanBuffer.append(advance());
+                while (isDigit(peek())) multiCharScanBuffer.append(advance());
             }
         }
 
+        String text = multiCharScanBuffer.toString();
+        multiCharScanBuffer.delete(
+            0,
+            multiCharScanBuffer.length()
+        );
+
         emit(new Token(
             isFloat ? TokenType.FLOAT_LITERAL : TokenType.INT_LITERAL,
-            sb.toString(),
+            text,
             line,
             col
         ));
@@ -643,44 +664,78 @@ public class Tokenizer {
 
     private void readString(char quote, boolean formatted, int col) throws Exception {
         multiCharScanActive = true;
-        StringBuilder sb = new StringBuilder();
-        sb.append(formatted ? "f/" + quote : quote);
-    
-        while (peek() != quote) {
-            char c = advance();
+        multiCharScanBuffer.append(formatted ? "f/" + quote : quote);
+
+        char c = peek();
+        
+        while (c != quote) {
     
             if (isAtEnd(c)) {
               error("Unterminated string literal found");
             }
     
             if (c == '\\') {
-                char esc = advance();
+                advance(); // discard reverse solidus char
+                
+                char esc = peek();
                 switch (esc) {
     
-                    case 'n'  -> sb.append('\n');
-                    case 't'  -> sb.append('\t');
-                    case 'r'  -> sb.append('\r');
-                    case 'b'  -> sb.append('\b');
-                    case 'f'  -> sb.append('\f');
-                    case '\\' -> sb.append('\\');
-                    case '\'' -> sb.append('\'');
-                    case '"'  -> sb.append('"');
-    
+                    case 'n' -> {
+                        advance();
+                        multiCharScanBuffer.append('\n');
+                    }
+                    case 't' -> {
+                        advance();
+                        multiCharScanBuffer.append('\t');
+                    }
+                    case 'r' -> {
+                        advance();
+                        multiCharScanBuffer.append('\r');
+                    }
+                    case 'b' -> {
+                        advance();
+                        multiCharScanBuffer.append('\b');
+                    }
+                    case 'f' -> {
+                        advance();
+                        multiCharScanBuffer.append('\f');
+                    }
+                    case '\\' -> {
+                        advance();
+                        multiCharScanBuffer.append('\\');
+                    }
+                    case '\'' -> {
+                        advance();
+                        multiCharScanBuffer.append('\'');
+                    }
+                    case '"' -> {
+                        advance();
+                        multiCharScanBuffer.append('\"');
+                    }
                     case 'u' -> {
-                        sb.append(readUnicodeEscape());
+                        multiCharScanBuffer.append(readUnicodeEscape());
                     }
     
                     default -> error("Invalid escape sequence: \\" + esc);
                 }
             } else {
-                sb.append(c);
+                 multiCharScanBuffer.append(advance())
             }
+            
+            c = peek();
         }
     
-        sb.append(advance()); // closing quote
+        multiCharScanBuffer.append(advance()); // closing quote
+        
+        String text = multiCharScanBuffer.toString();
+        multiCharScanBuffer.delete(
+            0,
+            multiCharScanBuffer.length()
+        );
+        
         emit(new Token(
             formatted ? TokenType.FORMATTED_STRING : TokenType.STRING,
-            sb.toString(),
+            text,
             line,
             col
         ));
@@ -833,26 +888,30 @@ public class Tokenizer {
         );
     }
 
-    private boolean isWhitespace(char c) {
+    private boolean isSpecialCharacter (char c) {
+        return c == '%' || c == '&' || c == '|' || c == '?' || c == '$' || c == '@' || c == '!' || c == '=';
+    }
+
+    private boolean isWhitespace (char c) {
         // Character.isWhitespace(c);
         return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f' || c == '\b';
     }
 
-    private boolean peekWhitespace() {
+    private boolean peekWhitespace () throws Exception {
         if (isWhitespace(peek())) return true;
         return false;
     }
 
-    private boolean isDigit(char c) {
+    private boolean isDigit (char c) {
         // Character.isDigit(c);
         return c >= '0' && c <= '9';
     }
 
-    private boolean isHexDigit(char c) {
+    private boolean isHexDigit (char c) {
         return isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     }
 
-    private boolean isCommentStart(char c) throws Exception {
+    private boolean isCommentStart (char c) throws Exception {
         if (c == '#') {
             return true;
         }
