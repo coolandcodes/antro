@@ -42,7 +42,7 @@ public class Tokenizer {
 
 
     /* ============================
-       Keywords
+       Keywords List Map
     ============================ */
 
     private static final Map<String, TokenType> KEYWORDS = Map.ofEntries(
@@ -90,16 +90,24 @@ public class Tokenizer {
 
 
     /**
+     * Constructs a new `Tokenizer` instance from a string
      *
+     * @param source
+     * @param tokenQueue
+     *
+     * @throws IOException
      */
-    public Tokenizer(String source, LexemeQueue tokenQueue) {
+    public Tokenizer(String source, LexemeQueue tokenQueue) throws IOException {
         this.reader = new BufferedReader(new StringReader(source), 2000); /* @FIXME: Modify this to use `NameBufferedReader` instead in the future */
         this.tokenQueue = tokenQueue;
         this.multiCharScanActive = false;
     }
 
     /**
+     * Constructs  a new `Tokenizer` instance from a reader
      *
+     * @param reader
+     * @param tokenQueue
      */
     public Tokenizer(BufferedReader reader, LexemeQueue tokenQueue) {
         this.reader = reader; /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
@@ -188,7 +196,7 @@ public class Tokenizer {
     }
 
     /**
-     *
+     * Collect 4 digits that make a Unicode sequence.
      *
      * @throws Exception
      * @returns char
@@ -213,6 +221,10 @@ public class Tokenizer {
     ============================ */
 
     /**
+     * Scan the next byte (as an ASCII character) from the
+     * input stream.
+     * 
+     * @param c
      *
      * @throws Exception
      */
@@ -236,22 +248,32 @@ public class Tokenizer {
             }
 
             boolean commentTerminated = false;
+            long maxCommentLength = 890L;
             
-            while (!isAtEnd(peek())) {
+            while (!isAtEnd(peek()) && !commentTerminated) {
                 if (isCommentEnd(c, peek())) {
                     advance();
                     commentTerminated = true;
+                }
+
+                if (maxCommentLength == 0) {
                     break;
                 }
+                
                 advance();
+                --maxCommentLength;
             }
 
-            if (!commentTerminated && c == '/' && isAtEnd(peek())) {
+            if (!commentTerminated && c == '/') {
                 NoticeConsoleLogger.logMessage(
                     "TOKENIZER",
                     "unterminated comment found at the end of source on line: " + line
                 );
-                error("Unterminated comment found");
+                error(
+                    isAtEnd(peek())
+                        ? "Unterminated comment found at EOF"
+                        : "Unterminated comment found"
+                );
             }
             return;
         }
@@ -275,13 +297,13 @@ public class Tokenizer {
             return;
         }
 
-        // Identifiers / keywords
+        /* @HINT: Scan for identifiers / keywords */
         if (isIdentifierStart(c)) {
             readIdentifier(c, startColumn);
             return;
         }
 
-        // Operators & punctuation
+        /* @HINT: Scan for operators, punctuations and other vocabulary */
         switch (c) {
             case '+': {
                 if (!peekWhitespace()) {
@@ -624,7 +646,7 @@ public class Tokenizer {
     }
 
     /* ============================
-       Readers
+       Lexical Collection
     ============================ */
 
     /**
@@ -1120,7 +1142,7 @@ public class Tokenizer {
     }
 
     /**
-     *
+     * Detect the start of an identifier/keyword.
      *
      * @param c
      *
@@ -1131,7 +1153,7 @@ public class Tokenizer {
     }
 
     /**
-     *
+     * Detect the middle/end of an identifier/keyword.
      *
      * @param c
      *
@@ -1142,7 +1164,7 @@ public class Tokenizer {
     }
 
     /**
-     *
+     * Raise an checked exception by itself.
      *
      * @param message
      *
@@ -1153,7 +1175,8 @@ public class Tokenizer {
     }
 
     /**
-     *
+     * Raise a checked exception that wraps an
+     * unchecked (runtime) exception.
      *
      * @param message
      * @param ex
