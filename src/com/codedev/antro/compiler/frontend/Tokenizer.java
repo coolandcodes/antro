@@ -115,7 +115,11 @@ public class Tokenizer {
        Public API
        ============================ */
 
-    public final void tokenize() throws LexisException {
+    /**
+     *
+     * @throws LexisException
+     */
+    public final void tokenize() {
         try {
             while (true) {
                 char c = peek();
@@ -137,9 +141,12 @@ public class Tokenizer {
                 e
             );
             throw lexisEx;
+        } finally {
+            /* @HINT: Whether or not an error is thrown; emit an `EOF` token */
+            emit(
+                new Token(TokenType.EOF, String.valueOf('\0'), line, column)
+            );
         }
-
-        emit(new Token(TokenType.EOF, String.valueOf('\0'), line, column));
     }
 
     private char readUnicodeEscape() throws Exception {
