@@ -26,10 +26,6 @@ import com.codedev.antro.compiler.frontend.contracts.concerns.LexisException;
  */
 public class Tokenizer {
 
-    /* ============================
-       Input handling
-       ============================ */
-
     private final BufferedReader reader; /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
     private final boolean multiCharScanActive;
 
@@ -40,16 +36,14 @@ public class Tokenizer {
     private int line = 1;
     private int column = 0;
 
-    /* ============================
-       Output
-       ============================ */
+
 
     private final LexemeQueue tokenQueue;
 
 
     /* ============================
        Keywords
-       ============================ */
+    ============================ */
 
     private static final Map<String, TokenType> KEYWORDS = Map.ofEntries(
         Map.entry("if", TokenType.IF),
@@ -95,31 +89,70 @@ public class Tokenizer {
     );
 
 
-    /* ============================
-       Constructors
-       ============================ */
-
+    /**
+     *
+     */
     public Tokenizer(String source, LexemeQueue tokenQueue) {
         this.reader = new BufferedReader(new StringReader(source), 2000); /* @FIXME: Modify this to use `NameBufferedReader` instead in the future */
         this.tokenQueue = tokenQueue;
         this.multiCharScanActive = false;
     }
 
+    /**
+     *
+     */
     public Tokenizer(BufferedReader reader, LexemeQueue tokenQueue) {
         this.reader = reader; /* @TODO: Modify this to use `NameBufferedReader` instead in the future */
         this.tokenQueue = tokenQueue;
         this.multiCharScanActive = false;
     }
 
+    
+
     /* ============================
-       Public API
-       ============================ */
+       Public APIs
+    ============================ */
 
     /**
+     * This is a variant of the `tokenize()` method that signals
+     * that this variant throws an unchecked exception if and when
+     * it fails and this is always guaranteed.
      *
      * @throws LexisException
      */
-    public final void tokenize() {
+    public final void UNSAFE_tokenize () {
+        /**!
+            @INFO:
+
+            The prefix 'UNSAFE_' signals to the API consumer
+            that this method exposes an unchecked exception
+            and will never expose a checked exception.
+
+            The use of 'UNSAFE_' is a custom convention and is
+            standardized throughout this compiler project.
+
+            It also makes a judgement based on the assumption
+            that the API consumer will not try to recover from
+            the unchecked exception by catching and unwrapping
+            said unchecked exception and then inspecting it.
+        */
+        try {
+            return tokenize();
+        } catch (Exception err) {
+            LexisException lexisException = new LexisException(
+                "lexical scan of source failed", 
+                err
+            );
+            throw lexisException;
+        }
+    }
+
+    /**
+     * Executes the lexing process until it succeeds or fails.
+     *
+     * @throws Exception
+     */
+    public final void tokenize () throws Exception {
         try {
             while (true) {
                 char c = peek();
@@ -135,20 +168,31 @@ public class Tokenizer {
                 }
                 scanNextByte(advance());
             }
-        } catch (Exception e) {
-            LexisException lexisEx = new LexisException(
-                "lexical scan of source failed", 
-                e
-            );
-            throw lexisEx;
+            return;
         } finally {
             /* @HINT: Whether or not an error is thrown; emit an `EOF` token */
             emit(
                 new Token(TokenType.EOF, String.valueOf('\0'), line, column)
             );
+
+            /* @HINT: Manual cleanup as Java doesn't support destructors */
+            this.reader = null;
+            this.tokenQueue = null;
+            this.multiCharScanBuffer = null;
+
+            this.buffer = null;
+            this.bufferPos = 0;
+            this.line = 1;
+            this.column = 0;
         }
     }
 
+    /**
+     *
+     *
+     * @throws Exception
+     * @returns char
+     */
     private char readUnicodeEscape() throws Exception {
         int value = 0;
     
@@ -166,13 +210,17 @@ public class Tokenizer {
 
     /* ============================
        Core scanning
-       ============================ */
+    ============================ */
 
+    /**
+     *
+     * @throws Exception
+     */
     private void scanNextByte(char c) throws Exception {
 
         int startColumn = column;
 
-        // Whitespace
+        /* @HINT: Scan for whitespace */
         if (isWhitespace(c)) {
             if (multiCharScanActive) {
                 multiCharScanActive = false;
@@ -180,7 +228,7 @@ public class Tokenizer {
             return;
         }
 
-        // Comment
+        /* @HINT: Scan for comments */
         if (isCommentStart(c)) {
             advance();
             if (multiCharScanActive) {
@@ -208,20 +256,20 @@ public class Tokenizer {
             return;
         }
 
-        // Strings
+        /* @HINT: Scan for string literal */
         if (c == '"' || c == '\'') {
             readString(c, false, startColumn);
             return;
         }
 
-        // Formatted string
+        /* @HINT: Scan for formatted string literal */
         if (c == 'f' && (peek() == '"' || peek() == '\'')) {
             char quote = advance();
             readString(quote, true, startColumn);
             return;
         }
 
-        // Numbers
+        /* @HINT: Scan for number literals */
         if (isDigit(c) || (c == '-' && isDigit(peek()))) {
             readNumber(c, startColumn);
             return;
@@ -507,44 +555,39 @@ public class Tokenizer {
                 if (Character.isDigit(nextChar) || isSpecialCharacter(nextChar)) {
                     emit(simple(nextChar, TokenType.UNKNOWN));
                 } else if (Character.isLetter(nextChar) && Character.isLetter(peek(true))) {
-                    // @HINT: About to match a type annotation (e.g. `.int32`, `.byte`, `.bool`)
-
+                    /* @HINT: About to match a type annotation (e.g. `.int32`, `.byte`, `.bool`) */
                     do {
                         multiCharScanBuffer.append(advance());
                     } while (!peekWhitespace());
                     
                     String text = multiCharScanBuffer.toString();
-                    multiCharScanBuffer.delete(
-                        0,
-                        multiCharScanBuffer.length()
-                    );
                     
                     if (text.equals(new String(".bool"))) {
-                        emit(new Token(TokenType.TYPE_BOOL, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_BOOL));
                     } else if (text.equals(new String(".byte"))) {
-                        emit(new Token(TokenType.TYPE_BYTE, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_BYTE));
                     } else if (text.equals(new String(".uint8"))) {
-                        emit(new Token(TokenType.TYPE_INT, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_INT));
                     } else if (text.equals(new String(".uint16"))) {
-                        emit(new Token(TokenType.TYPE_INT, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_INT));
                     } else if (text.equals(new String(".double"))) {
-                        emit(new Token(TokenType.TYPE_DBL, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_DBL));
                     } else if (text.equals(new String(".float"))) {
-                        emit(new Token(TokenType.TYPE_FLT, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_FLT));
                     } else if (text.equals(new String(".uint32"))) {
-                        emit(new Token(TokenType.TYPE_INT, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_INT));
                     } else if (text.equals(new String(".uint64"))) {
-                        emit(new Token(TokenType.TYPE_INT, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_INT));
                     } else if (text.equals(new String(".str"))) {
-                        emit(new Token(TokenType.TYPE_STR, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_STR));
                     } else if (text.equals(new String(".char"))) {
-                        emit(new Token(TokenType.TYPE_CHAR, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_CHAR));
                     } else if (text.equals(new String(".nil"))) {
-                        emit(new Token(TokenType.TYPE_NIL, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_NIL));
                     } else if (text.equals(new String(".int"))) {
-                        emit(new Token(TokenType.TYPE_INT, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_INT));
                     } else {
-                        emit(new Token(TokenType.TYPE_CUSTOM, text, line, column));
+                        emit(simple(nextChar, TokenType.TYPE_CUSTOM));
                     }
                 } else {
                     multiCharScanActive = false;
@@ -582,8 +625,16 @@ public class Tokenizer {
 
     /* ============================
        Readers
-       ============================ */
+    ============================ */
 
+    /**
+     * Collect a keyword or identifier.
+     *
+     * @param first
+     * @param col
+     *
+     * @throws Exception
+     */
     private void readIdentifier(char first, int col) throws Exception {
         multiCharScanActive = true;
 
@@ -611,6 +662,14 @@ public class Tokenizer {
         emit(new Token(type, text, line, col));
     }
 
+    /**
+     * Collect a number literal.
+     *
+     * @param first
+     * @param col
+     *
+     * @throws Exception
+     */
     private void readNumber(char first, int col) throws Exception {
         multiCharScanActive = true;
         multiCharScanBuffer.append(first);
@@ -661,7 +720,15 @@ public class Tokenizer {
         ));
     }
 
-
+    /**
+     * Collect a string literal (formatted or not).
+     * 
+     * @param quote
+     * @param formatted
+     * @param col
+     *
+     * @throws Exception
+     */
     private void readString(char quote, boolean formatted, int col) throws Exception {
         multiCharScanActive = true;
         multiCharScanBuffer.append(formatted ? "f/" + quote : quote);
@@ -675,7 +742,7 @@ public class Tokenizer {
             }
     
             if (c == '\\') {
-                advance(); // discard reverse solidus char
+                advance(); /* @HINT: discard reverse solidus character */
                 
                 char esc = peek();
                 switch (esc) {
@@ -725,7 +792,7 @@ public class Tokenizer {
             c = peek();
         }
     
-        multiCharScanBuffer.append(advance()); // closing quote
+        multiCharScanBuffer.append(advance()); /* @HINT: consume the closing quote character */
         
         String text = multiCharScanBuffer.toString();
         multiCharScanBuffer.delete(
@@ -743,10 +810,15 @@ public class Tokenizer {
 
     /* ============================
        Helpers
-       ============================ */
+    ============================ */
+
+    
 
     /**
-     * Consume the next character
+     * Consume the next character in the input stream
+     *
+     * @throws Exception
+     * @returns char
      */
     private char advance() throws Exception {
         boolean READER_EOF = false;
@@ -787,6 +859,12 @@ public class Tokenizer {
         return c;
     }
 
+    /**
+     * Peek at the next character in the input stream
+     *
+     * @throws Exception
+     * @returns char
+     */
     private char peek() throws Exception {
         char c = advance();
         
@@ -796,6 +874,15 @@ public class Tokenizer {
         return c;
     }
 
+    /**
+     * Peek at the next character or the character ahead of 
+     * the next character in the input stream.
+     *
+     * @param setBufferPos_IncrByOne
+     *
+     * @throws Exception
+     * @returns char 
+     */
     private char peek(boolean setBufferPos_IncrByOne) throws Exception {
         if (!setBufferPos_IncrByOne) {
             return peek();
@@ -810,26 +897,57 @@ public class Tokenizer {
         return c;
     }
 
+    /**
+     * Match and consume the character only when it is expected.
+     *
+     * @param expected
+     *
+     * @throws Exception
+     * @returns boolean
+     */
     private boolean match(char expected) throws Exception {
         if (peek() != expected) return false;
         
         if (multiCharScanActive) {
+            /* @HINT: Keep consumed character */
             multiCharScanBuffer.append(advance())
         } else {
-            advance();
+            advance(); /* @HINT: Discard consumed character */
         }
         
         return true;
     }
 
+    /**
+     * Test that the next character is not an `EOL` character.
+     *
+     * @param nextOnAdvance
+     *
+     * @returns boolean
+     */
     private boolean isAtEnd(char nextOnAdvance) {
         return nextOnAdvance == '\0';
     }
 
+    /**
+     * Check if the next character is a new line character.
+     *
+     * @param nextOnAdvance
+     *
+     * @returns boolean
+     */
     private boolean isAtNewLine(char nextOnAdvance) {
         return nextOnAdvance == '\n';
     }
 
+    /**
+     * Forward current token to the token queue only when the
+     * token is of a known token type else fail.
+     *
+     * @param token
+     *
+     * @throws Exception
+     */
     private void emit(Token token) throws Exception {   
         boolean interrupted = false;
         
@@ -858,23 +976,31 @@ public class Tokenizer {
                         @HINT: 
                         
                         Record that an interruption happened but defer 
-                        restoring the interrupted status.
+                        restoring the interrupted status to later.
                     */
                     interrupted = true;
                 }
             }
         } finally {
             if (interrupted) {
-                // @HINT: Restore interrupted status
+                /* @HINT: Restore interrupted status */
                 Thread.currentThread().interrupt();
             }
         }
     }
 
-    private Token simple(char c, TokenType type) {
+    /**
+     * Package and setup a brand new `Token` instance.
+     * 
+     * @param currentOnAdvance
+     * @param type
+     *
+     * @returns Token
+     */
+    private Token simple(char currentOnAdvance, TokenType type) {
         String text = multiCharScanActive
             ? multiCharScanBuffer.toString()
-            : String.valueOf(c);
+            : String.valueOf(currentOnAdvance);
         
         multiCharScanBuffer.delete(
             0,
@@ -888,29 +1014,72 @@ public class Tokenizer {
         );
     }
 
+    /**
+     * Check that character is a special character.
+     *
+     * @param c
+     *
+     * @returns boolean
+     */
     private boolean isSpecialCharacter (char c) {
         return c == '%' || c == '&' || c == '|' || c == '?' || c == '$' || c == '@' || c == '!' || c == '=';
     }
 
+    /**
+     * Check that character is a whitespace character.
+     *
+     * @param c
+     *
+     * @returns boolean
+     */
     private boolean isWhitespace (char c) {
         // Character.isWhitespace(c);
         return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f' || c == '\b';
     }
 
+    /**
+     * Peek the next character in the input stream and
+     * check if it is a whitespace character.
+     *
+     * @throws Exception
+     * @returns boolean
+     */
     private boolean peekWhitespace () throws Exception {
         if (isWhitespace(peek())) return true;
         return false;
     }
 
+    /**
+     * Check that character is a digit character.
+     *
+     * @param c
+     *
+     * @returns boolean
+     */
     private boolean isDigit (char c) {
         // Character.isDigit(c);
         return c >= '0' && c <= '9';
     }
 
+    /**
+     * Check that character is a hexadecimal character.
+     *
+     * @param c
+     *
+     * @returns boolean
+     */
     private boolean isHexDigit (char c) {
         return isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     }
 
+    /**
+     * Detect the start of a comment.
+     *
+     * @param c
+     *
+     * @throws Exception
+     * @returns boolean
+     */
     private boolean isCommentStart (char c) throws Exception {
         if (c == '#') {
             return true;
@@ -924,6 +1093,15 @@ public class Tokenizer {
         return false;
     }
 
+    /**
+     * Detect the end of a comment.
+     *
+     * @param start
+     * @param curr
+     *
+     * @throws Exception
+     * @returns boolean
+     */
     private boolean isCommentEnd(char start, char curr) throws Exception {
         if (start == '#') {
             return isAtNewLine(curr);
@@ -941,19 +1119,48 @@ public class Tokenizer {
         return false;
     }
 
+    /**
+     *
+     *
+     * @param c
+     *
+     * @returns boolean
+     */
     private boolean isIdentifierStart(char c) {
         return Character.isLetter(c) || c == '$' || c == '_';
     }
 
+    /**
+     *
+     *
+     * @param c
+     *
+     * @returns boolean
+     */
     private boolean isIdentifierPart(char c) {
         return isIdentifierStart(c) || isDigit(c) || c == '_';
     }
 
-    private void error(String msg) throws Exception {
-        throw new Exception("[Line " + line + ", Col " + column + "]; " + msg);
+    /**
+     *
+     *
+     * @param message
+     *
+     * @throws Exception
+     */
+    private void error(String message) throws Exception {
+        throw new Exception("[Line " + line + ", Col " + column + "]; " + message);
     }
 
-    private void error(String msg, RuntimeException ex) throws Exception {
-        throw new Exception("[Line " + line + ", Col " + column + "]; " + msg, ex);
+    /**
+     *
+     *
+     * @param message
+     * @param ex
+     *
+     * @throws Exception
+     */
+    private void error(String message, RuntimeException ex) throws Exception {
+        throw new Exception("[Line " + line + ", Col " + column + "]; " + message, ex);
     }
 }
