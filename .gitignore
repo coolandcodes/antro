@@ -1,0 +1,67 @@
+# =========================================================================
+# Java Core
+# =========================================================================
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files (Uncomment if you do not want to commit compiled archives)
+# *.jar
+# *.war
+# *.nar
+# *.ear
+# *.zip
+# *.tar.gz
+# *.rar
+
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# =========================================================================
+# Build Tools
+# =========================================================================
+
+### Gradle ###
+.gradle/
+build/
+/build/
+gradle-app.setting
+.gradletasknamecache
+# Avoid ignoring Gradle wrapper jar file
+!gradle-wrapper.jar
+
+# =========================================================================
+# IDEs and Editors
+# =========================================================================
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### Visual Studio Code ###
+.vscode/
+
+# =========================================================================
+# Operating System and System Files
+# =========================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Ehthumbs.db
+Desktop.ini
