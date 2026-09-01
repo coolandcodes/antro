@@ -85,7 +85,10 @@ public class Tokenizer {
         Map.entry("trait", TokenType.TRAIT),
         Map.entry("on", TokenType.MODIFIER),
         Map.entry("abstract", TokenType.QUALIFIER),
-        Map.entry("package", TokenType.MODULE)
+        Map.entry("package", TokenType.MODULE),
+        Map.entry(("yield", TokenType.YIELD),
+        Map.entry("synchronize_on", TokenType.SYNC),
+        Map.entry("release_on", TokeType.RELEASE)
     );
 
 
@@ -122,21 +125,22 @@ public class Tokenizer {
     ============================ */
 
     /**
-     * This is a variant of the `tokenize()` method that signals
-     * that this variant throws an unchecked exception if and when
-     * it fails and this is always guaranteed.
+     * This is a variant of the `UNSAFE_tokenize()` method 
+     * that signals that this variant throws an unchecked 
+     * exception if and when it fails and this is always 
+     * guaranteed.
      *
      * @throws LexisException
      */
-    public final void UNSAFE_tokenize () {
+    public final void FATAL_tokenize () {
         /**!
             @INFO:
 
-            The prefix 'UNSAFE_' signals to the API consumer
-            that this method exposes an unchecked exception
-            and will never expose a checked exception.
+            The prefix 'FATAL_' signals to the API consumer
+            that this method throws an unchecked exception
+            and will never throw a checked exception.
 
-            The use of 'UNSAFE_' is a custom convention and is
+            The use of 'FATAL_' is a custom convention and is
             standardized throughout this compiler project.
 
             It also makes a judgement based on the assumption
@@ -145,7 +149,7 @@ public class Tokenizer {
             said unchecked exception and then inspecting it.
         */
         try {
-            return tokenize();
+            return UNSAFE_tokenize();
         } catch (Exception err) {
             LexisException lexisException = new LexisException(
                 "lexical scan of source failed", 
@@ -160,7 +164,22 @@ public class Tokenizer {
      *
      * @throws Exception
      */
-    public final void tokenize () throws Exception {
+    public final void UNSAFE_tokenize () throws Exception {
+        /**!
+            @INFO:
+
+            The prefix 'UNSAFE_' signals to the API consumer
+            that this method throws a checked exception and
+            will never throw an unchecked exception.
+
+            The use of 'USAFE_' is a custom convention and is
+            standardized throughout this compiler project.
+
+            This API makes a judgement that the API consumer
+            will/may need to recover from this error and so
+            therefore will catch and then wrap or inspect the 
+            exception and/or other exceptions chained to it.
+        */
         try {
             while (true) {
                 char c = peek();
@@ -187,6 +206,7 @@ public class Tokenizer {
             this.reader = null;
             this.tokenQueue = null;
             this.multiCharScanBuffer = null;
+            this.multiCharScanActive = false;
 
             this.buffer = null;
             this.bufferPos = 0;
@@ -221,7 +241,7 @@ public class Tokenizer {
     ============================ */
 
     /**
-     * Scan the next byte (as an ASCII character) from the
+     * Scan the next byte (as a UTF-8 character) from the
      * input stream.
      * 
      * @param c
