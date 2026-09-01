@@ -1,0 +1,6 @@
+* text=auto
+*.xml linguist-vendored
+*.txt linguist-vendored
+*.sh linguist-vendored
+CHANGELOG.md export-ignore
+README.md export-ignore
