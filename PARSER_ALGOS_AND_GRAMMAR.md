@@ -52,7 +52,7 @@ consumeToken("identifier"); /* consume the next token retrieved and ensure it is
 
 ### ANTRO LANGUAGE GRAMMAR DETAILS
 
-Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EBNF
+Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- EBNF
 ==================================================================================
 
 #### Use [this EBNF meta-syntax defintion](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) to read the productions below
@@ -260,7 +260,7 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 - comment := hash, { allchars - hash } | ( divide, multiply ), { allchars - ( multiply, divide ), (multiply, divide) ;
 
 
-Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) -- EBNF
+Context Free Grammar Productions (CFGP) for ANTRO programming language (PARSER) -- EBNF
 =====================================================================================
 (* This is the list of all production rules *)
 
@@ -280,9 +280,9 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - enumeration      := enum, identifier, openbrace, enumitem, { comma, enumitem }, closebrace ;
 
-- boundfnlist      := identifier, openbracket, declexpressionlist, closebracket, [ type, ( signlink, ".Err" )? ] ;
+- boundfn          := identifier, openbracket, declexpressionlist, closebracket, [ type, ( signlink, ".Err" )? ] ;
 
-- traitblock       := [ inherits, identifier, openbrace, ( multiply | identifier, { comma, identifier } ), closebrace, terminator ], structblocklist, { comma, boundfnlist } ;
+- traitblock       := [ inherits, identifier, openbrace, ( multiply | identifier, { comma, identifier } ), closebrace, terminator ], structblocklist, { comma, boundfn } ;
 
 - traitform        := trait, identifier, openbrace, traitblock, closebrace ;
 
