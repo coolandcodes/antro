@@ -16,7 +16,7 @@ import com.codedev.antro.compiler.frontend.contracts.concerns.LexisException;
 /*
  * Antro Compiler Project
  * https://www.coolcodes.io/antro
- * Copyright (c) 2014-2026 Ifeora Okechukwu
+ * Copyright (c) 2014-2027 Ifeora Okechukwu
  * Licensed under the MIT license. See 'LICENSE' for details.
  */
 
@@ -81,14 +81,17 @@ public class Tokenizer {
         Map.entry("struct", TokenType.STRUCT),
         Map.entry("impl", TokenType.IMPLEMENTATION),
         Map.entry("pause", TokenType.PAUSE),
-        Map.entry(("inherits", TokenType.INHERITS),
+        Map.entry("inherits", TokenType.INHERITS),
         Map.entry("trait", TokenType.TRAIT),
         Map.entry("on", TokenType.MODIFIER),
         Map.entry("abstract", TokenType.QUALIFIER),
         Map.entry("package", TokenType.MODULE),
-        Map.entry(("yield", TokenType.YIELD),
+        Map.entry("yield", TokenType.YIELD),
         Map.entry("synchronize_on", TokenType.SYNC),
-        Map.entry("release_on", TokeType.RELEASE)
+        Map.entry("release_on", TokenType.RELEASE),
+        Map.entry("enum", TokenType.ENUM),
+        Map.entry("match", TokenType.MATCH),
+        Map.entry("const", TokenType.CONST)
     );
 
 
@@ -566,6 +569,8 @@ public class Tokenizer {
 
                 if (match('=')) {
                     emit(simple(c, TokenType.EQUAL));
+                } else if (match('>')) {
+                    emit(simple(c, TokenType.DIRECTED));
                 } else {
                     multiCharScanActive = false;
                     emit(simple(c, TokenType.ASSIGN));
