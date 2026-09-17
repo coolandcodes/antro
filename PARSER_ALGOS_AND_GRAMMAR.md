@@ -111,11 +111,17 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - modulo := "%" ;
 
+- match := "match" ;
+
+- static := "static" ;
+
+- syncho := "synchronize" ;
+
 - assignmentoperator := [ minus | plus | multiply | divide | modulo ], "=" ;
 
-- int := [ minus ], number ;
+- int := number ;
 
-- float := [ "0" ] | { digit }, dot, ("0" | digit), { "0" | digit }, [ ( "E" | "e" ), int ] ;
+- float := [ "0" ] | { digit }, dot, ("0" | digit), { "0" | digit }, [ ( "E" | "e" ) ], [ minus ], [ int ] ;
 
 - pipe := "|" ;
 
@@ -133,7 +139,9 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - null := "null" ;
 
-- type := ".int" | ".float" | ".str" | ".arr" | ".bool" | ".nil" | ".char" | ".byte" | ".double" | ".long" ;
+- type := ".int" | ".float" | ".str" | ".arr" | ".bool" | ".nil" | ".char" | ".byte" | ".double" | ".long" | ".ulong" | ".anynumber" | ".anypointer" | ".struct";
+
+- visibility := "priv" | "publ" ;
 
 - defer := "defer" ;
 
@@ -195,27 +203,35 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - var := "var" ;
 
+- const := "const" ;
+
+- enum := "enum" ;
+
 - module := "package";
 
 - whitespace := "\f" | "\t" | "\r" | "\n" | "\b" | " " | ?? ;
 
 - annotation := modulo, modulo ;
 
-- arithmeticunaryoperators := plus, plus | minus, minus ;
+- incrementarithmeticunaryoperator := plus, plus ;
+
+- decrementarithmeticunaryoperator := minus, minus ;
 
 - arithmeticbinaryoperators := multiply | divide | modulo | plus | minus ;
 
-- bitwise := pipe | and ;
+- bitwiseoperators := pipe | and | lt, lt | gt, gt ;
 
 - logicalunaryoperator := "!" ;
 
 - stringformatprefix := "f" ;
 
-- logicalbinaryoperators := pipe,  pipe | and, and ;
+- orlogicalbinaryoperator := pipe, pipe ;
+
+- andlogicalbinaryoperator := and, and ;
 
 - comparisonoperator :=  gt, [ assignmentoperator ] | lt, [ assignmentoperator ] ;
 
-- relationaloperator := comparisonoperator | ( assignmentoperator | logicalunaryoperator ), assignmentoperator, [ assignmentoperator ] ;
+- relationaloperator := ( assignmentoperator | logicalunaryoperator ), assignmentoperator, [ assignmentoperator ] ;
 
 - ace := "@" ;
 
@@ -224,6 +240,8 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 - link := "->" ;
 
 - signlink := "->>" ;
+
+- directed := "=>" ;
 
 - comma := "," ;
 
@@ -235,69 +253,98 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - identifier := ( pound | letter | uscore ), {  letterordigit | uscore  } ;
 
-- comment := hash, { allchars - hash } ;
-
+- comment := hash, { allchars - hash } | ( divide, multiply ), { allchars - ( multiply, divide ), (multiply, divide) ;
 
 
 Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) -- EBNF
 =====================================================================================
 (* This is the list of all production rules *)
 
-- numericliteral := int | float ;
+- numericliteral   := int | float ;
 
-- stringliteral := string | formattedstring ;
+- stringliteral    := string | formattedstring ;
 
-- flagliteral := boolean ;
+- enumitemtuple    := openbracket, ( numericliteral | stringliteral ), closebracket ;
 
-- factor :=  identifier | numericliteral ;
+- structblocklist  := identifier, type, { comma, identifier, type } ;
 
-- stringedterm := stringliteral, { plus, stringliteral } ;
+- enumitemstruct   := openbracket, ( openbrace, structblocklist, closebrace, | identifier, [ ".struct" ] ), closebracket ;
 
-- flaggedterm := flagliteral, { bitwise, flagliteral } ;
+- enumitem         :=  ( visibility )?, identifier, ( enumitemtuple | enumitemstruct )?, [ assignmentoperator, expression ] ;
 
-- factoredterm := factor, { ( bitwise | arithmeticbinaryoperator ), factor } ;
+- structure        := struct, identifier, openbrace, structblocklist, closebrace ;
 
-- operandterm := flaggedterm | factoredterm | stringedterm | null ;
+- enumeration      := enum, identifier, openbrace, enumitem, { comma, enumitem }, closebrace ;
 
-- symbolterm := (operandterm - stringedterm) | arithmeticunaryoperator, identifier | identifier, arithmeticunaryoperator ;
+- boundfnlist      := identifier, openbracket, declexpressionlist, closebracket, [ type, ( signlink, ".Err" )? ] ;
 
-- arithmeticexpression := symbolterm, { arithmeticbinaryoperator, symbolterm } | identifier, assignmentoperator, arithmeticexpression ; (* This production rule is recursive *)
+- traitblock       := [ inherits, identifier, openbrace, ( multiply | identifier, { comma, identifier } ), closebrace, terminator ], structblocklist, { comma, boundfnlist } ;
 
-- relationalexpression := operandterm, { relationaloperator, operandterm } | identifier, assignmentoperator, relationalexpression ; (* This production rule is recursive *)
+- traitform        := trait, identifier, openbrace, traitblock, closebrace ;
 
-- airthmeticexpressionsgroup :=  openbracket, airthmeticexpression, arithmeticbinaryoperator, { airthmeticexpression | airthmeticexpressiongroup }, closebracket ; (* This production rule is recursive *)
+- array            := ace, openbrace, [ expressionsgroup | array ], { comma, ( expressionsgroup | array ) }, closebrace ;
 
-- relationalexpressiongroup := openbracket, relationalexpression, relationaloperator, { relationalexpression | relationalexpressiongroup }, closebracket ; (* This production rule is recursive *)
+- rhs_slot         := boolean | callexpression | trialexpression ;
 
-- expressionsgroup := airthmeticexpressionsgroup | relationalexpressiongroup ;
+- postfix           :=  identifier, ( incrementarithmeticunaryoperator | decrementarithmeticunaryoperator ) ;
 
-- array := ace, openbrace, [ expressionsgroup | array ], { comma, expressionsgroup | array }, closebrace ;
+- increment_prefix  := incrementarithmeticunaryoperator, identifier ;
 
-- logicoperationexpression := expressionsgroup, { logicalbinaryoperator, expressionsgroup } ;
+- decrement_prefix  := decrementarithmeticunaryoperator, identifier ;
 
-- callexpression := call, cursor, identifier, openbracket, logicexpressionlist, closebracket ;
+- calcexpression   :=  numericliteral | expressionsgroup ;
 
-- trialexpression := [ stringedterm, comma ], callexpression, ( { link, (oeject | opanic), (identifier | pound, pound) }, { link, hook, scopeblock } ) ;
-                    
-- logicexpression :=  operandterm | [ logicalunaryoperator ], ( callexpression | logicoperationexpression ) | trialexpression ;
+- term             := rhs_slot | identifier | array | null ;
+
+- unary             :=  ( logicalunaryoperator )?, ( decrement_prefix | increment_prefix | rhs_slot ) | ( minus | plus )?, ( calcexpression | postfix ) | identifier ;
+
+- arithmetic        := stringliteral { plus, stringliteral } | unary { arithmeticbinaryoperators, unary } ;
+
+- bitwise           := arithmetic { bitwiseoperators, arithmetic } ;
+
+- relational        := bitwise { comparisonoperator, bitwise } ;
+
+- equality          := relational { relationaloperator, relational } ;
+
+- logical_and       := equality { andlogicalbinaryoperator, equality } ;
+
+- logical_or        := logical_and { orlogicalbinaryoperator, logical_and } ;
+
+- assignment        := logical_or | identifier, assignmentoperator, assignment ;
+
+- expression        := assignment { comma, assignment } | identifier, cursor, identifier ;
+
+- expressionsgroup  := openbracket, expression, closebracket ;
+
+- expressionset     := expression, { comma, expression } ;
+
+- logicexpression   :=  void | null | expressionset | expressiongroup ;
 
 - logicexpressionlist := logicexpression, { comma, logicexpression } ;
 
-- declsolution := [ type ], identifier ;
+- callexpression := call, cursor, identifier ( joiner, identifier | new )?, openbracket, logicexpressionlist, closebracket ;
 
-- declexpression :=  declsolution, { assignmentoperator, logicexpression } ;
+- trialexpression := [ stringedterm, comma ], callexpression, [ link, oeject, identifier ], [ link, hook, limitedscopeblock ] ;
+
+- limitedtrialexpression := [ stringedterm, comma ], callexpression, [ link, oeject, identifier ] ;
+
+- declsolution := identifier, [ type ];
+
+- declexpression :=  declsolution, { assignmentoperator, ( logicexpression | array ) } ;
 
 - declexpressionlist := declexpression, { comma, declexpression } ;
 
-- declstatement := { var, declexpressionlist }, terminator ;
+- simpledeclunit := [ static ], { ( var | const ), declexpressionlist }, terminator ;
+
+- declstatement := simpledeclunit | ( structure | enumeration | traitform ), terminator;
 
 - reqrstatement := require, cursor, string, { aliaser, identifier }, terminator ;
 
-- retnstatement := retn, [ logicexpression ], [ terminator ] ; (* if we put `logicexpressionlist` instead of `logicexpresion`, we risk making antro an multi-value return language *)
+- retnstatement := retn, [ ( logicexpression | array ) ], [ terminator ] ; (* if we put `logicexpressionlist` instead of `logicexpression` here, we risk making antro a multi-value return language *)
 
 - callstatement := trialexpression, terminator ;
 
-- fdefnbody := openbracket, (void | declexpressionlist), closebracket, scopeblock ;
+- fdefnbody := openbracket, declexpressionlist, closebracket, [ type, ( signlink, ".Err" )? ], scopeblock ;
 
 - globalliteraldefnstatement := def, cursor, identifier, literal, terminator ;
 
@@ -305,9 +352,9 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - localfunctiondefnstatement := var, identifier, fdefnbody, [ terminator ] ;
 
-- defnstatement := globalliteraldefnstatement | globalfunctiondefnstatement ;
+- globaldefnstatement := globalliteraldefnstatement | globalfunctiondefnstatement ;
 
-- forstatement := for, openbracket, declstatement, [ airthmeticexpression ], terminator, [ airthmeticexpression ], closebracket, scopeblock ;
+- forstatement := for, openbracket, simpledeclunit, [ expression ], terminator, ( increment_prefix | decrement_prefix | postfix ), closebracket, scopeblock ;
 
 - dowhilestatement := do, scopeblock, while, openbracket, logicexpression, closebracket ;
 
@@ -319,33 +366,43 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - elsestatement := else, scopeblock ;
 
-- switchstatement := switch openbrackect, term, closebracket openbrace { { case, literal, cursor }, { blockstatement }, flowstatement }, [ default, cursor, { blockstatement }, flowstatement ], closebrace ;
+- switchblock := openbrace { { case, logicexpression, cursor }, { blockstatement }, [ breakstatement ] }, [ default, cursor, { blockstatement }, breakstatement ], closebrace ;
+
+- switchstatement := switch openbrackect, term, closebracket switchblock ;
 
 - breakstatement := break, terminator ;
 
 - continuestatement := continue, terminator ;
 
-- invariantsblock := link, invariants, openbrace, { trialexpression }, closebrace, [ terminator ] ;
+- matchitem := (numericliteral | stringliteral | identifier), directed, expressionset ;
 
-- deferstatement := defer, declexpressionlist | invariantsblock ;
+- matchstatement := match, openbracket, identifier, [ ".Err" ], closebracket, openbrace, matchitem, { comma, matchitem }, closebrace ;
+
+- pausestatement := pause, openbracket, identifier, [ ".Err" ], closebracket, openbrace, { declstatement | controlstatement }, closebrace, terminator ;
+
+- invariantstatement := [ defer ], link, invariants, openbrace, { declstatement | controlstatement | flowstatement | callstatement }, closebrace, [ terminator ] ;
+
+- deferstatement := defer, openbrace, { declexpressionlist | invariantstatement | pausestatement }, closebrace, terminator ;
 
 - branchstatement := ifstatement, { elseifstatement }, { elsestatement } | switchstatement ;
 
-- controlstatement := branchstatement | forstatement | whilestatement | dowhilestatement | retnstatement ;
+- controlstatement := branchstatement | forstatement | whilestatement | dowhilestatement ;
 
 - flowstatement :=  breakstatement | continuestatement ;
 
 - modulestatement := module, cursor, string, terminator ;
 
-- exportstatement := export, cursor, identifier, { comma, identifier }, terminator ;
+- exportstatement := export, cursor, ( multiply | identifier, { comma, identifier } ), terminator ;
 
-- blockstatment := declstatement | localfunctiondefnstatement | controlstatement ;
+- blockstatment := declstatement | localfunctiondefnstatement | controlstatement | invariantstatement | deferstatement | retnstatement | callstatement | matchstatement ;
+
+- limitedscopeblock :=  openbrace, { declstatement | controlstatement | deferstatement | retnstatement | ( limitedtrialexpression, terminator ) }, closebrace ;
 
 - scopeblock := openbrace, { blockstatement | flowstatement }, closebrace ;
 
-- mainblock := begin, cursor, openbracket, (void | declexpressionlist), closebracket, { blockstatement }, end, [ terminator ] ;
+- mainblock := begin, cursor, openbracket, declexpressionlist, closebracket, { blockstatement }, end, [ terminator ] ;
 
-- programblock := [ modulestatement ], { reqrstatement }, { defnstatement }, [ mainblock ], { defnstatement }, [ exportstatement ], EOF ;
+- programblock := [ modulestatement ], { reqrstatement }, { globaldefnstatement }, [ mainblock ], { globaldefnstatement }, [ exportstatement ], EOF ;
 
 
 
