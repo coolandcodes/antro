@@ -264,7 +264,7 @@ Context Free Grammar Productions (CFGP) for ANTRO scripting language (PARSER) --
 
 - stringliteral    := string | formattedstring ;
 
-- enumitemtuple    := openbracket, ( numericliteral | stringliteral ), closebracket ;
+- enumitemtuple    := openbracket, ( type, { comma, type } ), closebracket ;
 
 - structblocklist  := identifier, type, { comma, identifier, type } ;
 
