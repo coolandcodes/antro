@@ -120,7 +120,10 @@ In _antro_, all data types are prefixed with a `.` (dot) character. The built-in
 - `.byte` for a unsigned char type
 - `.str` for a string type
 - `.bool` for a boolean type
-- `.Error` for an error type
+- `.anynumber` for all number type in one (i.e. `.int`, `.float`, `.double`, and `.long`)
+- `.anypointer` for all pointer types of varying sizes
+- `.struct` for all struct types (pointer or not)
+- `.Err` for an error type
 - `.File` for a file type
 
 #### Module/File Imports
@@ -133,10 +136,13 @@ The `begin` keyword is used to defined the [**entry point**](https://en.wikipedi
 The  `def`  keyword is used to define variables in the **global scope** (i.e. outside functions) that cannot be changed. When using `def`, it doesn't matter if the variable is defined in a **global scope** or **local scope**, it will always be a **globally-scoped** variable. Also, variables created with the `def` keyword cannot have their values changed/mutated but only copied into a variable whose value can be changed/mutated. NOTE: Antro makes use of lexical scoping.
 
 #### Variable Creation
-The `var` keyword is used to define variables or functions within a **local scope** (i.e. within functions) only. When using the `var` keyword, it matters that it isn't used in a **global scope** (i.e. outside functions) else the _antro_ parser will throw a parse error. Also, variables created with the `var` keyword can have their value changed/mutated.
+The `var` keyword is used to define variables or functions within a **local scope** (i.e. within a function) only. When using the `var` keyword, it matters that it isn't used in a **global scope** (i.e. outside functions) else the _antro_ parser will throw a parse error. Also, variables created with the `var` keyword can have their value changed/mutated. To create constant variables, use the `const` keyword.
 
 #### Multiple Return Values
 _antro_ does not have multiple return values. This is a very meticulously determined feature. As time goes on, it will become clear why this decision was made.
+
+#### Object And Array Unpacking/Destructuring
+_antro_ does support array and object destructuring just like in JavaScript. However, when dealing with object destructuring specifically, bound functions on implementations (`impl`) cannot be destructured out. On the other hand, array destructuring (or list unpacking) works just like it does in JavaScript and Python.
 
 #### Error Handling - Part 1
 The `eject_on` keyword in _antro_ is the equivalent of a [catch block](https://www.geeksforgeeks.org/try-catch-block-in-programming/#what-is-a-catchexcept-block) in other programming languages like C#, Java and JavaScript. _antro_ does not directly use the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) model for error handling. It uses an error to catch other errors that occur higher up on the call stack. In this way, the [try/catch](https://medium.com/@puran.joshi307/how-it-works-try-catch-61e90b18140a) block [is abstracted away](https://github.com/isocroft/runn) from the source-level (hidden from the programmer) and handled by the _antro_ compiler and runtime.
@@ -153,7 +159,10 @@ NOTE: Antro compiler has a **build mode** build-flag (i.e. `--build-mode`) on th
 - Using `--build-mode=dev`, any declared yet unused variable does not cause a compilation error
 - Using `--build-mode=prod`, any variable declaration where the right-hand side is a non-standard library API/non-literal must be typed
 - Using `--build-mode=prod`, any function definition without an `invariants` block causes a compilation error
-- Using `--build-mode=dev`, any call to `panic_on` (directly or indirectly) outside of a `use` block does not cause a compilation error 
+- Using `--build-mode=dev`, any call to `panic_on` (directly or indirectly) outside of a `use` block does not cause a compilation error
+- Using `--build-mode=prod`, any declaration or definition that does not include types will cause a compilation error
+- Using `--build-mode=prod`, any expression that requires implicit type coersion will cause a compilation error
+- Using `--build-mode=dev`, any expression that requires implicit type coersion will not cause a compilation error
 
 NOTE: Antro only has 2 broad classifications for errors:
 
@@ -183,8 +192,8 @@ Or `defer` being used to execute a `pause` for a panic:
 	defer {
 		pause (err .Err) {
 			# More code goes here...
-		}
-	}
+		};
+	};
 ```
 
 Within a `defer` block, trying to access a variable that is in the global scope will result in a compilation error irrespective of the `--build-mode` (see section on **build modes**).
@@ -193,13 +202,22 @@ Within a `defer` block, trying to access a variable that is in the global scope 
 The `retn` (return) keyword is used to return a value from a function definition or `begin` block.
 
 #### Limiting Scope
-The `static` keyword (similar to same in C programming language) is used in  _antro_ to limit the lexical scope access of a function or variable within a module source file.
+The `static` keyword (similar to same in C programming language) is used in _antro_ to limit the lexical scope access of a function or variable within a module source file.
 
-#### Structs And Inheritance
-The `struct` keyword is used to create structs in _antro_ just like in Go, C, Odin and Zig. However, the only novel thing is that _antro_ implements is inheritance of an  abstract struct but not a type struct. Inheritance in _antro_ is restricted to `struct`s and `impl`s that cannot be instantiated (i.e. they are `abstract`).  
+#### Enums, Structs, Implementations And Inheritance
+```antro
+enum ShipState {
+  FLOAT (.uint8) = 2 + 4,
+  SINK (.uint8, .str) = 4
+};
+```
+
+Above is a definition of an enum inspired mostly by Rust and Java. C and Go have very weak enum philosophies and so _antro_ rejects both of them. Also, note that enums are also types.
+
+The `struct` keyword is used to create structs in _antro_ just like in Go, C, Odin and Zig. However, the only novel thing is that _antro_ implements is inheritance of an  abstract implementation `impl` and also a struct. Inheritance in _antro_ is restricted to `struct`s as well as `impl`s that cannot be instantiated (i.e. they are `abstract`).  
 
 ```antro
-	# A single type struct (think `dict` type in Python)
+	# A single concrete type struct (think `dict` type in Python)
 	
 	struct Student {
 	  name .str,
@@ -207,40 +225,34 @@ The `struct` keyword is used to create structs in _antro_ just like in Go, C, Od
 	  age .uint8,
 	};
 
-	var student .Student = Student::new(name = "Patrick",grade = "A",age = 11); # no compiler error
-	var grad_student = Student::new(name = "Efosa",grade = "B",age = 23); # no compiler error
+	var student .Student = Student[name = "Patrick", grade = 'A', age = 11]; # no compiler error
+	static const grad_student = Student[name = "Efosa", grade = 'B', age = 23]; # no compiler error
 ```
 
 ```antro
-	# A single abstract struct (not a concrete type)
-
-	struct Student {
-	  name .str,
-	  age .uint8,
-	} as abstract;
-
-	# A single type trait (think `interface` in TypeScript or Java and also an `abstract` class in PHP or Java)
+	# A single abstract type trait (think `interface` in TypeScript or Java)
 	
 	trait Person {
 	  inherits Student { name };
 	  
-	   old .bool,
-	   walk (void) void ->> .Error,
+	  isOld .bool,
+   	  walk (void) void ->> .Err
 	};
 
-	impl Me on Person {
-	  
-	  init () {
-		prv |> old = false;
-		pub |> name = "";
+	# A single abstract implementation (think `abstract` class in PHP or Java but with several differences)
+	impl abstract Me on Person {
+	  init ($age .uint8) void {
+		priv |> age = $age;
+		priv |> isOld = false; # Compilation error: The field "old" is defined on the trait as public visibility (i.e. "publ") but here it is reset to private (i.e. "priv")
+		publ |> name = "Gideon Omah";
 	  }
 
-	  prv |> self&: walk (void) void ->> .Error {
+	  priv |> self&: walk (void) void ->> .Err { # Compilation error: Cannot set the `walk` bound function to a visibility of private (i.e. "priv"). It is public by default
 		call: print("walk called...");
 	  }
-	} as abstract;
+	};
 
-	var me .Person = Me::new(); # compiler error since `impl Me on Person` is abstract
+	var me .Person = call: Me::new(23); # Compilation error: This occurs since `impl Me on Person` is abstract
 ```
 
 ## License 
