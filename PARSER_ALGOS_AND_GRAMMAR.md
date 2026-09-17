@@ -115,7 +115,11 @@ Regular Grammar Productions (RGP) for ANTRO scripting language (TOKENIZER) -- EB
 
 - static := "static" ;
 
-- syncho := "synchronize" ;
+- sync := "synchronize_on" ;
+
+- release := "release_on" ;
+
+- yield := "yield" ;
 
 - assignmentoperator := [ minus | plus | multiply | divide | modulo ], "=" ;
 
