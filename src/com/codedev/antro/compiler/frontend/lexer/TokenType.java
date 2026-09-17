@@ -3,7 +3,7 @@ package com.codedev.antro.compiler.frontend.lexer;
 /*
  * Antro Compiler Project
  * https://www.coolcodes.io/antro
- * Copyright (c) 2014-2026 Ifeora Okechukwu
+ * Copyright (c) 2014-2027 Ifeora Okechukwu
  * Licensed under the MIT license. See 'LICENSE' for details.
  */
 
@@ -35,7 +35,7 @@ public enum TokenType {
     INVARIANTS, ALIASER,
     STRUCT, STATIC, IMPLEMENTATION,
     PAUSE, INHERITS, TRAIT, MODIFIER, QUALIFIER,
-    YIELD, SYNC, RELEASE,
+    YIELD, SYNC, RELEASE, ENUM, MATCH, CONST,
 
     // Types
     TYPE_INT, TYPE_FLT, TYPE_STR, TYPE_ARR,
@@ -45,7 +45,8 @@ public enum TokenType {
     // Operators
     PLUS, MINUS, STAR, SLASH, MODULO,
     INCREMENT, DECREMENT,
-    ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN, STAR_ASSIGN, SLASH_ASSIGN, MOD_ASSIGN,
+    ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN,
+    STAR_ASSIGN, SLASH_ASSIGN, MOD_ASSIGN,
     EQUAL, NOT_EQUAL,
     GREATER, GREATER_EQUAL,
     LESS, LESS_EQUAL,
@@ -58,5 +59,5 @@ public enum TokenType {
     LBRACE, RBRACE,
     LBRACKET, RBRACKET,
     COMMA, DOT, COLON, SEMICOLON,
-    AT, ANNOTATION, JOINER
+    AT, ANNOTATION, JOINER, DIRECTED
 }
