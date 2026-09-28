@@ -121,7 +121,9 @@ Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- 
 
 - yield := "yield" ;
 
-- assignmentoperator := [ minus | plus | multiply | divide | modulo ], "=" ;
+- assignmentoperator := "=" ;
+
+- loadedassignmentoperator := [ minus | plus | multiply | divide | modulo ], assignmentoperator ;
 
 - int := number ;
 
@@ -143,7 +145,7 @@ Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- 
 
 - null := "null" ;
 
-- type := ".int" | ".float" | ".str" | ".arr" | ".bool" | ".nil" | ".char" | ".byte" | ".double" | ".long" | ".ulong" | ".anynumber" | ".anypointer" | ".struct";
+- type := ".int" | ".float" | ".str" | ".arr" | ".bool" | ".nil" | ".char" | ".byte" | ".double" | ".long" | ".ulong" | ".anynumber" | ".anypointer" | ".anystruct" | ".any";
 
 - visibility := "priv" | "publ" ;
 
@@ -155,7 +157,7 @@ Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- 
 
 - pause := "pause" ;
 
-- implementation := "impl" ;
+- impl := "impl" ;
 
 - binder := "on" ;
 
@@ -183,7 +185,7 @@ Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- 
 
 - default := "default" ;
 
-- throw := "throw" ;
+- abstract := "abstract" ;
 
 - oeject := "eject_on" ;
 
@@ -213,6 +215,8 @@ Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- 
 
 - module := "package";
 
+- of := "of";
+
 - whitespace := "\f" | "\t" | "\r" | "\n" | "\b" | " " | ?? ;
 
 - annotation := modulo, modulo ;
@@ -239,6 +243,8 @@ Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- 
 
 - ace := "@" ;
 
+- cons := "|>" ;
+
 - boolean := "true" | "false" ;
 
 - link := "->" ;
@@ -257,7 +263,7 @@ Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- 
 
 - identifier := ( pound | letter | uscore ), {  letterordigit | uscore  } ;
 
-- comment := hash, { allchars - hash } | ( divide, multiply ), { allchars - ( multiply, divide ), (multiply, divide) ;
+- comment := hash, { allchars - hash } | ( divide, multiply ), { allchars - ( multiply, divide ) }, ( multiply, divide ) ;
 
 
 Context Free Grammar Productions (CFGP) for ANTRO programming language (PARSER) -- EBNF
@@ -270,19 +276,21 @@ Context Free Grammar Productions (CFGP) for ANTRO programming language (PARSER) 
 
 - enumitemtuple    := openbracket, ( type, { comma, type } ), closebracket ;
 
-- structblocklist  := identifier, type, { comma, identifier, type } ;
+- structblocklist  := identifier, [ "&" ], ( type | identifier ), { comma, identifier, [ "&" ], ( type | identifier ) } ;
 
-- enumitemstruct   := openbracket, ( openbrace, structblocklist, closebrace, | identifier, [ ".struct" ] ), closebracket ;
+- enumitemstruct   := openbracket, ( openbrace, structblocklist, closebrace, | type ), closebracket ;
 
-- enumitem         :=  ( visibility )?, identifier, ( enumitemtuple | enumitemstruct )?, [ assignmentoperator, expression ] ;
+- enumitem         :=  [ visibility ], identifier, ( enumitemtuple | enumitemstruct )?, [ assignmentoperator, expression ] ;
 
-- structure        := struct, identifier, openbrace, structblocklist, closebrace ;
+- structure        := struct, identifier, [lt, identifier [ assignmentoperator, type ], gt], openbrace, structblocklist, closebrace ;
 
 - enumeration      := enum, identifier, openbrace, enumitem, { comma, enumitem }, closebrace ;
 
-- boundfn          := identifier, openbracket, declexpressionlist, closebracket, [ type, ( signlink, ".Err" )? ] ;
+- boundfn          := identifier, openbracket, declexpressionlist, closebracket, [ type, [ signlink, ".Err" ] ] ;
 
-- traitblock       := [ inherits, identifier, openbrace, ( multiply | identifier, { comma, identifier } ), closebrace, terminator ], structblocklist, { comma, boundfn } ;
+- inheritanceblock  := inherits, identifier, openbrace, ( multiply | identifier, { comma, identifier } ), closebrace, terminator ;
+
+- traitblock       := [ inheritanceblock ], structblocklist, { comma, boundfn } ;
 
 - traitform        := trait, identifier, openbrace, traitblock, closebrace ;
 
@@ -300,7 +308,7 @@ Context Free Grammar Productions (CFGP) for ANTRO programming language (PARSER) 
 
 - term             := rhs_slot | identifier | array | null ;
 
-- unary             :=  ( logicalunaryoperator )?, ( decrement_prefix | increment_prefix | rhs_slot ) | ( minus | plus )?, ( calcexpression | postfix ) | identifier ;
+- unary             :=  [ logicalunaryoperator ], ( decrement_prefix | increment_prefix | rhs_slot ) | [ minus | plus ], ( calcexpression | postfix ) | identifier ;
 
 - arithmetic        := stringliteral { plus, stringliteral } | unary { arithmeticbinaryoperators, unary } ;
 
@@ -322,21 +330,21 @@ Context Free Grammar Productions (CFGP) for ANTRO programming language (PARSER) 
 
 - expressionset     := expression, { comma, expression } ;
 
-- logicexpression   :=  void | null | expressionset | expressiongroup ;
+- logicexpression   :=  null | expressionset | expressiongroup ;
 
 - logicexpressionlist := logicexpression, { comma, logicexpression } ;
 
-- callexpression := call, cursor, identifier ( joiner, identifier | new )?, openbracket, logicexpressionlist, closebracket ;
+- callexpression := call, cursor, identifier [ joiner, identifier | new ], openbracket, logicexpressionlist, closebracket ;
 
 - trialexpression := [ stringedterm, comma ], callexpression, [ link, oeject, identifier ], [ link, hook, limitedscopeblock ] ;
 
 - limitedtrialexpression := [ stringedterm, comma ], callexpression, [ link, oeject, identifier ] ;
 
-- declsolution := identifier, [ type ];
+- declsolution := identifier, [ type [ of, identifier ] ] ;
 
-- declexpression :=  declsolution, { assignmentoperator, ( logicexpression | array ) } ;
+- declexpression :=  declsolution, { loadedassignmentoperator, ( logicexpression | array ) } ;
 
-- declexpressionlist := declexpression, { comma, declexpression } ;
+- declexpressionlist := void | declexpression, { comma, declexpression } ;
 
 - simpledeclunit := [ static ], { ( var | const ), declexpressionlist }, terminator ;
 
@@ -344,11 +352,13 @@ Context Free Grammar Productions (CFGP) for ANTRO programming language (PARSER) 
 
 - reqrstatement := require, cursor, string, { aliaser, identifier }, terminator ;
 
-- retnstatement := retn, [ ( logicexpression | array ) ], [ terminator ] ; (* if we put `logicexpressionlist` instead of `logicexpression` here, we risk making antro a multi-value return language *)
+- retnstatement := retn, [ logicexpression | array ], [ terminator ] ; (* if we put `logicexpressionlist` instead of `logicexpression` here, we risk making antro a multi-value return language *)
 
 - callstatement := trialexpression, terminator ;
 
-- fdefnbody := openbracket, declexpressionlist, closebracket, [ type, ( signlink, ".Err" )? ], scopeblock ;
+- fdefnbody := openbracket, declexpressionlist, closebracket, [ type, [ signlink, ".Err" ] ], scopeblock ;
+
+- impldefnblock := openbrace, { blockstatement | flowstatement | ( visibility, cons, declexpression ) }, closebrace ;
 
 - globalliteraldefnstatement := def, cursor, identifier, literal, terminator ;
 
@@ -377,6 +387,12 @@ Context Free Grammar Productions (CFGP) for ANTRO programming language (PARSER) 
 - breakstatement := break, terminator ;
 
 - continuestatement := continue, terminator ;
+
+- impldefinitions := [ "init", impldefnblock ], [ "entry", openbracket, "self&", closebracket, scopeblock ], { [ visibility ], cons, "self&", cursor, identifier, fdefnbody } ;
+
+- implblock := openbrace, impldefinitions, closebrace, terminator ;
+
+- implementation := impl, [ abstract ], identifier, [ binder, identifier ], implblock ;
 
 - matchitem := (numericliteral | stringliteral | identifier), directed, expressionset ;
 
