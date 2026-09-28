@@ -1,6 +1,6 @@
 # antro
 
-A compiler project for an experimental programming language called _antro language_ which is still in development. This project is purely educational and full or experimentation (for now) as the language cannot be used for any industry work in its current form. Therefore, the sole aim of this project is to show and teach the skills required of designing computer languages and implementing them.
+A compiler project for an experimental programming language called _antro language_ which is still in development. This project is purely educational and full or experimentation (for now) as the language cannot be used for any industry work in its current form. Therefore, the sole aim of this project is to show and teach the skills required of designing computer languages and implementing them. In the future, it can be usec
 
 The Antro project is implemented as a predictive recursive descent parser with a [lookahead of 2 tokens](https://www.quora.com/What-is-a-%E2%80%9Clookahead-operator%E2%80%9D-in-compiler-designs) (at most) and some backtracking to deal with parts of the grammar that aren't left-factored (... to be fixed).
 
@@ -116,13 +116,15 @@ In _antro_, all data types are prefixed with a `.` (dot) character. The built-in
 - `.double` for a double type
 - `.long` for a long type
 - `.ulong` for an unsigned long type
-- `.char`  for an signed char type
-- `.byte` for a unsigned char type
+- `.char`  for a signed char type
+- `.byte` for an unsigned char type
 - `.str` for a string type
 - `.bool` for a boolean type
-- `.anynumber` for all number type in one (i.e. `.int`, `.float`, `.double`, and `.long`)
+- `.anynumber` for all number types grouped in one (i.e. `.int`, `.float`, `.byte`, `.char` `.double`, and `.long`)
 - `.anypointer` for all pointer types of varying sizes
-- `.struct` for all struct types (pointer or not)
+- `.anystruct` for all struct types (pointer or not)
+- `.any` for all conceivable types (pointer or not)
+- `.nil` for the value of **null** (i.e. null reference)
 - `.Err` for an error type
 - `.File` for a file type
 
@@ -207,14 +209,30 @@ The `static` keyword (similar to same in C programming language) is used in _ant
 #### Enums, Structs, Implementations And Inheritance
 ```antro
 enum ShipState {
-  FLOAT (.uint8) = 2 + 4,
-  SINK (.uint8, .str) = 4
+  FLOAT (.uint8) = 2 + 4, # primitive type (.int)
+  SINK (.uint8, .str) = 4 # primitive and reference type (.int)
 };
+
+var state .ShipState of SINK = ShipState:SINK # assigns the value of 4
+
+# ----------------------------------------------------------------------
+
+struct LinkedNode<T> {
+  next &.LinkedNode<T>, # reference type (.LinkedNode)
+  value T # any type (.any)
+}
+
+enum LinkedList<T=.int> {
+  publ ELEM_NODE (.LinkedNode<T>),
+  publ NIL (.nil)
+}
+
+const last_item .LinkedList<.bool> of ELEM_NODE = [next=null, value=true]
 ```
 
-Above is a definition of an enum inspired mostly by Rust and Java. C and Go have very weak enum philosophies and so _antro_ rejects both of them. Also, note that enums are also types.
+Above is a definition of enums in _antro_ inspired mostly by Rust and Java. Actually, C and Go have very weak enum philosophies and so _antro_ rejects both of them. Also, note that enums are also types.
 
-The `struct` keyword is used to create structs in _antro_ just like in Go, C, Odin and Zig. However, the only novel thing is that _antro_ implements is inheritance of an  abstract implementation `impl` and also a struct. Inheritance in _antro_ is restricted to `struct`s as well as `impl`s that cannot be instantiated (i.e. they are `abstract`).  
+The `struct` keyword is used to create structs in _antro_ just like in Go, C, Odin and Zig. However, the only novel thing is that _antro_ implements is inheritance of an  abstract implementation (`impl`) and also a struct. Inheritance in _antro_ is restricted to `struct`s as well as `impl`s (that cannot be instantiated - i.e. they are `abstract`). In _antro_, any non-abstract implementation (`impl`) cannot be inherited from.
 
 ```antro
 	# A single concrete type struct (think `dict` type in Python)
@@ -225,7 +243,7 @@ The `struct` keyword is used to create structs in _antro_ just like in Go, C, Od
 	  age .uint8,
 	};
 
-	var student .Student = Student[name = "Patrick", grade = 'A', age = 11]; # no compiler error
+	var student .Student = [name = "Patrick", grade = 'A', age = 11]; # no compiler error
 	static const grad_student = Student[name = "Efosa", grade = 'B', age = 23]; # no compiler error
 ```
 
@@ -247,8 +265,12 @@ The `struct` keyword is used to create structs in _antro_ just like in Go, C, Od
 		publ |> name = "Gideon Omah";
 	  }
 
+      entry (self&) {
+        call: self.walk();
+      }
+
 	  priv |> self&: walk (void) void ->> .Err { # Compilation error: Cannot set the `walk` bound function to a visibility of private (i.e. "priv"). It is public by default
-		call: print("walk called...");
+		call: print("walk, " + self:name);
 	  }
 	};
 
