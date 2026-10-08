@@ -7,8 +7,19 @@ import info.picocli.CommandLine.Parameters;
 import java.io.File;
 import java.util.concurrent.Callable;
 
-@Command(name = "interpret", mixinStandardHelpOptions = true, version = "1.0",
-        description = "Interprets source files from the CLI.")
+/*
+ * Antro Compiler Project
+ * https://www.coolcodes.io/antro
+ * Copyright (c) 2014-2027 Ifeora Okechukwu
+ * Licensed under the MIT license. See 'LICENSE' for details.
+ */
+
+/**
+ *
+ */
+
+@Command(name = "antroc", mixinStandardHelpOptions = true, version = "1.0",
+        description = "Compiles Antro source files from the CLI.")
 public class Main implements Callable<Integer> {
 
     @Parameters(index = "0", description = "The source file to run.", arity = "0..1")
@@ -31,7 +42,7 @@ public class Main implements Callable<Integer> {
 
     private void runFile(File file) throws Exception {
         System.out.println("Executing: " + file.getName());
-        // @NOTE: Lexer -> Parser -> Evaluator logic here
+        // @HINT: [Lexer -> Parser -> Code Generator] logic here
     }
 
     public static void main(String[] args) {
