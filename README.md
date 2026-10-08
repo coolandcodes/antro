@@ -29,7 +29,7 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 ```antro
 
 	require: "sys.module/io"; # `print(...)` is defined here
-	require: "asserts.module"; # `UNSAFE_type(...)` is defined here
+	require: "asserts.module"; # `UNSAFE_isType(...)` is defined here
 	require: "errors.module"; # `.Err` trait + the `Error` impl is defined here
 
 	def: MAX 200;
@@ -47,7 +47,7 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 	    }
 		
   	    call: print("A fatal error occurred");
-
+		
 		panic_on error;
 	  };
 	  
@@ -56,7 +56,7 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 
 	def: UNSAFE_factorUpBy2(x .int) .int ->> .Err {
 	  var y, g = true;
-      var error = call: Error::new("could not factor value by 2");
+	  var error = call: Error::new("could not factor value by 2");
 
 	   if (x > 0) {
 	     y = (x / 2) * 4;
@@ -71,22 +71,22 @@ Make use of the [LLVM IR Builder](https://github.com/rwl/ir-builder/) for IR (in
 	def: UNSAFE_convertToFactor(c .bool, d .int) .int ->> .Err {
 	  var error_message_prefix = "Argument type error: ";
 
-	  defer -> invariants {
-		call: print("leaving `UNSAFE_convertToFactor(...)` function");
-      }
+	  defer -> guard {
+	    call: print("leaving `UNSAFE_convertToFactor(...)` function");
+	  }
 
-	  invariants {
+	  guard {
 	     error_message_prefix += "calling `UNSAFE_convertToFactor(..)` ~ ";
 	     var next_error_message = "";
 	     var error_message = error_message_prefix + "`c` is not a boolean";
 	
 	     var error = call: Error::new(error_message);
-	     call: UNSAFE_type(c, "boolean") -> eject_on error;
+	     call: UNSAFE_isType(c, "boolean") -> eject_on error;
 	
 	     next_error_message = error_message_prefix + "`d` is not a number";
 	
 	     var _error = call: Error::new(next_error_message);
-	     call: UNSAFE_type(d, "number") -> eject_on _error;
+	     call: UNSAFE_isType(d, "number") -> eject_on _error;
 	  }
 
 	  # before the `retn` (return) statement below executes...
@@ -120,9 +120,9 @@ In _antro_, all data types are prefixed with a `.` (dot) character. The built-in
 - `.byte` for an unsigned char type
 - `.str` for a string type
 - `.bool` for a boolean type
-- `.anynumber` for all number types grouped in one (i.e. `.int`, `.float`, `.byte`, `.char` `.double`, and `.long`)
-- `.anypointer` for all pointer types of varying sizes
-- `.anystruct` for all struct types (pointer or not)
+- `.anynumber` for all number types of varying sizes at runtime (i.e. `.int`, `.float`, `.byte`, `.char` `.double`, and `.long`)
+- `.anypointer` for all pointer types of varying sizes at runtime
+- `.anystruct` for all struct types (pointer or not) of varying sizes at runtime
 - `.any` for all conceivable types (pointer or not)
 - `.nil` for the value of **null** (i.e. null reference)
 - `.Err` for an error type
@@ -177,14 +177,14 @@ The `use` keyword is not the _antro_ equivalent of [finally](https://www.w3schoo
 Finally, _antro_ has **checked errors** (a much more constrained and healthy implementation of [Checked Exceptions in Java](https://www.baeldung.com/java-checked-unchecked-exceptions#checked). Checked Errors build on top of **Error Ejection** and ensure that the only error type a function can possibly eject is included in the function signature.
 
 #### Invariants
-The `invariants` keyword is used to setup [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) within a **local scope** (i.e. within functions). For the design of _antro_, i believe that [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) ought to be baked into the programming model (i.e. the programming language design). In the future, i plan to setup [macros](https://doc.rust-lang.org/book/ch20-05-macros.html) just like they are used in [Rust](https://www.rust-lang.org/) to make the `invariants` block shorter and more compact. All function definitions MUST contain an `invariants` block else the _antro_ runtime will throw an error.
+The `guard` keyword is used to setup [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) within a **local scope** (i.e. within functions). For the design of _antro_, i believe that [invariants](https://softwareengineering.stackexchange.com/questions/32727/what-are-invariants-how-can-they-be-used-and-have-you-ever-used-it-in-your-pro) ought to be baked into the programming model (i.e. the programming language design). In the future, i plan to setup [macros](https://doc.rust-lang.org/book/ch20-05-macros.html) just like they are used in [Rust](https://www.rust-lang.org/) to make the `guard` block shorter and more compact. All function definitions MUST contain a `guard` block else the _antro_ runtime will throw an error.
 
 #### Deferring An Action
 The `defer` keyword is the _antro_ equivalent of the [defer](https://gobyexample.com/defer) keyword in [Golang](https://go.dev/). The `defer` keyword in _antro_ works in a very specific set of ways. This includes `defer` being used to execute invariants as a function scope is about to be exited:
 
 ```antro
-	defer -> invariants {
-		# More code goes here...
+	defer -> guard {
+	  # More code goes here...
 	}
 ```
 
@@ -192,9 +192,9 @@ Or `defer` being used to execute a `pause` for a panic:
 
 ```antro
 	defer {
-		pause (err .Err) {
-			# More code goes here...
-		};
+	  pause (err .Err) {
+	    # More code goes here...
+	  };
 	};
 ```
 
@@ -228,9 +228,56 @@ enum LinkedList<T=.int> {
 }
 
 const last_item .LinkedList<.bool> of ELEM_NODE = [next=null, value=true]
+
+export { .ShipState, .LinkedList, * };
 ```
 
 Above is a definition of enums in _antro_ inspired mostly by Rust and Java. Actually, C and Go have very weak enum philosophies and so _antro_ rejects both of them. Also, note that enums are also types.
+
+Enums in _antro_ can either be fixed like with Rust or variable depending on how they are constructed. This means that if literals are used in constructing an array of characters (i.e. character buffer) or an array of strings (i.e. a string buffer) or an array of structs (either based on an enum or standalone), then a contigous block of memory is used to store them. This has 2 implications. The first is that there are no pointers and allocations on the heap and the second is that the size of each member of the array can vary.
+
+However, if non-literals (e.g. derived from variables) are used in constructing these arrays, then each member gets a fixed size in a contigous block of memory with padding and alignment with pointers within pointing to locations in the heap.
+
+```antro
+require: "asserts.module"; # `getType(...)` is defined here
+
+enum Shape_2D {
+  Circle ({ radius .double }),
+  Rectangle ({ width .double, height .double }),
+  Square ({ side .double }),
+  Triangle ({ base .double, height .double }),
+  Dot ({ x .double, y .double })
+}
+
+const shapes .Shape_2D[] = @{}; # empty array (dynamic grow-only array)
+
+shapes::push(Shape_2D:Circle[radius=5.1]);
+shapes::push(Shape_2D:Rectangle[width=12.6, height=4.0]);
+shapes::push(Shape_2D:Square[side=3.5]);
+shapes::push(Shape_2D:Triangle[base=2.2, height=6.3]);
+
+def: areaOfShape(shape .Shape_2D) .double ->> .Err {
+  const PI = 3.14159;
+  const result = match (shape .Shape_2D) {
+  	.Shape_2D of Circle => {
+	  retn PI * shape:radius * shape:radius;
+	},
+	.Shape_2D of Rectangle => {
+	  retn shape:width * shape:height;
+	},
+	.Shape_2D of Triangle => {
+	  retn (0.5 * shape:base) * shape:height;
+	},
+	_ => {
+	  call: print(f"`areaOfShape(...)` called with no way to handle: {getType(shape)}");
+	  retn 0.0;
+  	}
+  }
+  retn result;
+};
+
+export { .Shape_2D, Shape_2D, shapes, areaOfShape };
+```
 
 The `struct` keyword is used to create structs in _antro_ just like in Go, C, Odin and Zig. However, the only novel thing is that _antro_ implements is inheritance of an  abstract implementation (`impl`) and also a struct. Inheritance in _antro_ is restricted to `struct`s as well as `impl`s (that cannot be instantiated - i.e. they are `abstract`). In _antro_, any non-abstract implementation (`impl`) cannot be inherited from.
 
@@ -239,12 +286,14 @@ The `struct` keyword is used to create structs in _antro_ just like in Go, C, Od
 	
 	struct Student {
 	  name .str,
-      grade .char,
+	  grade .char,
 	  age .uint8,
 	};
 
 	var student .Student = [name = "Patrick", grade = 'A', age = 11]; # no compiler error
 	static const grad_student = Student[name = "Efosa", grade = 'B', age = 23]; # no compiler error
+
+	# NOTE: A `const` variable must only be initialize with a literal value
 ```
 
 ```antro
@@ -264,17 +313,17 @@ The `struct` keyword is used to create structs in _antro_ just like in Go, C, Od
 		priv |> isOld = false; # Compilation error: The field "old" is defined on the trait as public visibility (i.e. "publ") but here it is reset to private (i.e. "priv")
 		publ |> name = "Gideon Omah";
 	  }
-
-      entry (self&) {
-        call: self.walk();
-      }
-
+	  
+	  entry (self&) {
+	  	call: self.walk();
+	  }
+	  
 	  priv |> self&: walk (void) void ->> .Err { # Compilation error: Cannot set the `walk` bound function to a visibility of private (i.e. "priv"). It is public by default
-		call: print("walk, " + self:name);
+	  	call: print("walk, " + self:name);
 	  }
 	};
 
-	var me .Person = call: Me::new(23); # Compilation error: This occurs since `impl Me on Person` is abstract
+	var me .Person = call: Me::new(23); # Compilation error: This occurs since `impl abstract Me on Person` is abstract
 ```
 
 ## License 
@@ -283,7 +332,7 @@ This is released under the MIT license.
 
 ## Design Inspiration
 
-_antro_ language design was inspired by 9 languages: C, Go, Zig, Python, PHP, Java, Odin, Rust and TypeScript all combined.
+_antro_ language design was inspired by 10 languages: C, Goose, Go, Zig, Python, PHP, Java, Odin, Rust and TypeScript all combined.
 
 
 
