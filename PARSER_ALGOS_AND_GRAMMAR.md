@@ -95,7 +95,7 @@ Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- 
 
 - digit := "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 
-- number := [ "0x" ], ("0" | digit), { "0" | digit } ;
+- number := [ "0x" ], ( "0" | digit ), { "0" | digit } ;
 
 - letter := "a" | "b" | "c" | "d" | "e"  | "f" | "g"  | "h" | "i"  | "j" | "k"  | "l" | "m"  | "n" | "o"  | "p" | "q"  | "r" | "s"  | "t" | "u"  | "v" | "w"  | "x" | "y"  | "z" | "A"  | "B" | "C"  | "D" | "E"  | "F" | "G"  | "H" | "I"  | "J" | "K"  | "L" | "M"  | "N" | "O"  | "P" | "Q"  | "R" | "S"  | "T" | "U"  | "V" | "W"  | "X" | "Y"  | "Z" ;
 
@@ -163,7 +163,7 @@ Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- 
 
 - def := "def" ;
 
-- invariants := "invariants" ;
+- invariants := "guard" ;
 
 - switch := "switch" ;
 
@@ -216,6 +216,8 @@ Regular Grammar Productions (RGP) for ANTRO programming language (TOKENIZER) -- 
 - module := "package";
 
 - of := "of";
+
+- in := "in";
 
 - whitespace := "\f" | "\t" | "\r" | "\n" | "\b" | " " | ?? ;
 
@@ -368,7 +370,13 @@ Context Free Grammar Productions (CFGP) for ANTRO programming language (PARSER) 
 
 - globaldefnstatement := globalliteraldefnstatement | globalfunctiondefnstatement ;
 
-- forstatement := for, openbracket, simpledeclunit, [ expression ], terminator, ( increment_prefix | decrement_prefix | postfix ), closebracket, scopeblock ;
+- basicforstatement := for, openbracket, simpledeclunit, [ expression ], terminator, ( increment_prefix | decrement_prefix | postfix ), closebracket, scopeblock ;
+
+- rangeset := int ".." int ;
+
+- abridgedforstatement := for, openbracket, identifier, in, ( rangeset | int ), closebracket, scopeblock ;
+
+- forstatement :=  basicforstatement | abridgedforstatement ;
 
 - dowhilestatement := do, scopeblock, while, openbracket, logicexpression, closebracket ;
 
@@ -394,9 +402,9 @@ Context Free Grammar Productions (CFGP) for ANTRO programming language (PARSER) 
 
 - implementation := impl, [ abstract ], identifier, [ binder, identifier ], implblock ;
 
-- matchitem := (numericliteral | stringliteral | identifier), directed, expressionset ;
+- matchitem := (numericliteral | stringliteral | identifier | type), directed, ( openbrace, expressionset, closebrace | expressionset ) ;
 
-- matchstatement := match, openbracket, identifier, [ ".Err" ], closebracket, openbrace, matchitem, { comma, matchitem }, closebrace ;
+- matchstatement := match, openbracket, identifier, ( type [ of, identifier ] ), closebracket, openbrace, matchitem, { comma, matchitem }, closebrace ;
 
 - pausestatement := pause, openbracket, identifier, [ ".Err" ], closebracket, openbrace, { declstatement | controlstatement }, closebrace, terminator ;
 
