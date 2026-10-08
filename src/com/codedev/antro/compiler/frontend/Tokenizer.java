@@ -84,7 +84,7 @@ public class Tokenizer {
         Map.entry("inherits", TokenType.INHERITS),
         Map.entry("trait", TokenType.TRAIT),
         Map.entry("on", TokenType.MODIFIER),
-        Map.entry("of", TokenType.ATTER),
+        Map.entry("of", TokenType.TERK),
         Map.entry("in", TokenType.SINK),
         Map.entry("abstract", TokenType.QUALIFIER),
         Map.entry("package", TokenType.MODULE),
@@ -93,7 +93,8 @@ public class Tokenizer {
         Map.entry("release_on", TokenType.RELEASE),
         Map.entry("enum", TokenType.ENUM),
         Map.entry("match", TokenType.MATCH),
-        Map.entry("const", TokenType.CONST)
+        Map.entry("const", TokenType.CONST),
+        Map.entry("self&", TokenType.SELF)
     );
 
 
@@ -458,6 +459,13 @@ public class Tokenizer {
                     */
                     multiCharScanActive = true;
                     multiCharScanBuffer.append(c);
+
+                   char nextChar = peek();
+
+                   if (nextChar == '.') {
+                       // @HINT: about to match a type
+                       return;
+                   }
                 }
 
                 if (match('&')) {
@@ -570,7 +578,11 @@ public class Tokenizer {
                 }
 
                 if (match('=')) {
-                    emit(simple(c, TokenType.EQUAL));
+                    if (match('=')) {
+                        emit(simple(c, TokenType.STRICT_EQUAL));
+                    } else {
+                        emit(simple(c, TokenType.EQUAL));
+                    }
                 } else if (match('>')) {
                     emit(simple(c, TokenType.DIRECTED));
                 } else {
@@ -594,8 +606,19 @@ public class Tokenizer {
                         Assume multiple character token if there is 
                         no whitespace character until it becomes
                         clear no additional characters can be matched
+
+                        If multiple character sca is already active
+                        then, try to verify that we are reading a 
+                        reference type.
                     */
-                    multiCharScanActive = true;
+                    if (multiCharScanActive) {
+                        char prevChar = multiCharScanBuffer.charAt(0);
+                        if (prevChar != '&') {
+                          throw new Exception("invalid token image sequence found: " + "`" prevChar + c + "`");
+                        }
+                    } else {
+                        multiCharScanActive = true;
+                    }
                     multiCharScanBuffer.append(c);
                 }
 
@@ -616,17 +639,23 @@ public class Tokenizer {
                     } else if (text.equals(new String(".byte"))) {
                         emit(simple(nextChar, TokenType.TYPE_BYTE));
                     } else if (text.equals(new String(".uint8"))) {
-                        emit(simple(nextChar, TokenType.TYPE_INT));
+                        emit(simple(nextChar, TokenType.TYPE_UINT));
                     } else if (text.equals(new String(".uint16"))) {
-                        emit(simple(nextChar, TokenType.TYPE_INT));
+                        emit(simple(nextChar, TokenType.TYPE_UINT));
+                    } else if (text.equals(new String(".uint32"))) {
+                        emit(simple(nextChar, TokenType.TYPE_UINT));
+                    } else if (text.equals(new String(".uint64"))) {
+                        emit(simple(nextChar, TokenType.TYPE_UINT));
                     } else if (text.equals(new String(".double"))) {
                         emit(simple(nextChar, TokenType.TYPE_DBL));
                     } else if (text.equals(new String(".float"))) {
                         emit(simple(nextChar, TokenType.TYPE_FLT));
-                    } else if (text.equals(new String(".uint32"))) {
-                        emit(simple(nextChar, TokenType.TYPE_INT));
-                    } else if (text.equals(new String(".uint64"))) {
-                        emit(simple(nextChar, TokenType.TYPE_INT));
+                    } else if (text.equals(new String(".any"))) {
+                        emit(simple(nextChar, TokenType.TYPE_ANY));
+                    } else if (text.equals(new String(".anynumber"))) {
+                        emit(simple(nextChar, TokenType.TYPE_ANYNUMBER));
+                    } else if (text.equals(new String(".anypointer"))) {
+                        emit(simple(nextChar, TokenType.TYPE_ANYPOINTER));
                     } else if (text.equals(new String(".str"))) {
                         emit(simple(nextChar, TokenType.TYPE_STR));
                     } else if (text.equals(new String(".char"))) {
@@ -961,7 +990,8 @@ public class Tokenizer {
             /* @HINT: Keep consumed character */
             multiCharScanBuffer.append(advance())
         } else {
-            advance(); /* @HINT: Discard consumed character */
+            /* @HINT: Discard consumed character */
+            advance();
         }
         
         return true;
