@@ -7,6 +7,17 @@ import com.codedev.antro.compiler.frontend.ast.rules.Variable;
 import com.codedev.antro.compiler.frontend.ast.rules.Assignment;
 import com.codedev.antro.compiler.frontend.ast.rules.Call;
 
+/*
+ * Antro Compiler Project
+ * https://www.coolcodes.io/antro
+ * Copyright (c) 2014-2027 Ifeora Okechukwu
+ * Licensed under the MIT license. See 'LICENSE' for details.
+ */
+
+/**
+ *
+ */
+
 public abstract class Expr implements Cloneable, Attribution {
     public interface Visitor<R> {
         R visitBinary(Binary e);
